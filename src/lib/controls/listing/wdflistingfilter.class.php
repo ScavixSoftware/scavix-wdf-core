@@ -1,0 +1,364 @@
+<?php
+/**
+ * Scavix Web Development Framework
+ *
+ * Copyright (c) since 2019 Scavix Software GmbH & Co. KG
+ *
+ * This library is free software; you can redistribute it
+ * and/or modify it under the terms of the GNU Lesser General
+ * Public License as published by the Free Software Foundation;
+ * either version 3 of the License, or (at your option) any
+ * later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library. If not, see <http://www.gnu.org/licenses/>
+ *
+ * @copyright since 2019 Scavix Software GmbH & Co. KG
+ * @license http://www.opensource.org/licenses/lgpl-license.php LGPL
+ */
+namespace ScavixWDF\Controls\Listing;
+
+use ScavixWDF\Base\Args;
+use ScavixWDF\Base\Template;
+use ScavixWDF\Base\WdfClosure;
+use ScavixWDF\Controls\Form\TextInput;
+
+/**
+ * Simple filters for <WdfListing> controls.
+ */
+class WdfListingFilter extends Template
+{
+    public $prefix = "";
+    public $sql_builders = [];
+    public $listings = [];
+    // public $onoffs = [];
+
+    function __construct($controller,$method='',$object=false)
+    {
+        parent::__construct();
+
+        $this->prefix = "lstfilter_{$controller}{$method}";
+        if( $object )
+        {
+            $id = ifavail($object,'id');
+            $this->prefix .= get_class_simple($object).$id;
+        }
+
+        $this->set('prefix',$this->prefix);
+        if( isset($id) && $id )
+            $this->set('action',buildQuery($controller,$method,compact('id')));
+        else
+            $this->set('action',buildQuery($controller,$method));
+
+        $this->script("wdf.listings.initFilter('#{$this->id}');");
+    }
+
+    protected function persist($name,$value)
+    {
+        WdfListing::Storage()->set("{$this->prefix}_{$name}",$value);
+    }
+    protected function delValue($name)
+    {
+        WdfListing::Storage()->del("{$this->prefix}_{$name}");
+    }
+    protected function hasSetting($name)
+    {
+        return WdfListing::Storage()->has("{$this->prefix}_{$name}");
+    }
+    protected function getSetting($name,$default=false)
+    {
+        return WdfListing::Storage()->get("{$this->prefix}_{$name}", $default);
+    }
+
+    /**
+     * Do not use! Use <WdfListing>::setFilter() instead.
+     * @param mixed $listing WdfListing instance
+     * @return static
+     */
+    function setListing($listing)
+    {
+        // IMPORANT: Do not call this method, call WdfListing::setFilter instead
+        $this->listings[] = $listing;
+        $this->set('listings', array_map(function($l) { return $l->id; }, $this->listings));
+        return $this;
+    }
+
+    /**
+     * Returns an input control by name.
+     * @param mixed $name The control name.
+     * @return mixed
+     */
+	function getInput($name)
+	{
+		foreach( $this->get('inputs') as $i )
+			if( $i->attr('name') == $name )
+				return $i;
+		return null;
+	}
+
+    /**
+     * Adds a search <TextInput> control.
+     *
+     * Note: This performs a case-insensitive substring search.
+     * @param mixed $name Name-attribute for the control.
+     * @param mixed $title Title-attribute for the control.
+     * @param mixed $columns Columns to search in
+     * @return mixed
+     */
+	function addSearchInput($name,$title,$columns)
+	{
+		return $this->addInput(
+			TextInput::Make($this->getValue($name),$name)->setTitle($title),
+			$this->makeTermBuilder($columns),
+			false
+		);
+	}
+
+    /**
+     * Adds a EQ <Select> control.
+     * @param mixed $name Name-attribute for the control.
+     * @param mixed $title Title-attribute for the control.
+     * @param mixed $column Column name
+     * @return mixed
+     */
+	function addEqualsSelect($name,$title,$column)
+	{
+		return $this->addInput(
+
+			\ScavixWDF\Controls\Form\Select::Make($name)->setValue($this->getValue($name))->setTitle($title),
+			$this->makeEqualsBuilder($column),
+			false
+		);
+	}
+
+    /**
+     * Adds a EQ filter.
+     * @param mixed $control Input control (like <TextInput>)
+     * @param mixed $column Column name
+     * @return mixed
+     */
+	function addEqualsInput($control, $column)
+	{
+		$name = $control->attr('name');
+		return $this->addInput(
+
+			$control->setValue($this->getValue($name)),
+			$this->makeEqualsBuilder($column)
+		);
+	}
+
+    protected function addInput($control,$sql_builder,$return_self=true)
+    {
+        $name = $control->attr('name');
+        if(ends_with($name, '[]'))
+            $name = substr($name, 0, -2);
+        $this->sql_builders[$name] = $sql_builder;
+        $this->add2var('inputs',$control);
+
+        $val = Args::post($name);
+        if( $val )
+            $this->persist($name, $val);
+
+        // if( $control instanceof \ScavixWDF\Controls\Form\CheckBox )
+        //     $this->onoffs[] = $name;
+
+        return $return_self?$this:$control;
+    }
+
+    /**
+     * @internal
+     */
+    function dataFromPost()
+    {
+        if( Args::request("reset") == 1 )
+            return $this->resetValues();
+
+        foreach( $this->sql_builders as $name=>$b )
+        {
+            $val = Args::get($name,null);
+            if( $val !== null )
+                $this->persist($name, $val);
+        }
+        foreach( $this->sql_builders as $name=>$b )
+        {
+            $val = Args::post($name,null);
+            if( $val !== null )
+                $this->persist($name, $val);
+        }
+        // wdflisting.js ensures that even unchecked checkboxes will be transferred as '0', so this bad 'always off' handling can be left out
+//        foreach( $this->onoffs as $name )
+//        {
+//            $val = Args::request($name,null);
+//            if( $val === null )
+//                $this->persist($name, 0);
+//        }
+        return $this;
+    }
+
+    /**
+     * @internal Resets all filter values.
+     */
+    function resetValues()
+    {
+        foreach( WdfListing::Storage()->keys() as $k )
+            if( starts_with($k,"{$this->prefix}_") )
+                $this->delValue(str_replace("{$this->prefix}_","",$k));
+
+        foreach ($this->get('inputs') as $control)
+        {
+            if(method_exists($control, 'setValue'))
+                $control->setValue('');
+        }
+        return $this;
+    }
+
+    /**
+     * Sets the value of a filter by name.
+     * @param mixed $name Filter name
+     * @param mixed $value Filter value	(in null is given, the value is removed)
+     * @return mixed
+     */
+    function setValue($name,$value)
+    {
+        if( $value === false )
+            $this->delValue($name);
+        else
+            $this->persist($name, $value);
+        return $value;
+    }
+
+    /**
+     * Returns the value of a filter by name.
+     * @param mixed $name The filter name.
+     * @param mixed $default An optional default value.
+     * @return mixed
+     */
+    function getValue($name,$default=false)
+    {
+        if(isset($_GET[$name]) && ($_GET[$name] != ''))     // filter value passed by GET parameter
+            $this->persist($name, $_GET[$name]);
+        if( !$this->hasSetting($name) )
+        {
+            if( $default )
+                $this->persist($name, $default);
+            return $default;
+        }
+        return $this->getSetting($name);
+    }
+
+    /**
+     * @internal Returns prepare SQL fragment
+     */
+    function getSql($for_listing_injection=false)
+    {
+        $res = [];
+
+        foreach( $this->sql_builders as $name=>$b )
+        {
+            $val = $this->getSetting($name);
+            $sql = $b($name,$val);
+            if( !$sql ) continue;
+            if( !starts_with($sql,"(") ) $sql = "($sql)";
+            $res[] = $sql;
+        }
+        $sql = count($res)==0?"(1=1)":"(".implode("AND",$res).")";
+        if( $for_listing_injection )
+            $sql = "/*BEG {$this->prefix}*/".$sql."/*{$this->prefix} END*/";
+
+        return $sql;
+    }
+
+    protected function makeTermBuilder($columns)
+    {
+        return new WdfClosure(function($name,$value)use($columns)
+        {
+//            log_debug("TERM $name",$value);
+            $res = [];
+            foreach( explode("\n",wordwrap("$value",1)) as $t )
+            {
+                $ds = \ScavixWDF\Model\DataSource::Get();
+                $t = $ds->EscapeArgument(trim($t));
+                if( !$t ) continue;
+                foreach( $columns as $col )
+                    $res[] = "(".$ds->QuoteColumnName($col)." LIKE '%$t%')";
+            }
+            if( count($res)>0 )
+                return "(".implode("OR",$res).")";
+            return "";
+        });
+    }
+
+    protected function makeEqualsBuilder($column)
+    {
+        return new WdfClosure(function($name,$value)use($column)
+        {
+            if( $value !== false && $value !== '' && !is_null($value) )
+            {
+                $ds = \ScavixWDF\Model\DataSource::Get();
+                return $ds->QuoteColumnName($column)."='".$ds->EscapeArgument($value)."'";
+            }
+            return "";
+        });
+    }
+
+    protected function makeIsNullBuilder($column,$inverted=false,$xor=false)
+    {
+        return new WdfClosure(function($name,$value)use($column,$inverted,$xor)
+        {
+            if( $inverted ) $value = !$value;
+            $column = \ScavixWDF\Model\DataSource::Get()->QuoteColumnName($column);
+            if( $value )
+                return "($column IS NULL)";
+            return $xor?"($column IS NOT NULL)":"";
+        });
+    }
+
+    protected function makeDateBuilder($column,$op)
+    {
+        return new WdfClosure(function($name,$value)use($column,$op)
+        {
+            if( $value )
+            {
+                $ci = false;
+                if(isset($this->listings) && $this->listings && isset($this->listings[0]) && isset($this->listings[0]->ci) && $this->listings[0]->ci)
+                    $ci = $this->listings[0]->ci;
+                if(!$ci && \ScavixWDF\JQueryUI\uiDatePicker::$DefaultCI)
+                    $ci = \ScavixWDF\JQueryUI\uiDatePicker::$DefaultCI;
+                if(!$ci)
+                    $ci = \ScavixWDF\Localization\Localization::detectCulture();
+                if(!$ci)
+                    return '';
+                $v = date("Y-m-d",$ci->DateTimeFormat->StringToTime($value));
+                return "DATE(".\ScavixWDF\Model\DataSource::Get()->QuoteColumnName($column).")$op'$v'";
+            }
+            return "";
+        });
+    }
+
+    protected function makeDateTimeBuilder($column,$op)
+    {
+        return new WdfClosure(function($name,$value)use($column,$op)
+        {
+            if( $value )
+            {
+                $ci = false;
+                if(isset($this->listings) && $this->listings && isset($this->listings[0]) && isset($this->listings[0]->ci) && $this->listings[0]->ci)
+                    $ci = $this->listings[0]->ci;
+                if(!$ci && \ScavixWDF\JQueryUI\uiDatePicker::$DefaultCI)
+                    $ci = \ScavixWDF\JQueryUI\uiDatePicker::$DefaultCI;
+                if(!$ci)
+                    $ci = \ScavixWDF\Localization\Localization::detectCulture();
+                if(!$ci)
+                    return '';
+                $v = date("Y-m-d H:i:s",$ci->DateTimeFormat->StringToTime($value));
+                return \ScavixWDF\Model\DataSource::Get()->QuoteColumnName($column)."$op'$v'";
+            }
+            return "";
+        });
+    }
+}
