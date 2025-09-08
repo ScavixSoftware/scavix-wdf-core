@@ -553,7 +553,8 @@ class ResultSet implements Iterator, ArrayAccess, \Serializable
         {
             if( !$this->_ds || !$this->_ds->Driver )
                 return $key?0:[];
-			$this->_paging_info = $this->_ds->Driver->getPagingInfo($this->_stmt->queryString,$this->_arguments_used);
+            $args = is_null($this->_arguments_used)?null:array_clean_assoc_or_sequence($this->_arguments_used);
+			$this->_paging_info = $this->_ds->Driver->getPagingInfo($this->_stmt->queryString,$args);
         }
 		if( $key && isset($this->_paging_info[$key]) )
 			return $this->_paging_info[$key];
