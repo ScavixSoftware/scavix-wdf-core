@@ -45,7 +45,7 @@ function session_init()
 {
 	global $CONFIG;
 
-	$CONFIG['class_path']['system'][] = __DIR__.'/session/';
+    classpath_add(__DIR__ . '/session', true, 'system');
 
 	if( !isset($CONFIG['session']['session_name']) )
 		$CONFIG['session']['session_name'] = isset($CONFIG['system']['application_name'])?$CONFIG['system']['application_name']:'WDF_SESSION';

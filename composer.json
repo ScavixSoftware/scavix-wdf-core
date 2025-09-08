@@ -1,5 +1,5 @@
 {
-	"name": "scavix-wdf/core",
+	"name": "scavix/wdf-core",
 	"version": "2025.9.0",
 	"description": "Core components",
 	"type": "library",
@@ -11,16 +11,10 @@
 	},
 	"require": {
 		"php": ">=8.0",
-        "leafo/lessphp":"^0.8.0"
+        "scavix/lessphp":"0.8.0"
 	},
 	"suggest": {
 		"ext-xml": "Needed for some features",
 		"ext-curl": "Needed for some features"
-	},
-    "repositories": [
-        {
-        "type": "vcs",
-        "url": "https://github.com/ScavixSoftware/lessphp.git"
-        }
-    ]
+	}
 }

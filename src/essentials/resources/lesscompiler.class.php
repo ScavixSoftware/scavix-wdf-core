@@ -24,14 +24,14 @@
  */
 namespace ScavixWDF;
 
-require_once(__DIR__.'/lessphp/lessc.inc.php');
+// require_once(__DIR__.'/lessphp/lessc.inc.php');
 
 /**
  * This class creates a unique interface for LESS compilers.
- * 
+ *
  * Currently just inherited from lessc, it may be used to add more abstraction
  * when another compiler is used.
- * 
+ *
  * Some notes about LESS variables: There's a priority and some extensions to the LESS syntax.
  * This is the variable prio, highest first:
  *   1. Defined in less file with: @<varname>: force(<value>);
@@ -41,11 +41,11 @@ require_once(__DIR__.'/lessphp/lessc.inc.php');
  *   5. Defined in less file with: @<varname>: <value>;
  * This implies, that variables are not overwritten, if they were defined as in 1-4.
  * Normal assignments (as in 5) will allow later overwriting as usual.
- * 
+ *
  * More config bases options are:
  * - En-/Disable verbose logging: $CONFIG['less']['verbose'] = true|false (default: false)
  * - Add global less files (injected in every file): $CONFIG['less']['files'] = ['/path/to/file.less']
- * 
+ *
  * Other LESS enhancements:
  * - Add "verbose_compilation = on" as comment somewhere in a less file to enable verbose logging
  * - Add "verbose_compilation = off" to disable it
@@ -56,14 +56,14 @@ require_once(__DIR__.'/lessphp/lessc.inc.php');
 class LessCompiler extends \lessc implements \JsonSerializable
 {
     private $id, $injected, $verbose, $injecting;
-    
+
     function __construct($fname = null)
     {
         parent::__construct($fname);
         $this->id = random_int(999, 9999);
         $this->injected = [];
         $this->verbose = cfg_getd('less','verbose',false);
-        
+
         $enhancedBackgound = function($a,$mode)
         {
             $color = '#fff';
@@ -85,26 +85,26 @@ class LessCompiler extends \lessc implements \JsonSerializable
                     $getVal($v);
             else
                 $getVal($a);
-            
+
             $svg_col = Base\Color::hex($mode=='lighten'?'white':'black')->setAlpha($opacity);
-            
+
             return implode(", ",[
                 "linear-gradient(to right,$color 0%,$color 100%)",
                 "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1 1' style='background:$svg_col'%3E%3C/svg%3E%0A\")"
             ]).";background-blend-mode:$mode;";
         };
-        
+
         $this->registerFunction('lightenBackground', function($a)use($enhancedBackgound){ return $enhancedBackgound($a,'lighten'); });
         $this->registerFunction('darkenBackground', function($a)use($enhancedBackgound){ return $enhancedBackgound($a,'darken'); });
         $this->registerFunction('dataUri', function($a)
         {
             if( $a[0] != 'string' )
                 return "none";
-            
+
             $fn = resFile(trim($a[2][0],"\"' "), true);
             if( !file_exists($fn) )
                 return "none";
-            
+
             $mime = system_guess_mime($fn);
             if( "image/svg+xml" == $mime )
             {
@@ -115,16 +115,16 @@ class LessCompiler extends \lessc implements \JsonSerializable
                 $c = preg_replace('/[\r\n\t]/', ' ', $c);
                 $c = preg_replace('/\s\s+/', ' ', $c);
                 $c = preg_replace('/>\s</is', '><', $c);
-                
+
                 $c = base64_encode($c);
                 return "url(\"data:$mime;base64,$c\")";
-                
+
                 // this seems to produce invaid data in some rare cases
                 // could not find out why. at this point the base64 overhead
                 // over urlencoded is about 20%, we need to live with that.
                 // $c = str_replace(
                 //     ['"',"%"  ,"#"  ,'{'  ,'}'  ,'<'  ,'>'  , '&'  ,' '],
-                //     ["'","%25","%23","%7B","%7D","%3C","%3E", "%26", "%20"], 
+                //     ["'","%25","%23","%7B","%7D","%3C","%3E", "%26", "%20"],
                 //     $c);
                 // return "url(\"data:$mime,$c\")";
             }
@@ -132,28 +132,28 @@ class LessCompiler extends \lessc implements \JsonSerializable
             return "url(\"data:$mime;base64,$c\")";
         });
     }
-    
+
     /**
      * Set verbosity on/off.
-     * 
+     *
      * @param bool $on True=on, False=off
      */
     function setVerbose($on=true)
     {
         $this->verbose = $on;
     }
-    
+
     function debug(...$args)
     {
         if( $this->verbose )
             log_debug("[LESS][$this->id]",...$args);
     }
-    
+
     function error(...$args)
     {
         log_error("[LESS][$this->id]",...$args);
     }
-    
+
     /**
      * @suppress PHP0416
      */
@@ -169,7 +169,7 @@ class LessCompiler extends \lessc implements \JsonSerializable
                 parent::__construct($compiler,$name);
                 $this->writeComments = $preserveComments;
             }
-            
+
             /**
              * @internal Overwritten to handle in-file verbosity flags
              */
@@ -187,7 +187,7 @@ class LessCompiler extends \lessc implements \JsonSerializable
             }
         };
     }
-    
+
     /**
      * @internal Compiles a LESS file to $outfile
      */
@@ -205,7 +205,7 @@ class LessCompiler extends \lessc implements \JsonSerializable
         }
         return parent::compileFile($fname, $outFname);
     }
-    
+
     /**
      * @internal Compiles LESS code
      */
@@ -229,7 +229,7 @@ class LessCompiler extends \lessc implements \JsonSerializable
         }
         return "";
     }
-    
+
     /**
      * @internal Overwritten to process variable injection
      */
@@ -241,7 +241,7 @@ class LessCompiler extends \lessc implements \JsonSerializable
             return $this->injected[str_replace("@","",$name)];
         return false;
     }
-    
+
     /**
      * @internal Overwritten to process variable injection
      */
@@ -253,7 +253,7 @@ class LessCompiler extends \lessc implements \JsonSerializable
         parent::injectVariables($args);
         $this->injecting = false;
     }
-    
+
     /**
      * @internal Overwritten to catch some errors
      */
@@ -269,7 +269,7 @@ class LessCompiler extends \lessc implements \JsonSerializable
         }
         return ["string","",[]];
     }
-    
+
     /**
      * @internal Overwritten handle extended logic
      */
@@ -284,24 +284,24 @@ class LessCompiler extends \lessc implements \JsonSerializable
         }
         else
             $reg = $this->getRegisteredVariable($name);
-        
+
         if( $value[0] == "function" )
         {
             switch( $value[1] )
             {
-                case 'register': 
+                case 'register':
                     $reg = $this->getRegisteredVariable($name);
                     if( !$reg )
                     {
-                        $reg = parent::flattenList($value[2]); 
+                        $reg = parent::flattenList($value[2]);
                         $this->injected[$name] = $reg;
                         $this->debug("Register variable {$name} = ".json_encode($reg));
                         $log = false;
                     }
                     break;
-                case 'force': 
+                case 'force':
                     $overwritten = $this->getRegisteredVariable($name);
-                    $reg = parent::flattenList($value[2]); 
+                    $reg = parent::flattenList($value[2]);
                     $this->injected[$name] = $reg;
                     if( $overwritten )
                         $this->debug("Forced overwrite {$name} = ".json_encode($reg).", old value was ".json_encode($overwritten));

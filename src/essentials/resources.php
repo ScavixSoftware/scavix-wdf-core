@@ -28,10 +28,10 @@
  * @copyright since 2019 Scavix Software GmbH & Co. KG
  * @license http://www.opensource.org/licenses/lgpl-license.php LGPL
  */
- 
+
 /**
  * Initializes the resources essential.
- * 
+ *
  * @return void
  */
 function resources_init()
@@ -40,13 +40,13 @@ function resources_init()
 
 	if( !isset($CONFIG['resources']) )
 		$CONFIG['resources'] = [];
-	
+
 	if( !isset($CONFIG['resources_system_url_root']) || !$CONFIG['resources_system_url_root'] )
 		$CONFIG['resources_system_url_root'] = can_rewrite()
 			?$CONFIG['system']['url_root'].'WdfResource/'
 			:$CONFIG['system']['url_root'].'?wdf_route=WdfResource/';
 
-	
+
 	foreach( $CONFIG['resources'] as $i=>$conf )
 	{
 		if( substr($conf['url'],0,4) == 'http' )
@@ -57,12 +57,12 @@ function resources_init()
 			continue;
 		$CONFIG['resources'][$i]['url'] = $CONFIG['system']['url_root'].$conf['url'];
 	}
-    
+
     if(class_exists('Phar'))
         $path = Phar::running()?:realpath(__DIR__."/../");
     else
         $path = realpath(__DIR__."/../");
-	
+
 	$CONFIG['resources'][] = array
 	(
 		'ext' => 'js|css|png|jpg|jpeg|gif|svg|htc|ico|less',
@@ -70,13 +70,13 @@ function resources_init()
 		'url' => $CONFIG['resources_system_url_root'].'res/',
 		'append_nc' => true,
 	);
-	
-	$CONFIG['class_path']['system'][] = __DIR__.'/resources/';
+
+    classpath_add(__DIR__ . '/resources', true, 'system');
 }
 
 /**
  * Checks if a resource exists and returns it if so.
- * 
+ *
  * @param string $filename The resource name
  * @param bool $return_url If true returns an URL, else returns true or false depending on if the resource exists
  * @param bool $as_local_path If true returns not URL, but a filepath in local filesystem. Needs $return_url=true.
@@ -86,7 +86,7 @@ function resources_init()
 function resourceExists($filename, $return_url = false, $as_local_path = false, $nocache = false)
 {
 	global $CONFIG;
-    
+
 	$cnc = substr(appendVersion('/'),1);
 	$key = md5((isSSL()?"resource_ssl_$filename":"resource_$filename")."_{$cnc}".($as_local_path?"_l":"").$CONFIG['system']['url_root']);
 	if( !$nocache && (($res = cache_get($key)) !== false) )
@@ -94,19 +94,19 @@ function resourceExists($filename, $return_url = false, $as_local_path = false, 
 
 	$ext = pathinfo($filename,PATHINFO_EXTENSION);
 	foreach( $CONFIG['resources'] as $conf )
-	{	
+	{
 		if( strpos("|".$conf['ext']."|", "|".$ext."|") === false )
 			continue;
-		
+
         if( !file_exists($conf['path'].'/'.$filename) )
 			continue;
-		
+
 		if( $as_local_path )
 			return $conf['path'].'/'.$filename;
 
         if ($ext == 'less')
             $conf['url'] = $CONFIG['resources_system_url_root'] . 'res/';
-			
+
 		$nc = $conf['append_nc']?$cnc:'';
 		$res = can_nocache()
 			?$conf['url'].$nc.$filename
@@ -122,7 +122,7 @@ function resourceExists($filename, $return_url = false, $as_local_path = false, 
 
 /**
  * Returns aresource file, as local path or as URI.
- * 
+ *
  * @param string $filename The resource filename (relative or name only)
  * @param bool $as_local_path If true returns no URL, but a local path
  * @return string An URL to the resource or the local file path. FALSE on error.
@@ -136,7 +136,7 @@ function resFile($filename, $as_local_path = false)
 
 /**
  * Registers a variable for use in LESS files.
- * 
+ *
  * @param string $name Variable name
  * @param string $value Variable value
  * @return void
@@ -150,7 +150,7 @@ function register_less_variable($name,$value)
 
 /**
  * Adds a folder to the LESS search path.
- * 
+ *
  * @param string $dir Folder to be added
  * @param mixed $key If given names this folder, so that it can be overwritten by another call to <add_less_import_dir>
  * @return void
@@ -170,7 +170,7 @@ function add_less_import_dir($dir,$key=false)
 
 /**
  * Clears the LESS cache.
- * 
+ *
  * @return void
  */
 function clear_less_cache()
@@ -184,7 +184,7 @@ function clear_less_cache()
 
 /**
  * Compiles LESS code to CSS.
- * 
+ *
  * @param string $less The LESS code
  * @param bool $use_vars Switch if defined variables should be used (default: true).
  * @return string The compiled CSS code
@@ -193,9 +193,9 @@ function compile_less_code($less,$use_vars=false)
 {
 //    require_once(__DIR__.'/resources/lessphp/lessc.inc.php');
     $compiler = new ScavixWDF\LessCompiler();
-    
+
     if( $use_vars && isset($_SESSION['resources_less_variables']) )
         $compiler->setVariables($_SESSION['resources_less_variables']);
-    
+
     return $compiler->compile($less,__FUNCTION__);
 }

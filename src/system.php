@@ -2081,6 +2081,10 @@ function system_get_lock($name,$datasource='internal',$timeout=10)
 function system_release_lock($name,$datasource='internal')
 {
 	$ds = ($datasource instanceof DataSource)?$datasource:model_datasource($datasource);
-	$rs = $ds->ExecuteSql("DELETE FROM wdf_locks WHERE lockname=?",$name);
-	return ($rs->Count() > 0);
+    if ($ds->Driver instanceof \ScavixWDF\Model\Driver\MySql)
+    {
+        $rs = $ds->ExecuteSql("DELETE FROM wdf_locks WHERE lockname=?", $name);
+        return ($rs->Count() > 0);
+    }
+	return true;
 }

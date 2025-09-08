@@ -40,8 +40,8 @@ function localization_init()
 {
 	global $CONFIG;
 
-	$p = __DIR__.'/localization/';
-	$CONFIG['class_path']['system'][] = $p;
+	$p = __DIR__.'/localization';
+    classpath_add($p, true, 'system');
 
 	if( !isset($CONFIG['localization']['default_culture']) )
 		$CONFIG['localization']['default_culture'] = 'en-US';
@@ -52,7 +52,7 @@ function localization_init()
 	if( !isset($CONFIG['localization']['detection_order']) )
 		$CONFIG['localization']['detection_order'] = array(Localization::USE_BROWSER,Localization::USE_IP);
 
-	require_once($p.'cultureinfo.inc.php');
+	require_once($p.'/cultureinfo.inc.php');
 }
 
 /**

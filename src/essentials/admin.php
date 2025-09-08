@@ -30,30 +30,30 @@ use ScavixWDF\WdfException;
 
 /**
  * Initializes the admin essential.
- * 
+ *
  * @return void
  */
 function admin_init()
 {
 	global $CONFIG;
-	
+
 	if( $CONFIG['system']['admin']['enabled'] )
 	{
-		$CONFIG['class_path']['system'][]   = __DIR__.'/admin/';
-        
+        classpath_add(__DIR__ . '/admin/', true, 'system');
+
         if( (!isset($CONFIG['system']['admin']['credentials']) || count($CONFIG['system']['admin']['credentials']) == 0 )
 		    &&
             (!$CONFIG['system']['admin']['username'] || !$CONFIG['system']['admin']['password'])
           )
 			WdfException::Raise("System admin needs username and password to be set!");
-		
+
 		$CONFIG['system']['admin']['actions'] = [];
 	}
 }
 
 /**
  * Registers a handler for the <SysAdmin> controller.
- * 
+ *
  * @param string $label Label for the navigation entry
  * @param string $controller Controller class
  * @param string $method Method to be called

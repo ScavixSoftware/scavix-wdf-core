@@ -263,7 +263,7 @@ class Wdf
             }
             catch(WdfException $ex)
             {
-                log_warn("Package $name threw an error: " . $ex->getMessage());
+                log_warn("Package $name threw an error: " . $ex->getMessage() . " (" . $ex->getCaller() . ")");
             }
             execute_hooks(HOOK_POST_MODULE_INIT, [$name]);
             self::$Modules[$name] = true;
@@ -528,6 +528,7 @@ class WdfException extends Exception
 trait WdfThrowable
 {
     public $details = '';
+    private $caller = null;
 
 	private function ex()
 	{
@@ -568,6 +569,7 @@ trait WdfThrowable
 			$ex = new $classname($message);
 
         $ex->details = implode("\t",$msgs);
+        $ex->caller = system_get_caller();
         throw $ex;
 	}
 
@@ -650,6 +652,8 @@ trait WdfThrowable
 	 * @return array Returns the Exception stack trace as an array
 	 */
 	public function getTraceEx(){ return $this->ex()->getTrace(); }
+
+    public function getCaller(){ return $this->caller; }
 }
 
 /**

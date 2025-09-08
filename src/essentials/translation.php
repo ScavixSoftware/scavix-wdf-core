@@ -50,7 +50,7 @@ function translation_init()
 	if( !isset($CONFIG['translation']['data_path']) )
 	{
 		//log_warn('Please define $CONFIG["translation"]["data_path"]');
-		$CONFIG['translation']['data_path'] = __DIR__.'/UNDEFINED/';
+		$CONFIG['translation']['data_path'] = 'strings/';
 	}
 
     if( !isset($CONFIG['translation']['sync']['provider']) || !$CONFIG['translation']['sync']['provider'] )
@@ -58,8 +58,7 @@ function translation_init()
     if( !isset($CONFIG['translation']['sync']['datasource']) )
         $CONFIG['translation']['sync']['datasource'] = 'default';
 
-    $CONFIG['class_path']['system'][] = __DIR__.'/translation/';
-    $CONFIG['class_path']['system'][] = __DIR__.'/translation/'.strtolower($CONFIG['translation']['sync']['provider']).'/';
+    classpath_add(__DIR__ . '/translation/', true, 'system');
 
 	if( !isset($CONFIG['translation']['searchpatterns']) )
 		$CONFIG['translation']['searchpatterns'] = [];
@@ -109,9 +108,7 @@ function translation_do_includes()
 	{
 		$GLOBALS['translation']['included_language'] = $CONFIG['localization']['default_language'];
 		if( file_exists($CONFIG['translation']['data_path'].$CONFIG['localization']['default_language'].".inc.php") )
-		{
 			include($CONFIG['translation']['data_path'].$CONFIG['localization']['default_language'].".inc.php");
-		}
 		else
 		{
             if( !isDev() )

@@ -97,7 +97,7 @@ class TranslationAdmin extends TranslationAdminBase
 		$counts = [];
 		foreach( $this->ds->ExecuteSql("SELECT lang,count(*) as cnt FROM wdf_translations GROUP BY lang") as $row )
 			$counts[$row['lang']] = intval($row['cnt']);
-		$total = max($counts);
+		$total = count($counts)?max($counts):0;
         $def = $GLOBALS['CONFIG']['localization']['default_language'];
         $allowed = $this->user->getProperty('languages','all');
 		foreach( Localization::get_language_names() as $code=>$name )

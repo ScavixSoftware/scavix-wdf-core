@@ -639,11 +639,15 @@ class ResultSet implements Iterator, ArrayAccess, \Serializable
 				$this->_rowCount = $this->_stmt->rowCount();
 			elseif( !starts_with(trim(strtolower($this->_sql_used)),'select') )
 				$this->_rowCount = $this->_stmt->rowCount();
+			elseif( starts_with(trim(strtolower($this->_sql_used)),'select count(*)') )
+				$this->_rowCount = $this->_stmt->rowCount();
 			else
 			{
 				$stmt = $this->_pdo->prepare("SELECT count(*) FROM( {$this->_sql_used} ) as x");
-				$stmt->execute($this->_arguments_used);
+                $args = is_null($this->_arguments_used)?null:array_clean_assoc_or_sequence($this->_arguments_used);
+				$stmt->execute($args);
 				$this->_rowCount = $stmt->finishScalar();
+
 			}
 		}
 		return $this->_rowCount;
