@@ -1,20 +1,19 @@
 {
-	"name": "scavix/wdf-core",
-	"version": "1.0.0",
-	"description": "Core components",
-	"type": "library",
-	"license": "LGPL-3.0-or-later",
-	"autoload": {
-		"files": [
-			"bootstrap.php"
-		]
-	},
-	"require": {
-		"php": ">=8.0",
-        "scavix/lessphp":"0.8.0"
-	},
-	"suggest": {
-		"ext-xml": "Needed for some features",
-		"ext-curl": "Needed for some features"
-	}
+  "name": "scavix/wdf-core",
+  "description": "Core components",
+  "type": "library",
+  "license": "LGPL-3.0-or-later",
+  "autoload": {
+    "files": [
+      "bootstrap.php"
+    ]
+  },
+  "require": {
+    "php": ">=8.0",
+    "scavix/lessphp": "0.8.0"
+  },
+  "suggest": {
+    "ext-xml": "Needed for some features",
+    "ext-curl": "Needed for some features"
+  }
 }
