@@ -2033,7 +2033,7 @@ function system_get_lock($name,$datasource='internal',$timeout=10)
             ) ENGINE=MEMORY;");
     else
     {
-        log_warn("Locking in sqlite DB is unsupported and will never generate a valid lock");
+        // log_warn("Locking in sqlite DB is unsupported and will never generate a valid lock");
         return true;
     }
 
