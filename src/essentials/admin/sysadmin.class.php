@@ -48,8 +48,8 @@ use ScavixWDF\Model\Model;
  */
 class SysAdmin extends HtmlPage
 {
-	public $PrefedinedCacheSearches = array('autoload_template','autoload_class',
-		'lang_','method_','ref_attr_','resource_','filemtime_','doccomment_','DB_Cache_');
+	public $PrefedinedCacheSearches = ['autoload_template', 'autoload_class',
+        'lang_', 'method_', 'ref_attr_', 'resource_', 'filemtime_', 'doccomment_', 'DB_Cache_'];
 
     protected $_contentdiv = false;
 	protected $_subnav = false;
@@ -354,7 +354,7 @@ class SysAdmin extends HtmlPage
 		{
 			$k = explode('.',$k,2);
 			if( count($k)<2 )
-				$k = array('Core',$k[0]);
+				$k = ['Core', $k[0]];
 
 			$data[$k[0]][$k[1]] = $v;
 		}
@@ -626,7 +626,7 @@ class SysAdmin extends HtmlPage
 	protected function AddBreadcrumb($caption, $url = false)
 	{
 		if( !isset($this->breadcrumbs[$caption]) )
-			$this->breadcrumbs[$caption] = array('caption' => $caption, 'url' => $url);
+			$this->breadcrumbs[$caption] = ['caption' => $caption, 'url' => $url];
 	}
 
     protected function GenerateBreadcrumbNavigation()

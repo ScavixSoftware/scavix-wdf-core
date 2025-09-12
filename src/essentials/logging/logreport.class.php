@@ -32,10 +32,10 @@ namespace ScavixWDF\Logging;
 
 /**
  * Wrapper class to generate a report in the logs.
- * 
+ *
  * Use log_start_report function to generate a report.
  * Then add information and finally write it with log_report function.
- * 
+ *
  * Sample:
  * <code php>
  * $r = log_start_report('test-report');
@@ -49,15 +49,15 @@ class LogReport
 {
 	public $Name = "LogReport";
 	public $Lines = [];
-	
+
 	public function __construct($name)
 	{
 		$this->Name = $name;
 	}
-	
+
 	/**
 	 * Adds information to the report.
-	 * 
+	 *
 	 * @param_array mixed $a1,$a2,$a3,$a4,$a5,$a6,$a7,$a8,$a9,$a10 Data to be logged
 	 * @return void
 	 */
@@ -73,20 +73,20 @@ class LogReport
 		}
 		$this->Lines[] = $l;
 	}
-	
+
 	/**
 	 * Renders a report to a logfile.
-	 * 
+	 *
 	 * Do not call directly but use a combination of <log_start_report> and <log_report> instead.
 	 * @return string
 	 */
 	public function render()
 	{
-		$lines = array($this->Name." (".count($this->Lines)." lines):");
-		foreach( $this->Lines as $i=>$l )
-		{
-			$line = array("[#".($i+1)."]");
-			foreach( $l as $k=>$v )
+		$lines = [$this->Name . " (" . count($this->Lines) . " lines):"];
+        foreach ($this->Lines as $i => $l)
+        {
+            $line = ["[#" . ($i + 1) . "]"];
+            foreach( $l as $k=>$v )
 				$line[] = logging_render_var($v);
 			$lines[] = implode("\t",$line);
 		}

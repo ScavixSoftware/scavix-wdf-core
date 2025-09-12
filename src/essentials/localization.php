@@ -50,7 +50,7 @@ function localization_init()
 		$CONFIG['localization']['default_timezone'] = "Europe/Berlin";
 
 	if( !isset($CONFIG['localization']['detection_order']) )
-		$CONFIG['localization']['detection_order'] = array(Localization::USE_BROWSER,Localization::USE_IP);
+		$CONFIG['localization']['detection_order'] = [Localization::USE_BROWSER, Localization::USE_IP];
 
 	require_once($p.'/cultureinfo.inc.php');
 }

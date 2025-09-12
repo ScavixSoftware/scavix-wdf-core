@@ -37,7 +37,7 @@ use ScavixWDF\Localization\Localization;
 
 /**
  * Region selector.
- * 
+ *
  * @attribute[Resource('locale_settings.js')]
  */
 class RegionSelect extends Select
@@ -52,7 +52,7 @@ class RegionSelect extends Select
 		$this->script("Locale_Settings_Init();");
 		$this->data('role', 'region');
 		$this->data('controller', buildQuery($this->id));
-		
+
 		if( $current_language_code )
 		{
 			if( $current_language_code instanceof CultureInfo )
@@ -62,13 +62,13 @@ class RegionSelect extends Select
 			if( !$lang )
 				$lang = Localization::detectCulture()->ResolveToLanguage();
 			$regions = $lang->GetRegions(false);
-			
+
 			if( !$current_region_code )
 				$current_region_code = $lang->DefaultRegion()->Code;
 		}
 		else
 			$regions = Localization::get_all_regions(false);
-		
+
 		if( $current_region_code )
 		{
 			if( $current_region_code instanceof CultureInfo )
@@ -78,7 +78,7 @@ class RegionSelect extends Select
 		}
 		else
 			$this->AddOption(null, 'TXT_PLEASE_CHOOSE');
-			
+
 		if( count($regions)>0 )
 		{
 			$cc = current_controller(false);
@@ -89,10 +89,10 @@ class RegionSelect extends Select
 				if( !$reg ) continue;
 				$code = $reg->Code;
 				if( $translations_active )
-					$sorted[$code] = array("name"=>_text(tds("TXT_COUNTRY_".strtoupper($code), $reg->EnglishName)), "code" => $code);
-				else
-					$sorted[$code] = array("name"=>$reg->EnglishName, "code" => $code);
-			}
+					$sorted[$code] = ["name" => _text(tds("TXT_COUNTRY_" . strtoupper($code), $reg->EnglishName)), "code" => $code];
+                else
+                    $sorted[$code] = ["name" => $reg->EnglishName, "code" => $code];
+            }
 			uasort($sorted, __CLASS__."::compareCountryNames");
 
 			foreach($sorted as $code=>$item)
@@ -101,21 +101,21 @@ class RegionSelect extends Select
 
 		store_object($this);
 	}
-	
+
 	/**
 	 * @internal Compares country names
 	 */
 	public static function compareCountryNames($a, $b)
     {
-		$chars = array('Ä'=>'A', 'Ö'=>'O', 'Ü'=>'U', 'ä'=>'a', 'ö'=>'o', 'ü'=>'u', 'ß'=>'ss');
+		$chars = ['Ä' => 'A', 'Ö' => 'O', 'Ü' => 'U', 'ä' => 'a', 'ö' => 'o', 'ü' => 'u', 'ß' => 'ss'];
 		$a = strtr($a["name"], $chars);
 		$b = strtr($b["name"], $chars);
 		return strnatcasecmp($a, $b);
     }
-	
+
 	/**
 	 * Returns a list of option elements.
-	 * 
+	 *
 	 * Called via AJAX to dynamically update the control.
 	 * @attribute[RequestParam('language','string')]
 	 * @param string $language Language code
@@ -129,7 +129,7 @@ class RegionSelect extends Select
 		$regions = $lang->GetRegions(true);
 		$sorted = [];
 		foreach($regions as $code)
-			$sorted[$code] = array("name"=>getString("TXT_COUNTRY_".strtoupper($code)),"code" => $code);
+			$sorted[$code] = ["name" => getString("TXT_COUNTRY_" . strtoupper($code)), "code" => $code];
 		uasort($sorted, __CLASS__."::compareCountryNames");
 
 		$res = [];

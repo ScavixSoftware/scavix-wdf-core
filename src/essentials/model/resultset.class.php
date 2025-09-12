@@ -336,7 +336,7 @@ class ResultSet implements Iterator, ArrayAccess, \Serializable
 	function execute($input_parameters = null)
 	{
 		if( !is_null($input_parameters) && !is_array($input_parameters) )
-			$input_parameters = array($input_parameters);
+			$input_parameters = [$input_parameters];
 
 		$this->_sql_used = $this->_stmt->queryString;
 		if( !is_null($input_parameters) )

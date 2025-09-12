@@ -45,7 +45,7 @@ default_string('TXT_DP_TIME_ZONE', 'Time Zone');
 
 /**
  * Wraps a jQueryUI DatePicker
- * 
+ *
  * See http://jqueryui.com/datepicker/
  */
 class uiDatePicker extends uiControl
@@ -58,18 +58,18 @@ class uiDatePicker extends uiControl
 	 * @param bool $inline If true will be displayed inline
 	 */
 	function __construct($value = false, $inline = false)
-	{		
+	{
 		parent::__construct($inline?"div":"input");
-		$this->Options = array(
-			'nextText' => 'BTN_DP_NEXT',
-			'prevText' => 'BTN_DP_PREV',
-			'buttonText' => '...',
-			'closeText' => 'TXT_DP_CLOSE',
-			'currentText' => (get_class_simple($this)=="uiDateTimePicker" ? 'TXT_DP_NOW' : 'TXT_DP_CURRENT'),
-		);
+		$this->Options = [
+            'nextText' => 'BTN_DP_NEXT',
+            'prevText' => 'BTN_DP_PREV',
+            'buttonText' => '...',
+            'closeText' => 'TXT_DP_CLOSE',
+            'currentText' => (get_class_simple($this) == "uiDateTimePicker" ? 'TXT_DP_NOW' : 'TXT_DP_CURRENT'),
+        ];
         if(get_class_simple($this)=="uiDateTimePicker")
         {
-            $this->Options += 
+            $this->Options +=
                     [
                         'timeText' => 'TXT_DP_TIME',
                         'hourText' => 'TXT_DP_HOUR',
@@ -91,7 +91,7 @@ class uiDatePicker extends uiControl
 			else
 				$this->Options['defaultDate'] = $value;
 		}
-        
+
         if( self::$DefaultCI )
             $this->SetCulture(self::$DefaultCI);
 	}
@@ -118,7 +118,7 @@ class uiDatePicker extends uiControl
 
 	/**
 	 * Sets the culture.
-	 * 
+	 *
 	 * @param CultureInfo $cultureInfo The (new) culture
 	 * @return static
 	 */
@@ -128,13 +128,13 @@ class uiDatePicker extends uiControl
 			$cultureInfo = $cultureInfo->DefaultRegion()->DefaultCulture();
 
 		$this->CultureInfo = $cultureInfo;
-        
+
         $format = $cultureInfo->DateTimeFormat->ShortDatePattern;
 		$format = str_replace("d1", "d", $format);
 		$format = str_replace("d2", "dd", $format);
 		$format = str_replace("d3", "D", $format);
 		$format = str_replace("d4", "DD", $format);
-		
+
 		$format = str_replace("M1", "m", $format);
 		$format = str_replace("MM", "M2", $format);
 		$format = str_replace("M2", "mm", $format);
@@ -147,9 +147,9 @@ class uiDatePicker extends uiControl
 		$format = str_replace("y2", "yy", $format);
 		$format = str_replace("y3", "yy", $format);
 		$format = str_replace("y4", "yy", $format);
-		
+
         $this->Options['firstDay'] = $cultureInfo->DateTimeFormat->FirstDayOfWeek;
-        
+
 		$this->Options['dayNames'] = $cultureInfo->DateTimeFormat->DayNames;
 		$this->Options['dayNamesMin'] = $cultureInfo->DateTimeFormat->ShortDayNames;
 		$this->Options['dayNamesShort'] = $cultureInfo->DateTimeFormat->ShortDayNames;
@@ -157,26 +157,26 @@ class uiDatePicker extends uiControl
 		$this->Options['monthNames'] = $cultureInfo->DateTimeFormat->MonthNames;
 		$this->Options['monthNamesShort'] = $cultureInfo->DateTimeFormat->ShortMonthNames;
 		$this->Options['dateFormat'] = $format;
-        
+
         if(get_class_simple($this) == "uiDateTimePicker")
         {
             $format = $cultureInfo->DateTimeFormat->ShortTimePattern;
-            
+
             $format = str_replace(['h1', 'h2', 'h3', 'h4', 'H1', 'H2'], ['h', 'hh', 'hh', 'hh', 'H', 'HH'], $format);
             $format = str_replace(['m1', 'm2', 'm3', 'm4'], ['m', 'mm', 'mm', 'mm'], $format);
             $format = str_replace(['t2'], ['tt'], $format);
-            
+
             $this->Options['timeFormat'] = $format;
             if(strpos($format, 'tt') !== false)
                 $this->Options['ampm'] = true;
         }
-		
+
 		return $this;
 	}
-    
+
     /**
      * Add default uiDatepicker settings to the given <HtmlPage>s JavaScript code.
-     * 
+     *
      * @param \ScavixWDF\Base\HtmlPage $page The HtmlPage
      * @param CultureInfo $cultureInfo The <CultureInfo> to be default
      * @param array $options Default options
@@ -191,10 +191,10 @@ class uiDatePicker extends uiControl
         $page->addDocReady("$.datepicker.setDefaults($def);");
         self::$DefaultCI = $cultureInfo;
     }
-    
+
 	/**
 	 * Sets the date value.
-	 * 
+	 *
 	 * @param string $value Valid date string representation
      * @return void
 	 */

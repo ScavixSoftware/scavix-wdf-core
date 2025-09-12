@@ -699,7 +699,7 @@ function strip_only(&$str, $tags)
 		return $str;
     if(!is_array($tags))
 	{
-        $tags = (strpos($str, '>') !== false ? explode('>', str_replace('<', '', $tags.'')) : array($tags));
+        $tags = (strpos($str, '>') !== false ? explode('>', str_replace('<', '', $tags.'')) : [$tags]);
         if(end($tags) == '') array_pop($tags);
     }
 
@@ -864,24 +864,24 @@ function get_ip_address()
 	if( $DETECTED_CLIENT_IP !== 'undefined' )
 		return $DETECTED_CLIENT_IP;
 
-	$proxy_headers = array(
-		'HTTP_VIA',
-		'HTTP_X_FORWARDED_FOR',
-		'HTTP_FORWARDED_FOR',
-		'HTTP_X_FORWARDED',
-		'HTTP_FORWARDED',
-		'HTTP_CLIENT_IP',
-		'HTTP_FORWARDED_FOR_IP',
-		'VIA',
-		'X_FORWARDED_FOR',
-		'FORWARDED_FOR',
-		'X_FORWARDED',
-		'FORWARDED',
-		'CLIENT_IP',
-		'FORWARDED_FOR_IP',
-		'HTTP_PROXY_CONNECTION',
-		'REMOTE_ADDR' // REMOTE_ADDR must be last -> fallback
-	);
+	$proxy_headers = [
+        'HTTP_VIA',
+        'HTTP_X_FORWARDED_FOR',
+        'HTTP_FORWARDED_FOR',
+        'HTTP_X_FORWARDED',
+        'HTTP_FORWARDED',
+        'HTTP_CLIENT_IP',
+        'HTTP_FORWARDED_FOR_IP',
+        'VIA',
+        'X_FORWARDED_FOR',
+        'FORWARDED_FOR',
+        'X_FORWARDED',
+        'FORWARDED',
+        'CLIENT_IP',
+        'FORWARDED_FOR_IP',
+        'HTTP_PROXY_CONNECTION',
+        'REMOTE_ADDR' // REMOTE_ADDR must be last -> fallback
+    ];
 
 	foreach( $proxy_headers as $ph )
 	{
@@ -1116,7 +1116,7 @@ function is_assoc($array)
  * Requires at least two parameters. The first must be an object or array to check.
  * All others represent property/key names that shall be checked for existance.
  * <code php>
- * $data = array('name'=>'helloworld','display_name'=>'Hello World!');
+ * $data = ['name'=>'helloworld','display_name'=>'Hello World!'];
  * $result = ifnull($data,'email','username','display_name','name');
  * // $result is now "Hello World!"
  * </code>
@@ -1856,7 +1856,7 @@ function system_get_call_depth(string $function_name): int
  */
 function system_get_cookie_values($name, $raw_cookie_string)
 {
-    $cookies = array();
+    $cookies = [];
     $tok     = strtok($raw_cookie_string, ';');
     while ($tok !== false)
     {

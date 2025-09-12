@@ -34,7 +34,7 @@ use ScavixWDF\WdfException;
 
 /**
  * Building blocks of web pages.
- * 
+ *
  * Each template consist of a logic part and a layout part. The logic part is optional and can be handled
  * by this (base) class (see <Template::Make>).
  * @attribute[Resource('jquery.js')]
@@ -43,18 +43,18 @@ class Template extends Renderable
 {
 	public $_data = [];
 	public $file = "";
-    
+
     function __toString()
     {
         $r = parent::__toString();
         return $r." ".$this->file;
     }
-	
+
 	function __getContentVars(){ return array_merge(parent::__getContentVars(),array('_data')); }
 
 	/**
 	 * Creates a template with layout only.
-	 * 
+	 *
 	 * Sometimes you just want to separate parts of your layout without giving them some special logic.
 	 * You may just store them as *.tpl.php files and create a template from them like this:
 	 * <code php>
@@ -84,23 +84,23 @@ class Template extends Renderable
 		}
 		if( !$tpl_file )
 			WdfException::Raise("Template not found: $template_basename");
-		
+
 		$res = new $className($tpl_file);
 		return $res;
 	}
-	
+
 	/**
 	 * Constructs a Template
 	 */
 	function __construct($file = "")
 	{
 		$this->__constructed();
-		
+
 		$this->file = $file;
         create_storage_id($this);
         $this->set('id',$this->_storage_id);
 	}
-    
+
     function __constructed()
     {
         if( !hook_already_fired(HOOK_PRE_RENDER) )
@@ -113,7 +113,7 @@ class Template extends Renderable
 	{
 		WdfException::Raise(get_class($this)," calling obsolete __initialize, please implement constructor!");
 	}
-	
+
 	/**
 	 * @internal Magic method __get.
 	 * See [Member overloading](http://ch2.php.net/manual/en/language.oop5.overloading.php#language.oop5.overloading.members)
@@ -124,10 +124,10 @@ class Template extends Renderable
 			return $this->_data[$name];
 		return null;
 	}
-	
+
 	/**
 	 * Will be executed on HOOK_PRE_RENDER.
-	 * 
+	 *
 	 * Prepares the template for output.
 	 * @internal
 	 */
@@ -149,7 +149,7 @@ class Template extends Renderable
 
 	/**
 	 * Set a variable for use in template file.
-	 * 
+	 *
 	 * @param string $name Var can be use in template under this name
 	 * @param mixed $value The value
 	 * @return static
@@ -163,19 +163,19 @@ class Template extends Renderable
 			$this->_storage_id = $value;
 		return $this;
 	}
-	
+
 	/**
 	 * Adds a value to an already defined var.
-	 * 
+	 *
 	 * If $name is not already an array it will be converted to one.
 	 * <code php>
 	 * $tpl->set('a','one');
 	 * $tpl->add2var('a','two');
-	 * // $a is now array('one','two')
+	 * // $a is now ['one','two']
 	 * $tpl->set('a','three');
 	 * // $a is now 'three'
 	 * $tpl->add2var('b','four');
-	 * // $b is now array('four')
+	 * // $b is now ['four']
 	 * </code>
 	 * @param string $name Variable name
 	 * @param mixed $value Value to add
@@ -186,17 +186,17 @@ class Template extends Renderable
 		if( $value instanceof Renderable )
 			$value->_parent = $this;
 		if( !isset($this->_data[$name]) )
-			$this->_data[$name] = array($value);
-		elseif( !is_array($this->_data[$name]) )
-			$this->_data[$name] = array($this->_data[$name],$value);
-		else
+			$this->_data[$name] = [$value];
+        elseif (!is_array($this->_data[$name]))
+            $this->_data[$name] = [$this->_data[$name], $value];
+        else
 			$this->_data[$name][] = $value;
 		return $this;
 	}
 
 	/**
 	 * Sets all template variables.
-	 * 
+	 *
 	 * @param array $vars Key=>Value pairs of variables
 	 * @param bool $clear Overwrite the whole vars (defaults to false)
 	 * @return static
@@ -205,16 +205,16 @@ class Template extends Renderable
 	{
 		if( $clear )
         	$this->_data = [];
-        
+
         foreach( force_array($vars) as $name=>$value )
             $this->set($name,$value);
-        
+
 		return $this;
 	}
-	
+
 	/**
 	 * Gets a variables value.
-	 * 
+	 *
 	 * @param string $name Var name
 	 * @return mixed Value of var
 	 */
@@ -222,17 +222,17 @@ class Template extends Renderable
 	{
 		return isset($this->_data[$name])?$this->_data[$name]:null;
 	}
-	
+
 	/**
 	 * Gets all variables.
-	 * 
+	 *
 	 * @return array All variables
 	 */
 	function get_vars()
 	{
 		return $this->_data;
 	}
-	
+
 	/**
 	 * @override
 	 */
@@ -249,7 +249,7 @@ class Template extends Renderable
         $tpl = strtolower(str_replace("\\","/",$tpl));
         return $tpl == strtolower(str_replace("\\","/",WDF_HTMLPAGE_TEMPLATE));
     }
-        
+
 	/**
 	 * @override
 	 */
@@ -262,15 +262,15 @@ class Template extends Renderable
         $render_in_context = function($wdf__file__to__be__included, $wdf__arguments__to__be__extracted)
         {
             Renderable::PushRenderer($this);
-            
+
             extract($GLOBALS);
             extract($wdf__arguments__to__be__extracted);
-            
+
             ob_start();
             require($wdf__file__to__be__included);
             $result = ob_get_contents();
             ob_end_clean();
-            
+
             Renderable::PopRenderer();
             return $result;
         };
@@ -284,14 +284,14 @@ class Template extends Renderable
 			if( !$this->isHtmlPageTemplate($__template_file) )
 			{
                 $tempvars['sub_template_content'] = $render_in_context($__template_file,$tempvars);
-                
+
                 foreach( Renderable::CategorizeResources(Renderable::__getLazyResources()) as $r )
                 {
                     if( $r['ext'] == 'css' || $r['ext'] == 'less' )
                         $this->addCss($r['url'],$r['key']);
                     else
                         $this->addjs($r['url'],$r['key']);
-                }                
+                }
                 $tempvars['meta'] = $this->meta;
                 $tempvars['css'] = $this->css;
                 $tempvars['js'] = $this->js;
@@ -304,19 +304,19 @@ class Template extends Renderable
 			WdfException::Raise("Template for class '".get_class($this)."' not found: ".$this->file);
 
         $contents = $render_in_context($__template_file,$tempvars);
-        
+
         $script = '';
 		if( system_is_ajax_call() )
         {
             if( count($this->_script)>0 )
     			$script = implode("\n",$this->_script);
         }
-        elseif( $scriptcnt < count($this->_script) ) 
+        elseif( $scriptcnt < count($this->_script) )
             $script = implode("\n",array_slice($this->_script,$scriptcnt));
-        
+
         if(trim($script) != '')
             $contents .= "<script>".$script."</script>";
-        
+
 		return $contents;
 	}
 }

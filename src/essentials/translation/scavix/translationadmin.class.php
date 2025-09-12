@@ -194,7 +194,7 @@ class TranslationAdmin extends TranslationAdminBase
 
         $head = [];
         foreach( $db_languages as $lang )
-            $head[$lang->code] = array('percentage_complete'=>$lang->percentage/100, 'percentage_empty'=>(1-$lang->percentage/100), 'syntax_error_qty'=>0);
+            $head[$lang->code] = ['percentage_complete' => $lang->percentage / 100, 'percentage_empty' => (1 - $lang->percentage / 100), 'syntax_error_qty' => 0];
 //        $info = "\$GLOBALS['translation']['properties'] = ".var_export($head,true);
 
         $defaults = $this->fetchTerms($CONFIG['localization']['default_language']);
@@ -377,19 +377,19 @@ class TranslationAdmin extends TranslationAdminBase
 			return $this->ds->ExecuteSql(str_replace("{having}","having isnull(trans) or trans=''",$sql),$lang);
 		if( !$search )
 			return $this->ds->ExecuteSql(str_replace("{having}","",$sql),$lang);
-		$s = str_replace(array('_','%'), array('\_','\%'), $this->ds->EscapeArgument($search));
-		$s = str_replace(array('?','*'),array('_','%'),$s);
-		$s = "%$s%";
-		return $this->ds->ExecuteSql(str_replace("{having}","having id like ? or def like ? or trans like ?",$sql),array($lang,$s,$s,$s));
-	}
+		$s = str_replace(['_', '%'], ['\_', '\%'], $this->ds->EscapeArgument($search));
+        $s = str_replace(['?', '*'], ['_', '%'], $s);
+        $s = "%$s%";
+        return $this->ds->ExecuteSql(str_replace("{having}", "having id like ? or def like ? or trans like ?", $sql), [$lang, $s, $s, $s]);
+    }
 
-	/**
-	 * @internal Entry point for translation admin.
-	 * @attribute[RequestParam('lang','string',false)]
-	 * @attribute[RequestParam('offset','int',0)]
-	 * @attribute[RequestParam('search','text','')]
-	 * @attribute[RequestParam('untranslated','bool',false)]
-	 */
+    /**
+     * @internal Entry point for translation admin.
+     * @attribute[RequestParam('lang','string',false)]
+     * @attribute[RequestParam('offset','int',0)]
+     * @attribute[RequestParam('search','text','')]
+     * @attribute[RequestParam('untranslated','bool',false)]
+     */
 	function Translate($lang,$offset,$search,$untranslated)
 	{
 		global $CONFIG;
@@ -671,11 +671,11 @@ class TranslationAdmin extends TranslationAdminBase
 			return $dlg;
 		}
 		$this->ds->ExecuteSql("UPDATE wdf_translations SET id=? WHERE id=?",array($new_term,$term));
-		return AjaxResponse::Redirect('TranslationAdmin','Translate', array(
-			'lang' => $_SESSION['trans_admin_lang'],
-			'offset' => $_SESSION['trans_admin_offset'],
-			'search' => $_SESSION['trans_admin_search'],
-		));
+		return AjaxResponse::Redirect('TranslationAdmin','Translate', [
+            'lang' => $_SESSION['trans_admin_lang'],
+            'offset' => $_SESSION['trans_admin_offset'],
+            'search' => $_SESSION['trans_admin_search'],
+        ]);
 	}
 
 	/**
@@ -691,13 +691,13 @@ class TranslationAdmin extends TranslationAdminBase
 		default_string("TXT_REMOVE_TERM","Do you really want to remove this term? This cannot be undone!");
 
 		if( !AjaxAction::IsConfirmed("REMOVE_TERM") )
-            return AjaxAction::Confirm("REMOVE_TERM", 'TranslationAdmin', 'Remove', array('term'=>"{$term}[NT]"));
+            return AjaxAction::Confirm("REMOVE_TERM", 'TranslationAdmin', 'Remove', ['term' => "{$term}[NT]"]);
 
 		$this->ds->ExecuteSql("DELETE FROM wdf_translations WHERE id=?",$term);
-		return AjaxResponse::Redirect('TranslationAdmin','Translate', array(
-			'lang' => $_SESSION['trans_admin_lang'],
-			'offset' => $_SESSION['trans_admin_offset'],
-			'search' => $_SESSION['trans_admin_search'],
-		));
+		return AjaxResponse::Redirect('TranslationAdmin','Translate', [
+            'lang' => $_SESSION['trans_admin_lang'],
+            'offset' => $_SESSION['trans_admin_offset'],
+            'search' => $_SESSION['trans_admin_search'],
+        ]);
 	}
 }

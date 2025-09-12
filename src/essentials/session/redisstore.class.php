@@ -32,13 +32,13 @@ use ScavixWDF\WdfException;
 
 /**
  * Stores objects in a central REDIS server.
- * 
+ *
  * This may be used if you want to share objects across server boundaries.
  */
 class RedisStore extends ObjectStore
 {
     protected $serializer;
-    
+
     protected $socket;
     protected function getSocket()
     {
@@ -46,27 +46,27 @@ class RedisStore extends ObjectStore
             ? $this->socket
             : ($this->socket = stream_socket_client($GLOBALS['CONFIG']['session']['redisstore']['server']));
     }
-    
+
     protected function _key($key)
     {
         if( strpos($key,session_id()."_")===0 )
             return $key;
         return session_id()."_$key";
     }
-    
+
     public function __construct()
     {
         global $CONFIG;
-        
+
         if( !isset($CONFIG['session']['redisstore']['server']) )
             $CONFIG['session']['redisstore']['server'] = 'localhost:6379';
-        
+
         $this->serializer = new Serializer();
-        
+
         if( !isset($_SESSION['object_ids']) )
             $_SESSION['object_ids'] = [];
     }
-    
+
     private function makePaket($args)
     {
         $cmd = '*' . count($args) . "\r\n";
@@ -75,7 +75,7 @@ class RedisStore extends ObjectStore
         }
         return $cmd;
     }
-    
+
     private function exec($method,$args=[])
     {
         if( $method == 'multi' )
@@ -90,7 +90,7 @@ class RedisStore extends ObjectStore
             array_unshift($args, $method);
             $cmd = $this->makePaket($args);
         }
-        
+
         fwrite($this->getSocket(), $cmd);
         try
         {
@@ -102,20 +102,20 @@ class RedisStore extends ObjectStore
             }
             return $res;
         }
-        catch (Exception $ex) 
+        catch (Exception $ex)
         {
             log_error($ex,"CMD",$cmd);
         }
         return false;
     }
-    
+
     private function getResponse()
     {
         do
         {
             $line = fgets($this->getSocket());
-        
-            list($type, $result) = array($line[0], substr($line, 1, strlen($line) - 3));
+
+            [$type, $result] = [$line[0], substr($line, 1, strlen($line) - 3)];
             if ($type == '-') { // error message
                 throw new Exception($result);
             } elseif ($type == '$') { // bulk reply
@@ -135,7 +135,7 @@ class RedisStore extends ObjectStore
         while( is_string($result) && trim($result) == 'QUEUED' );
         return $result;
     }
-    
+
     protected function set($key,$value)
     {
         return $this->exec('setex',[$this->_key($key),'300',$value]);
@@ -155,7 +155,7 @@ class RedisStore extends ObjectStore
     {
         return $this->exec('expire',[$this->_key($key),300]);
     }
-    
+
     /**
      * @override <ObjectStore::Store>
      */
@@ -171,14 +171,14 @@ class RedisStore extends ObjectStore
 		}
 		else
 			$obj->_storage_id = $id;
-        
+
         $content = $this->serializer->Serialize($obj);
-        
+
         $this->set($id,$content);
         ObjectStore::$buffer[$id] = $obj;
         $this->_stats(__METHOD__,$start);
     }
-    
+
     /**
      * @override <ObjectStore::Delete>
      */
@@ -187,13 +187,13 @@ class RedisStore extends ObjectStore
         $start = microtime(true);
 		if( is_object($id) && isset($id->_storage_id) )
 			$id = $id->_storage_id;
-        
+
         if( isset(ObjectStore::$buffer[$id]) )
             unset(ObjectStore::$buffer[$id]);
 		$this->del($id);
         $this->_stats(__METHOD__,$start);
     }
-    
+
     /**
      * @override <ObjectStore::Exists>
      */
@@ -210,7 +210,7 @@ class RedisStore extends ObjectStore
         $this->_stats(__METHOD__,$start);
 		return $res;
     }
-    
+
     /**
      * @override <ObjectStore::Restore>
      */
@@ -230,7 +230,7 @@ class RedisStore extends ObjectStore
         $this->_stats(__METHOD__,$start);
 		return $res;
     }
-    
+
     /**
      * @override <ObjectStore::CreateId>
      */
@@ -254,7 +254,7 @@ class RedisStore extends ObjectStore
         $this->_stats(__METHOD__,$start);
         return $obj->_storage_id;
     }
-    
+
     /**
      * @override <ObjectStore::Cleanup>
      */
@@ -272,17 +272,17 @@ class RedisStore extends ObjectStore
             $this->_stats(__METHOD__."/CN",$start);
             return;
         }
-        
+
         $this->_stats(__METHOD__,$start);
     }
-    
+
     /**
      * @override <ObjectStore::Update>
      */
     function Update($keep_alive=false)
     {
         $start = microtime(true);
-        
+
         if( $keep_alive )
             $ids = $this->exec('keys',[session_id()."_*"]);
         else
@@ -292,7 +292,7 @@ class RedisStore extends ObjectStore
             $this->expire($id);
         $this->_stats(__METHOD__.($keep_alive?"/KA":''),$start);
     }
-    
+
     /**
      * @override <ObjectStore::Migrate>
      */

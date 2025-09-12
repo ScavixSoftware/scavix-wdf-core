@@ -21,11 +21,11 @@ class DevServer extends Task
     {
         $endpoint = $this->getArg($args,0) ?: "127.0.0.1:80";
         $cmd = PHP_BINARY . " -S $endpoint ".__SCAVIXWDF__."/cli.php";
-        $specs = array(
-            0 => array("file", "php://stdin", "r"),
-            1 => array("file", "php://stderr", "w"),
-            2 => array("file", "php://stderr", "w")
-        );
+        $specs = [
+            0 => ["file", "php://stdin", "r"],
+            1 => ["file", "php://stderr", "w"],
+            2 => ["file", "php://stderr", "w"]
+        ];
         $proc = proc_open($cmd, $specs, $pipes, getcwd());
         if (!is_resource($proc))
             return log_error("Unable to start PHP devserver");

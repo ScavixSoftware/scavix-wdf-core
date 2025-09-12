@@ -34,7 +34,7 @@ default_string("TXT_CONFIRMATION", "Please confirm");
 
 /**
  * Displays a confirmation dialog.
- * 
+ *
  * This is basically a normal modal <uiDialog> with a predefined set of buttons.
  */
 class uiConfirmation extends uiDialog
@@ -42,10 +42,10 @@ class uiConfirmation extends uiDialog
 	const OK_CANCEL = 1;
 	const YES_NO = 2;
 	public $Mode;
-	
+
 	/**
 	 * Creates a new uiConfirmation object.
-	 * 
+	 *
 	 * The $text_base argument in fact defines two texts in one (and assumes you are using translations!):
 	 * It will be prefixed with 'TXT_' and 'TITLE_' and that two constants will be used.
 	 * Sample: 'CONFIRMATION' will become 'TXT_CONFIRMATION' and 'TITLE_CONFIRMATION'.
@@ -55,15 +55,15 @@ class uiConfirmation extends uiDialog
 	 */
 	function __construct($text_base='CONFIRMATION',$ok_callback=false,$button_mode=self::OK_CANCEL)
 	{
-		$options = array(
-			'autoOpen'=>true,
-			'modal'=>true,
-			'width'=>450,
-			'height'=>300,
-			'show' => array('effect' => 'fade', 'duration' => 500),
-			'hide' => array('effect' => 'fade', 'duration' => 500),
-			'open' => '[jscode]function(){ $(\'.ui-widget-overlay\').hide().fadeIn(); }',
-			'beforeClose' => '[jscode]function(){ $(\'.ui-widget-overlay\').remove();
+		$options = [
+            'autoOpen' => true,
+            'modal' => true,
+            'width' => 450,
+            'height' => 300,
+            'show' => ['effect' => 'fade', 'duration' => 500],
+            'hide' => ['effect' => 'fade', 'duration' => 500],
+            'open' => '[jscode]function(){ $(\'.ui-widget-overlay\').hide().fadeIn(); }',
+            'beforeClose' => '[jscode]function(){ $(\'.ui-widget-overlay\').remove();
 $(\'<div />\', {
     \'class\':\'ui-widget-overlay\'
 }).css({
@@ -73,11 +73,11 @@ $(\'<div />\', {
 }).appendTo(\'body\').fadeOut(function(){
     $(this).remove();
 }); }',
-		);
-		
-		$title = "TITLE_$text_base";
+        ];
+
+        $title = "TITLE_$text_base";
 		$text  = "TXT_$text_base";
-		
+
 		parent::__construct($title,$options);
 		switch( $button_mode )
 		{
@@ -95,10 +95,10 @@ $(\'<div />\', {
 		$this->Mode = $button_mode;
 		$this->content($text);
 	}
-	
+
 	/**
 	 * Set the callback for the positive button.
-	 * 
+	 *
 	 * @param string $action JS code to be executed when the positive button is clicked (OK, YES)
 	 * @return static
 	 */

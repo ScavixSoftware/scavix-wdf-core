@@ -29,10 +29,10 @@ namespace ScavixWDF\JQueryUI;
 
 /**
  * Wraps a jQueryUI Autocomplete
- * 
+ *
  * See http://jqueryui.com/autocomplete/
- * 
- * @attribute[Resource('jquery-ui/ui.autocomplete.ex.js')] 
+ *
+ * @attribute[Resource('jquery-ui/ui.autocomplete.ex.js')]
  */
 class uiAutocomplete extends uiControl
 {
@@ -43,15 +43,15 @@ class uiAutocomplete extends uiControl
 	 * @param array $options See http://api.jqueryui.com/autocomplete/
 	 */
 	function __construct($options=[])
-	{		
+	{
 		parent::__construct("input");
 		$this->type = "text";
 		$this->Options = $options;
 	}
-	
+
 	/**
 	 * Sets an on change handler.
-	 * 
+	 *
 	 * @param string $function JS Handler function
 	 * @return static
 	 */
@@ -63,9 +63,9 @@ class uiAutocomplete extends uiControl
         $this->opt('change',$function);
 		return $this;
 	}
-    
-    public function __sleep() 
+
+    public function __sleep()
     {
-        return array('_storage_id');
+        return ['_storage_id'];
     }
 }

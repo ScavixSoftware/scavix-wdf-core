@@ -5,4 +5,4 @@ This is the main package that drives the app or website using it.
 
 Installation
 ============
-Install the package with `composer require scavix/wdf-core`
+Install the package with `composer require {{name}}`.

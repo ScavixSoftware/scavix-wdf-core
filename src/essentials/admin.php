@@ -62,5 +62,5 @@ function admin_init()
 function admin_register_handler($label,$controller,$method)
 {
 	global $CONFIG;
-	$CONFIG['system']['admin']['actions'][$label] = array($controller,$method);
+	$CONFIG['system']['admin']['actions'][$label] = [$controller, $method];
 }

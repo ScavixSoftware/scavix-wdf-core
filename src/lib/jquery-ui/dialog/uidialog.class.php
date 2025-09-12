@@ -33,7 +33,7 @@ default_string('TITLE_DIALOG', 'Dialog');
 
 /**
  * Wraps a jQueryUI Dialog
- * 
+ *
  * See http://jqueryui.com/dialog/
  */
 class uiDialog extends uiControl
@@ -41,7 +41,7 @@ class uiDialog extends uiControl
 	protected $Buttons = [];
 	protected $CloseButton = null;
 	public $CloseButtonAction = null;
-    
+
     public static $DESTROY_ON_CLOSE = false;        // destroy the dialog when it's closed. To keep backward-comaptibility, this new beahviour can only be enabled manually
 
 	/**
@@ -63,7 +63,7 @@ class uiDialog extends uiControl
 				'height'=>150,
 				'open'=>"function(){ $(this).parent().find('.ui-button').button('enable');$tit_script }",
 			),$options);
-		
+
         if(uiDialog::$DESTROY_ON_CLOSE)
         {
             // remove the dialog on close
@@ -80,7 +80,7 @@ class uiDialog extends uiControl
                 :"try{ $('#{$this->id}').dialog('close'); }catch(noop){}";
             $this->CloseButtonAction = "function(){ $rem }";
         }
-		
+
 		$this->InitFunctionName = false;
 	}
 
@@ -95,14 +95,14 @@ class uiDialog extends uiControl
 			// just to render close button with the right id
 			if( !is_null($this->CloseButton) )
 			{
-				$temp = array( $this->CloseButton => $this->CloseButtonAction );
+				$temp = [$this->CloseButton => $this->CloseButtonAction];
 				$this->Buttons = array_merge($this->Buttons, $temp);
 			}
-			
+
             $close_action = system_is_ajax_call()
                 ?"$('#{$this->id}').removeDialog();"
                 :"try{ $('#{$this->id}').dialog('close'); }catch(noop){}";
-			
+
 			foreach( $this->Buttons as $label=>$action )
 			{
 				if( !starts_with($action, '[jscode]') && !starts_with($action, 'function') )
@@ -127,10 +127,10 @@ class uiDialog extends uiControl
 		}
 		return parent::PreRender($args);
 	}
-	
+
 	/**
 	 * Adds a button to the dialog.
-	 * 
+	 *
 	 * @param string $label Button text
 	 * @param string $action JS code for button click event
 	 * @param string $prepend If true will prepend the button, else append
@@ -140,14 +140,14 @@ class uiDialog extends uiControl
 	{
 		if( !starts_with($action, '[jscode]') && !starts_with($action, 'function') )
 			$action = "function(){ $action }";
-        
+
         if( $prepend )
             $this->Buttons = array_merge([$label=>$action],$this->Buttons);
         else
             $this->Buttons[$label] = $action;
 		return $this;
 	}
-	
+
 	/**
 	 * @shortcut <uiDialog::AddButton>
 	 */
@@ -158,7 +158,7 @@ class uiDialog extends uiControl
 
 	/**
 	 * Adds a close button.
-	 * 
+	 *
 	 * @param string $label Close button text
 	 * @param string $action Action to be performed on click, defaults to the standard close action
 	 * @return static

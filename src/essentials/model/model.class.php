@@ -230,7 +230,7 @@ abstract class Model implements Iterator, Countable, ArrayAccess, \ScavixWDF\ILo
 			$this->__ensureResults();
 			return $this->_results;
 		}
-		return array($this);
+		return [$this];
 	}
 
 	/**
@@ -691,7 +691,7 @@ abstract class Model implements Iterator, Countable, ArrayAccess, \ScavixWDF\ILo
 			$q = $res->andAll();
 			$pkcols = $res->GetPrimaryColumns();
 			if( count($pkcols) == 1 && !is_array($pk_value) )
-				$pk_value = array($pkcols[0] => $pk_value);
+				$pk_value = [$pkcols[0] => $pk_value];
 			foreach( $pkcols as $pkc )
 			{
 				if( !isset($pk_value[$pkc]) )
@@ -1685,7 +1685,7 @@ abstract class Model implements Iterator, Countable, ArrayAccess, \ScavixWDF\ILo
 		$q = new SelectQuery($this, $this->_ds);
 		$sql = $q->__toString()." WHERE ".$where;
 
-		if( $arguments !== false && !is_array($arguments) ) $arguments = array($arguments);
+		if( $arguments !== false && !is_array($arguments) ) $arguments = [$arguments];
 		$q = $this->_ds->ExecuteSql($sql,$arguments);
 		if( $q->rowCount() > 0 )
 		{

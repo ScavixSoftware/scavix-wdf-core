@@ -199,7 +199,7 @@ abstract class Renderable implements \JsonSerializable
         return $this->WdfRender();
     }
 
-    function __getContentVars(){ return array('_content'); }
+    function __getContentVars(){ return ['_content']; }
 
 	function __collectResources()
 	{
@@ -209,7 +209,7 @@ abstract class Renderable implements \JsonSerializable
 		$min_css_file = isset($CONFIG['use_compiled_css'])?$CONFIG['use_compiled_css']:false;
 
 		if( $min_js_file && $min_css_file )
-			return array($min_css_file,$min_js_file);
+			return [$min_css_file, $min_js_file];
 		$res = $this->__collectResourcesInternal($this);
 		if( !$min_js_file && !$min_css_file )
 			return $res;

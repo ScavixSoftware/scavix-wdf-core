@@ -187,7 +187,7 @@ class WdfReflector extends ReflectionClass
 			return [];
 
 		if( !is_array($filter) )
-			$filter = array($filter);
+			$filter = [$filter];
 		foreach( $filter as $i=>$f )
 			$filter[$i] = strtolower(str_replace("Attribute","",$f));
 
@@ -285,7 +285,7 @@ class WdfReflector extends ReflectionClass
 	public function GetClassAttributes($filter=[], $allowAttrInheritance=true)
 	{
 		if( !is_array($filter) )
-			$filter = array($filter);
+			$filter = [$filter];
 
 		$res = $this->_getCached($this->Classname,$filter);
 		if( $res )

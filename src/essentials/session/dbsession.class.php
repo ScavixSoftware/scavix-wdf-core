@@ -34,7 +34,7 @@ use ScavixWDF\WdfException;
 
 /**
  * A DB Session handler.
- * 
+ *
  * THIS WHOLE CLASS IS UNTESTED!!!
  * Still just prototype from the times when session handling was initially implemented
  */
@@ -63,123 +63,123 @@ class DbSession extends SessionBase
 
 		$rs = $this->ds->ExecuteSql(
 			"SELECT storage_id FROM ".$CONFIG['session']['table']."
-			WHERE id=? AND auto_load>0", array($CONFIG['session']['prefix'].session_id())
-		);
-		foreach( $rs as $row )
-			restore_object($row['storage_id']);
-	}
-
-	/**
-	 * @implements <SessionBase::KillAll>
-	 */
-	function KillAll()
-	{
-		global $CONFIG;
-        $this->ds->ExecuteSql(
-            "DELETE FROM ".$CONFIG['session']['table']."
-            WHERE id=?", array($CONFIG['session']['prefix'].session_id())
+			WHERE id=? AND auto_load>0", [$CONFIG['session']['prefix'] . session_id()]
         );
-		unset($_SESSION[$CONFIG['session']['prefix']."session_lastaccess"]);
-		session_destroy();
-		session_start();
-	}
+        foreach ($rs as $row)
+            restore_object($row['storage_id']);
+    }
 
-	/**
-	 * @implements <SessionBase::KeepAlive>
-	 */
-	function KeepAlive($request_key='PING')
-	{
-		global $CONFIG;
-		$rid = isset($_REQUEST[$request_key])?$_REQUEST[$request_key]:"";
+    /**
+     * @implements <SessionBase::KillAll>
+     */
+    function KillAll()
+    {
+        global $CONFIG;
+        $this->ds->ExecuteSql(
+            "DELETE FROM " . $CONFIG['session']['table'] . "
+            WHERE id=?", [$CONFIG['session']['prefix'] . session_id()]
+        );
+        unset($_SESSION[$CONFIG['session']['prefix'] . "session_lastaccess"]);
+        session_destroy();
+        session_start();
+    }
 
-		$this->ds->ExecuteSql(
-			"UPDATE ".$CONFIG['session']['table']."
-			SET last_access=NOW() WHERE id=? AND (request_id=? OR auto_load=1)", array($CONFIG['session']['prefix'].session_id(), $rid)
-		);
+    /**
+     * @implements <SessionBase::KeepAlive>
+     */
+    function KeepAlive($request_key = 'PING')
+    {
+        global $CONFIG;
+        $rid = isset($_REQUEST[$request_key]) ? $_REQUEST[$request_key] : "";
+
+        $this->ds->ExecuteSql(
+            "UPDATE " . $CONFIG['session']['table'] . "
+			SET last_access=NOW() WHERE id=? AND (request_id=? OR auto_load=1)", [$CONFIG['session']['prefix'] . session_id(), $rid]
+        );
 
         self::$session_request_id = $rid;
-	}
+    }
 
-	/**
-	 * @implements <SessionBase::Store>
-	 */
-	function Store(&$obj,$id="")
-	{
-		global $CONFIG;
+    /**
+     * @implements <SessionBase::Store>
+     */
+    function Store(&$obj, $id = "")
+    {
+        global $CONFIG;
 
-		if( $id == "" )
-		{
-			if( !isset($obj->_storage_id) )
-				WdfException::Raise("Trying to store an object without storage_id!");
-			$id = $obj->_storage_id;
-		}
-		else
-			$obj->_storage_id = $id;
-		$serializer = new Serializer();
-		$content = $serializer->Serialize($obj);
+        if ($id == "")
+        {
+            if (!isset($obj->_storage_id))
+                WdfException::Raise("Trying to store an object without storage_id!");
+            $id = $obj->_storage_id;
+        }
+        else
+            $obj->_storage_id = $id;
+        $serializer = new Serializer();
+        $content = $serializer->Serialize($obj);
 
-		$vals = "id=?, request_id=?, storage_id=?, last_access=NOW(), content=?";
-		$updates = "last_access=NOW(), content=?, request_id=?";
+        $vals = "id=?, request_id=?, storage_id=?, last_access=NOW(), content=?";
+        $updates = "last_access=NOW(), content=?, request_id=?";
 
-		$this->ds->ExecuteSql(
-			"REPLACE INTO ".$CONFIG['session']['table']."
+        $this->ds->ExecuteSql(
+            "REPLACE INTO " . $CONFIG['session']['table'] . "
 			SET $vals",
-			array($CONFIG['session']['prefix'].session_id(),request_id(),$id,$content)
-		);
+            [$CONFIG['session']['prefix'] . session_id(), request_id(), $id, $content]
+        );
 
-		ObjectStore::$buffer[strtolower($id)] = $obj;
-	}
+        ObjectStore::$buffer[strtolower($id)] = $obj;
+    }
 
-	/**
-	 * @implements <SessionBase::Delete>
-	 */
-	function Delete($id)
-	{
-		global $CONFIG;
-		if( is_object($id) && isset($id->_storage_id) )
-			$id = $id->_storage_id;
+    /**
+     * @implements <SessionBase::Delete>
+     */
+    function Delete($id)
+    {
+        global $CONFIG;
+        if (is_object($id) && isset($id->_storage_id))
+            $id = $id->_storage_id;
 
-		$this->ds->ExecuteSql(
-			"DELETE FROM ".$CONFIG['session']['table']."
-			WHERE id=? AND storage_id=?",array($CONFIG['session']['prefix'].session_id(),$id)
-		);
-		unset(ObjectStore::$buffer[strtolower($id)]);
-	}
+        $this->ds->ExecuteSql(
+            "DELETE FROM " . $CONFIG['session']['table'] . "
+			WHERE id=? AND storage_id=?", [$CONFIG['session']['prefix'] . session_id(), $id]
+        );
+        unset(ObjectStore::$buffer[strtolower($id)]);
+    }
 
-	/**
-	 * @implements <SessionBase::Exists>
-	 */
-	function Exists($id)
-	{
-		global $CONFIG;
-		if( is_object($id) && isset($id->_storage_id) )
-			$id = $id->_storage_id;
+    /**
+     * @implements <SessionBase::Exists>
+     */
+    function Exists($id)
+    {
+        global $CONFIG;
+        if (is_object($id) && isset($id->_storage_id))
+            $id = $id->_storage_id;
 
-		if( isset(ObjectStore::$buffer[strtolower($id)]) )
-			return true;
+        if (isset(ObjectStore::$buffer[strtolower($id)]))
+            return true;
 
-		$rs = $this->ds->ExecuteSql(
-			"SELECT COUNT(*) as cnt FROM ".$CONFIG['session']['table']."
-			WHERE id=? AND storage_id=? LIMIT 1",array($CONFIG['session']['prefix'].session_id(),$id)
-		);
-		return $rs['cnt'] > 0;
-	}
+        $rs = $this->ds->ExecuteSql(
+            "SELECT COUNT(*) as cnt FROM " . $CONFIG['session']['table'] . "
+			WHERE id=? AND storage_id=? LIMIT 1", [$CONFIG['session']['prefix'] . session_id(), $id]
+        );
+        return $rs['cnt'] > 0;
+    }
 
-	/**
-	 * @implements <SessionBase::Restore>
-	 */
-	function &Restore($id)
-	{
-		global $CONFIG;
+    /**
+     * @implements <SessionBase::Restore>
+     */
+    function &Restore($id)
+    {
+        global $CONFIG;
 
-		if( isset(ObjectStore::$buffer[strtolower($id)]) )
-			return ObjectStore::$buffer[strtolower($id)];
+        if (isset(ObjectStore::$buffer[strtolower($id)]))
+            return ObjectStore::$buffer[strtolower($id)];
 
-		$rs = $this->ds->ExecuteSql(
-			"SELECT content FROM ".$CONFIG['session']['table']."
-			WHERE id=? AND storage_id=? LIMIT 1",array($CONFIG['session']['prefix'].session_id(),$id)
-		);
-		if( $rs->Count() == 0 )
+        $rs = $this->ds->ExecuteSql(
+            "SELECT content FROM " . $CONFIG['session']['table'] . "
+			WHERE id=? AND storage_id=? LIMIT 1", [$CONFIG['session']['prefix'] . session_id(), $id]
+        );
+        if ($rs->Count() == 0)
 		{
 			log_trace("Trying to restore unknown object '$id'");
 			$null = null;

@@ -51,7 +51,7 @@ class HtmlPage extends Template implements ICallable
 	public $inlineheaderpre = false;
 	public $inlineheader = false;
 	public $plaindocready = [];
-	public $wdf_settings = array('focus_first_input'=>true);
+	public $wdf_settings = ['focus_first_input' => true];
 
     public static $RENDER_NOSCRIPT = true;
     public static $DOCTYPE = '<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">';

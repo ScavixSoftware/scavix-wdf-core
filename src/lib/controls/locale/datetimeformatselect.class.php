@@ -34,16 +34,16 @@ use ScavixWDF\Base\AjaxResponse;
 use ScavixWDF\Controls\Form\Select;
 use ScavixWDF\Localization\DateTimeFormat;
 use ScavixWDF\Localization\Localization;
- 
+
 /**
  * Selector for datetime formats.
- * 
+ *
  * @attribute[Resource('locale_settings.js')]
  */
 class DateTimeFormatSelect extends Select
 {
 	public $culture_code;
-	
+
 	/**
 	 * @param string $culture_code Culture code (see <CultureInfo>)
 	 * @param mixed $selected_date_format The currently selected date format or false
@@ -57,18 +57,18 @@ class DateTimeFormatSelect extends Select
 		$this->data('role', 'datetimeformat');
 		$this->data('controller', buildQuery($this->id));
 		$this->culture_code = $culture_code;
-		
+
 		if( $selected_date_format || $selected_time_format )
 			$this->setValue(
-				json_encode( array( 
-					$selected_date_format?$selected_date_format:false,
-					$selected_time_format?$selected_time_format:false) )
-			);
-		
-		$df = array(DateTimeFormat::DF_LONGDATE, DateTimeFormat::DF_SHORTDATE, DateTimeFormat::DF_MONTHDAY, DateTimeFormat::DF_YEARMONTH);
-		$tf = array(DateTimeFormat::DF_LONGTIME, DateTimeFormat::DF_SHORTTIME);
-		
-		$value = time();
+				json_encode([
+                    $selected_date_format ? $selected_date_format : false,
+                    $selected_time_format ? $selected_time_format : false])
+            );
+
+        $df = [DateTimeFormat::DF_LONGDATE, DateTimeFormat::DF_SHORTDATE, DateTimeFormat::DF_MONTHDAY, DateTimeFormat::DF_YEARMONTH];
+        $tf = [DateTimeFormat::DF_LONGTIME, DateTimeFormat::DF_SHORTTIME];
+
+        $value = time();
 		$ci = Localization::getCultureInfo($culture_code);
 		if( $timezone )
 		{
@@ -86,10 +86,10 @@ class DateTimeFormatSelect extends Select
 		}
 		store_object($this);
 	}
-	
+
 	/**
 	 * Returns a list of option elements.
-	 * 
+	 *
 	 * Called via AJAX to dynamically update the control.
 	 * @attribute[RequestParam('culture_code','string')]
 	 * @param string $culture_code Selected culture code
@@ -98,11 +98,11 @@ class DateTimeFormatSelect extends Select
 	public function ListOptions($culture_code)
 	{
 		$this->culture_code = $culture_code;
-		
-		$df = array(DateTimeFormat::DF_LONGDATE, DateTimeFormat::DF_SHORTDATE, DateTimeFormat::DF_MONTHDAY, DateTimeFormat::DF_YEARMONTH);
-		$tf = array(DateTimeFormat::DF_LONGTIME, DateTimeFormat::DF_SHORTTIME);
-		
-		$value = time();
+
+		$df = [DateTimeFormat::DF_LONGDATE, DateTimeFormat::DF_SHORTDATE, DateTimeFormat::DF_MONTHDAY, DateTimeFormat::DF_YEARMONTH];
+        $tf = [DateTimeFormat::DF_LONGTIME, DateTimeFormat::DF_SHORTTIME];
+
+        $value = time();
 		$ci = Localization::getCultureInfo($culture_code);
 		if(!$ci)
 			$ci = Localization::getCultureInfo('en-US');

@@ -252,23 +252,23 @@ class DatabaseTable extends Table implements ICallable
 	 */
 	function OverrideExecuteSql(&$handler,$function)
 	{
-		$this->ExecuteSqlHandler = array($handler,$function);
-	}
+		$this->ExecuteSqlHandler = [$handler, $function];
+    }
 
-	/**
-	 * Allows to assign your own handler to the AddHeader function
-	 *
-	 * Sometimes you do not want to inherit from this, but create a table and assign the handlers
-	 * to another object.
-	 * @param object $handler Object containing the handler method
-	 * @param string $function Name of the handler method
-	 * @return static
-	 */
-	function AssignOnAddHeader(&$handler,$function)
-	{
-		$res = $this->OnAddHeader;
-		$this->OnAddHeader = array($handler,$function);
-		return $this;
+    /**
+     * Allows to assign your own handler to the AddHeader function
+     *
+     * Sometimes you do not want to inherit from this, but create a table and assign the handlers
+     * to another object.
+     * @param object $handler Object containing the handler method
+     * @param string $function Name of the handler method
+     * @return static
+     */
+    function AssignOnAddHeader(&$handler, $function)
+    {
+        $res = $this->OnAddHeader;
+        $this->OnAddHeader = [$handler, $function];
+        return $this;
 	}
 
 	/**
@@ -283,28 +283,31 @@ class DatabaseTable extends Table implements ICallable
 	function AssignOnAddRow(&$handler,$function)
 	{
 		$res = $this->OnAddRow;
-		$this->OnAddRow = array($handler,$function);
-		return $this;
-	}
+		$this->OnAddRow = [$handler, $function];
+        return $this;
+    }
 
-	/**
-	 * Allows to assign your own handler to the AddFooter function
-	 *
-	 * Sometimes you do not want to inherit from this, but create a table and assign the handlers
-	 * to another object.
-	 * @param object $handler Object containing the handler method
-	 * @param string $function Name of the handler method
-	 * @return static
-	 */
-	function AssignOnAddFooter(&$handler,$function)
-	{
-		$res = $this->OnAddFooter;
-		$this->OnAddFooter = array($handler,$function);
-		return $this;
-	}
+    /**
+     * Allows to assign your own handler to the AddFooter function
+     *
+     * Sometimes you do not want to inherit from this, but create a table and assign the handlers
+     * to another object.
+     * @param object $handler Object containing the handler method
+     * @param string $function Name of the handler method
+     * @return static
+     */
+    function AssignOnAddFooter(&$handler, $function)
+    {
+        $res = $this->OnAddFooter;
+        $this->OnAddFooter = [$handler, $function];
+        return $this;
+    }
 
-	protected function GetColumns(){return array("*");}
-	protected function GetJoin(){return "";}
+    protected function GetColumns()
+    {
+        return ["*"];
+    }
+    protected function GetJoin(){return "";}
 	protected function GetWhere(){return "";}
 	protected function GetGroupBy(){return "";}
 	protected function GetHaving(){return "";}
@@ -465,15 +468,15 @@ class DatabaseTable extends Table implements ICallable
 
 	static $export_def = array
 	(
-		'xls'  => array( 'fn'=>'export_{date}.xls',  'mime'=>'application/vnd.ms-excel' ),
-		'xlsx' => array( 'fn'=>'export_{date}.xlsx', 'mime'=>'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' ),
-		'csv'  => array( 'fn'=>'export_{date}.csv',  'mime'=>'text/csv' ),
-	);
+		'xls'  => ['fn' => 'export_{date}.xls', 'mime' => 'application/vnd.ms-excel'],
+        'xlsx' => ['fn' => 'export_{date}.xlsx', 'mime' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'],
+        'csv' => ['fn' => 'export_{date}.csv', 'mime' => 'text/csv'],
+    );
 
-	/**
-	 * @internal Currently untested, so marked <b>internal</b>
-	 * @attribute[RequestParam('format','string')]
-	 */
+    /**
+     * @internal Currently untested, so marked <b>internal</b>
+     * @attribute[RequestParam('format','string')]
+     */
 	function Export($format, $rowcallback = null)
 	{
 		switch( $format )

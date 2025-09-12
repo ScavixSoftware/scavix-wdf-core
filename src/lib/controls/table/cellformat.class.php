@@ -33,7 +33,7 @@ namespace ScavixWDF\Controls\Table;
 
 /**
  * Handles cell formatting in a <Table>.
- * 
+ *
  * Never instanciate this class yourself, this will be done by <Table::SetFormat> or <Table::SetColFormat>.
  * Valid formats are:
  * - duration
@@ -63,23 +63,23 @@ class CellFormat
 			{
 				switch( strtolower($format) )
 				{
-					case 'f2': 
-					case 'd2': 
-					case 'float': 
-					case 'double': 
-						$format = array('double',2);
+					case 'f2':
+					case 'd2':
+					case 'float':
+					case 'double':
+						$format = ['double', 2];
 						break;
 				}
-			}			
+			}
 			$this->format = $format;
 			$this->blank_if_false = $blank_if_false;
 			$this->conditional_css = $conditional_css;
 		}
 	}
-	
+
 	/**
 	 * Gets the format.
-	 * 
+	 *
 	 * @return string The format
 	 */
 	function GetFormat()
@@ -112,7 +112,7 @@ class CellFormat
 			$cell->style = $cs.$ccss;
 		}
 	}
-    
+
     private function getNumeric($val)
     {
         if( is_numeric($val) )
@@ -121,10 +121,10 @@ class CellFormat
             return $this->getNumeric(str_replace(",", ".", $val));
         return false;
     }
-	
+
 	/**
 	 * Formats a given string.
-	 * 
+	 *
 	 * @param string $full_content The string to format
 	 * @param \ScavixWDF\Localization\CultureInfo $culture <CultureInfo> object or false if not present
 	 * @return string The formatted string
@@ -136,13 +136,13 @@ class CellFormat
 			return "";
 		if( !$this->format )
 			return $full_content;
-		
+
         if( is_array($this->format) )
 		{
             $format = strtolower($this->format[0]);
             $options = array_slice($this->format,1);
 			if(!is_array($options))
-				$options = array($options);
+				$options = [$options];
 		}
         elseif(is_callable($this->format) && !in_array($this->format, ['duration', 'fixed', 'pre', 'preformatted', 'date', 'time', 'datetime', 'currency', 'int', 'integer', 'percent', 'float', 'double', 'custom']))
         {
@@ -156,7 +156,7 @@ class CellFormat
 		{
 			if( intval($content)."" != $content && doubleval($content)."" != $content )
 				return $full_content;
-			
+
             $completedur = $dur = intval($content);
 			$s = sprintf("%02u",$dur % 60);
 			$dur = floor($dur / 60);
@@ -170,7 +170,7 @@ class CellFormat
 			}
 			else
 			{
-				$m = sprintf("%u",$dur % 60);				
+				$m = sprintf("%u",$dur % 60);
 				$content = str_replace($content,"$m:$s",$full_content);
 			}
 		}
@@ -232,7 +232,7 @@ class CellFormat
 		}
 		else
 			$content = str_replace($content,sprintf($format,$content),$full_content);
-		
+
 		return $content;
 	}
 
@@ -241,7 +241,7 @@ class CellFormat
 		$content = $this->content;
 		if( !is_numeric($content) )
 			return "";
-		
+
 		foreach( $this->conditional_css as $cond=>$css )
 		{
 			switch( strtolower($cond) )
@@ -261,32 +261,32 @@ class CellFormat
 				default:
 					if( !preg_match('/(.+)\((\d+)\)/', $cond, $m) )
 						break;
-					
+
 					$v = intval($m[2]);
 					switch( $m[1] )
 					{
-						case 'gt': 
+						case 'gt':
 							if( floatval($content) > $v )
 								return $css;
 							break;
-						case 'gte': 
+						case 'gte':
 							if( floatval($content) >= $v )
 								return $css;
 							break;
-						case 'lt': 
+						case 'lt':
 							if( floatval($content) < $v )
 								return $css;
 							break;
-						case 'lte': 
+						case 'lte':
 							if( floatval($content) <= $v )
 								return $css;
 							break;
-						case 'eq': 
+						case 'eq':
 							if( floatval($content) == $v )
 								return $css;
 							break;
 					}
-					
+
 					break;
 			}
 		}

@@ -43,7 +43,7 @@ use ScavixWDF\WdfException;
  * functionality by default.
  * You may configure multiple loggers of different classes, default is 'Logger'.
  * Specify configuration in CONFIG variable as follows:
- * $CONFIG['system']['logging'][&lt;alias&gt;] = array(&lt;key&gt; => &lt;value&gt;);
+ * $CONFIG['system']['logging'][&lt;alias&gt;] = [&lt;key&gt; => &lt;value&gt;];
  * &lt;alias&gt; is a meanful name for the logger (in fact it can be used to log to only
  * one logger instead of logging to all).
  * Rest is an array of key-value pairs.

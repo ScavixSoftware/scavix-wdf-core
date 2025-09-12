@@ -357,7 +357,7 @@ class Table extends Control
 		if( $this->DataCallback )
 		{
 			$this->Clear();
-			$args = array($this);
+			$args = [$this];
 			system_call_user_func_array_byref($this->DataCallback[0], $this->DataCallback[1], $args);
 		}
 
@@ -590,7 +590,7 @@ class Table extends Control
 		$this->_actions->content( $ra->wrap('div') );
 
 		if( $handler && $method )
-			$this->_actionHandler[$icon] = array($handler,$method);
+			$this->_actionHandler[$icon] = [$handler, $method];
 
 		store_object($this);
 		return $this;
@@ -622,7 +622,7 @@ class Table extends Control
 	 */
 	function Sortable($handler,$method)
 	{
-		$this->_sortHandler = array($handler,$method);
+		$this->_sortHandler = [$handler, $method];
 		$s = "wdf.post('{self}/OnReordered',{rows:$('#{self} .tbody .tr').enumAttr('id')}); $('#{self} .ui-table-actions').removeClass('sorting');";
 		$s = "$('#{self} .tbody').sortable({distance:5,update: function(){ $s }, start:function(){ $('#{self} .ui-table-actions').addClass('sorting').hide(); } });";
 		$this->script($s);
@@ -730,7 +730,7 @@ class Table extends Control
 	 */
 	function SetDataCallback($handler,$method)
 	{
-		$this->DataCallback = array($handler,$method);
+		$this->DataCallback = [$handler, $method];
 		return $this;
 	}
 

@@ -64,7 +64,7 @@ class Query
 			$this->_object = $obj;
 			$this->_ds = $datasource;
 			$this->_where = new ConditionTree(-1,"AND",$conditions_separator);
-			$this->_knownmodels = array($obj);
+			$this->_knownmodels = [$obj];
 		}
 	}
 

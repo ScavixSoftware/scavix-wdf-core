@@ -82,7 +82,7 @@ function model_init()
  */
 function model_init_db($name,$constr,$dstype='DataSource')
 {
-	Wdf::$DataSources[$name] = array($dstype,$constr);
+	Wdf::$DataSources[$name] = [$dstype, $constr];
 }
 
 /**

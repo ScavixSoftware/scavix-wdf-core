@@ -88,7 +88,7 @@ class LogEntry
 				$t0['function'] == 'WdfRender' ||
 				$t0['function'] == 'WdfRenderAsRoot' ||
                 (isset($t0['class']) && ($t0['class'] == 'lessc' || $t0['class'] == "ScavixWDF\\LessCompiler")) )
-				$t0['args'] = array("*TRUNCATED*");
+				$t0['args'] = ["*TRUNCATED*"];
 
 			$stack[] = $t0;
 			if( count($stack) == $max_trace_depth )

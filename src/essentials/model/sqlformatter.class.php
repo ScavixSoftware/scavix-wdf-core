@@ -61,7 +61,7 @@ class SqlFormatter
     const TOKEN_VALUE = 1;
 
     // Reserved words (for syntax highlighting)
-    protected static $reserved = array(
+    protected static $reserved = [
         'ACCESSIBLE', 'ACTION', 'AGAINST', 'AGGREGATE', 'ALGORITHM', 'ALL', 'ALTER', 'ANALYSE', 'ANALYZE', 'AS', 'ASC',
         'AUTOCOMMIT', 'AUTO_INCREMENT', 'BACKUP', 'BEGIN', 'BETWEEN', 'BINLOG', 'BOTH', 'CASCADE', 'CASE', 'CHANGE', 'CHANGED', 'CHARACTER SET',
         'CHARSET', 'CHECK', 'CHECKSUM', 'COLLATE', 'COLLATION', 'COLUMN', 'COLUMNS', 'COMMENT', 'COMMIT', 'COMMITTED', 'COMPRESSED', 'CONCURRENT',
@@ -73,52 +73,52 @@ class SqlFormatter
         'HOUR_SECOND', 'IDENTIFIED', 'IF', 'IFNULL', 'IGNORE', 'IN', 'INDEX', 'INDEXES', 'INFILE', 'INSERT', 'INSERT_ID', 'INSERT_METHOD', 'INTERVAL',
         'INTO', 'INVOKER', 'IS', 'ISOLATION', 'KEY', 'KEYS', 'KILL', 'LAST_INSERT_ID', 'LEADING', 'LEVEL', 'LIKE', 'LINEAR',
         'LINES', 'LOAD', 'LOCAL', 'LOCK', 'LOCKS', 'LOGS', 'LOW_PRIORITY', 'MARIA', 'MASTER', 'MASTER_CONNECT_RETRY', 'MASTER_HOST', 'MASTER_LOG_FILE',
-        'MATCH','MAX_CONNECTIONS_PER_HOUR', 'MAX_QUERIES_PER_HOUR', 'MAX_ROWS', 'MAX_UPDATES_PER_HOUR', 'MAX_USER_CONNECTIONS',
+        'MATCH', 'MAX_CONNECTIONS_PER_HOUR', 'MAX_QUERIES_PER_HOUR', 'MAX_ROWS', 'MAX_UPDATES_PER_HOUR', 'MAX_USER_CONNECTIONS',
         'MEDIUM', 'MERGE', 'MINUTE', 'MINUTE_SECOND', 'MIN_ROWS', 'MODE', 'MODIFY',
-        'MONTH', 'MRG_MYISAM', 'MYISAM', 'NAMES', 'NATURAL', 'NOT', 'NOW()','NULL', 'OFFSET', 'ON', 'OPEN', 'OPTIMIZE', 'OPTION', 'OPTIONALLY',
+        'MONTH', 'MRG_MYISAM', 'MYISAM', 'NAMES', 'NATURAL', 'NOT', 'NOW()', 'NULL', 'OFFSET', 'ON', 'OPEN', 'OPTIMIZE', 'OPTION', 'OPTIONALLY',
         'ON UPDATE', 'ON DELETE', 'OUTFILE', 'PACK_KEYS', 'PAGE', 'PARTIAL', 'PARTITION', 'PARTITIONS', 'PASSWORD', 'PRIMARY', 'PRIVILEGES', 'PROCEDURE',
-        'PROCESS', 'PROCESSLIST', 'PURGE', 'QUICK', 'RANGE', 'RAID0', 'RAID_CHUNKS', 'RAID_CHUNKSIZE','RAID_TYPE', 'READ', 'READ_ONLY',
+        'PROCESS', 'PROCESSLIST', 'PURGE', 'QUICK', 'RANGE', 'RAID0', 'RAID_CHUNKS', 'RAID_CHUNKSIZE', 'RAID_TYPE', 'READ', 'READ_ONLY',
         'READ_WRITE', 'REFERENCES', 'REGEXP', 'RELOAD', 'RENAME', 'REPAIR', 'REPEATABLE', 'REPLACE', 'REPLICATION', 'RESET', 'RESTORE', 'RESTRICT',
         'RETURN', 'RETURNS', 'REVOKE', 'RLIKE', 'ROLLBACK', 'ROW', 'ROWS', 'ROW_FORMAT', 'SECOND', 'SECURITY', 'SEPARATOR',
-        'SERIALIZABLE', 'SESSION', 'SHARE', 'SHOW', 'SHUTDOWN', 'SLAVE', 'SONAME', 'SOUNDS', 'SQL',  'SQL_AUTO_IS_NULL', 'SQL_BIG_RESULT',
+        'SERIALIZABLE', 'SESSION', 'SHARE', 'SHOW', 'SHUTDOWN', 'SLAVE', 'SONAME', 'SOUNDS', 'SQL', 'SQL_AUTO_IS_NULL', 'SQL_BIG_RESULT',
         'SQL_BIG_SELECTS', 'SQL_BIG_TABLES', 'SQL_BUFFER_RESULT', 'SQL_CALC_FOUND_ROWS', 'SQL_LOG_BIN', 'SQL_LOG_OFF', 'SQL_LOG_UPDATE',
         'SQL_LOW_PRIORITY_UPDATES', 'SQL_MAX_JOIN_SIZE', 'SQL_QUOTE_SHOW_CREATE', 'SQL_SAFE_UPDATES', 'SQL_SELECT_LIMIT', 'SQL_SLAVE_SKIP_COUNTER',
         'SQL_SMALL_RESULT', 'SQL_WARNINGS', 'SQL_CACHE', 'SQL_NO_CACHE', 'START', 'STARTING', 'STATUS', 'STOP', 'STORAGE',
         'STRAIGHT_JOIN', 'STRING', 'STRIPED', 'SUPER', 'TABLE', 'TABLES', 'TEMPORARY', 'TERMINATED', 'THEN', 'TO', 'TRAILING', 'TRANSACTIONAL', 'TRUE',
         'TRUNCATE', 'TYPE', 'TYPES', 'UNCOMMITTED', 'UNIQUE', 'UNLOCK', 'UNSIGNED', 'USAGE', 'USE', 'USING', 'VARIABLES',
         'VIEW', 'WHEN', 'WITH', 'WORK', 'WRITE', 'YEAR_MONTH'
-    );
+    ];
 
     // For SQL formatting
     // These keywords will all be on their own line
-    protected static $reserved_toplevel = array(
+    protected static $reserved_toplevel = [
         'SELECT', 'FROM', 'WHERE', 'SET', 'ORDER BY', 'GROUP BY', 'LIMIT', 'DROP',
         'VALUES', 'UPDATE', 'HAVING', 'ADD', 'AFTER', 'ALTER TABLE', 'DELETE FROM', 'UNION ALL', 'UNION', 'EXCEPT', 'INTERSECT'
-    );
+    ];
 
-    protected static $reserved_newline = array(
+    protected static $reserved_newline = [
         'LEFT OUTER JOIN', 'RIGHT OUTER JOIN', 'LEFT JOIN', 'RIGHT JOIN', 'OUTER JOIN', 'INNER JOIN', 'JOIN', 'XOR', 'OR', 'AND'
-    );
+    ];
 
-    protected static $functions = array (
+    protected static $functions = [
         'ABS', 'ACOS', 'ADDDATE', 'ADDTIME', 'AES_DECRYPT', 'AES_ENCRYPT', 'AREA', 'ASBINARY', 'ASCII', 'ASIN', 'ASTEXT', 'ATAN', 'ATAN2',
-        'AVG', 'BDMPOLYFROMTEXT',  'BDMPOLYFROMWKB', 'BDPOLYFROMTEXT', 'BDPOLYFROMWKB', 'BENCHMARK', 'BIN', 'BIT_AND', 'BIT_COUNT', 'BIT_LENGTH',
-        'BIT_OR', 'BIT_XOR', 'BOUNDARY',  'BUFFER',  'CAST', 'CEIL', 'CEILING', 'CENTROID',  'CHAR', 'CHARACTER_LENGTH', 'CHARSET', 'CHAR_LENGTH',
-        'COALESCE', 'COERCIBILITY', 'COLLATION',  'COMPRESS', 'CONCAT', 'CONCAT_WS', 'CONNECTION_ID', 'CONTAINS', 'CONV', 'CONVERT', 'CONVERT_TZ',
-        'CONVEXHULL',  'COS', 'COT', 'COUNT', 'CRC32', 'CROSSES', 'CURDATE', 'CURRENT_DATE', 'CURRENT_TIME', 'CURRENT_TIMESTAMP', 'CURRENT_USER',
+        'AVG', 'BDMPOLYFROMTEXT', 'BDMPOLYFROMWKB', 'BDPOLYFROMTEXT', 'BDPOLYFROMWKB', 'BENCHMARK', 'BIN', 'BIT_AND', 'BIT_COUNT', 'BIT_LENGTH',
+        'BIT_OR', 'BIT_XOR', 'BOUNDARY', 'BUFFER', 'CAST', 'CEIL', 'CEILING', 'CENTROID', 'CHAR', 'CHARACTER_LENGTH', 'CHARSET', 'CHAR_LENGTH',
+        'COALESCE', 'COERCIBILITY', 'COLLATION', 'COMPRESS', 'CONCAT', 'CONCAT_WS', 'CONNECTION_ID', 'CONTAINS', 'CONV', 'CONVERT', 'CONVERT_TZ',
+        'CONVEXHULL', 'COS', 'COT', 'COUNT', 'CRC32', 'CROSSES', 'CURDATE', 'CURRENT_DATE', 'CURRENT_TIME', 'CURRENT_TIMESTAMP', 'CURRENT_USER',
         'CURTIME', 'DATABASE', 'DATE', 'DATEDIFF', 'DATE_ADD', 'DATE_DIFF', 'DATE_FORMAT', 'DATE_SUB', 'DAY', 'DAYNAME', 'DAYOFMONTH', 'DAYOFWEEK',
         'DAYOFYEAR', 'DECODE', 'DEFAULT', 'DEGREES', 'DES_DECRYPT', 'DES_ENCRYPT', 'DIFFERENCE', 'DIMENSION', 'DISJOINT', 'DISTANCE', 'ELT', 'ENCODE',
         'ENCRYPT', 'ENDPOINT', 'ENVELOPE', 'EQUALS', 'EXP', 'EXPORT_SET', 'EXTERIORRING', 'EXTRACT', 'EXTRACTVALUE', 'FIELD', 'FIND_IN_SET', 'FLOOR',
         'FORMAT', 'FOUND_ROWS', 'FROM_DAYS', 'FROM_UNIXTIME', 'GEOMCOLLFROMTEXT', 'GEOMCOLLFROMWKB', 'GEOMETRYCOLLECTION', 'GEOMETRYCOLLECTIONFROMTEXT',
         'GEOMETRYCOLLECTIONFROMWKB', 'GEOMETRYFROMTEXT', 'GEOMETRYFROMWKB', 'GEOMETRYN', 'GEOMETRYTYPE', 'GEOMFROMTEXT', 'GEOMFROMWKB', 'GET_FORMAT',
         'GET_LOCK', 'GLENGTH', 'GREATEST', 'GROUP_CONCAT', 'GROUP_UNIQUE_USERS', 'HEX', 'HOUR', 'IF', 'IFNULL', 'INET_ATON', 'INET_NTOA', 'INSERT', 'INSTR',
-        'INTERIORRINGN', 'INTERSECTION', 'INTERSECTS',  'INTERVAL', 'ISCLOSED', 'ISEMPTY', 'ISNULL', 'ISRING', 'ISSIMPLE', 'IS_FREE_LOCK', 'IS_USED_LOCK',
+        'INTERIORRINGN', 'INTERSECTION', 'INTERSECTS', 'INTERVAL', 'ISCLOSED', 'ISEMPTY', 'ISNULL', 'ISRING', 'ISSIMPLE', 'IS_FREE_LOCK', 'IS_USED_LOCK',
         'LAST_DAY', 'LAST_INSERT_ID', 'LCASE', 'LEAST', 'LEFT', 'LENGTH', 'LINEFROMTEXT', 'LINEFROMWKB', 'LINESTRING', 'LINESTRINGFROMTEXT', 'LINESTRINGFROMWKB',
         'LN', 'LOAD_FILE', 'LOCALTIME', 'LOCALTIMESTAMP', 'LOCATE', 'LOG', 'LOG10', 'LOG2', 'LOWER', 'LPAD', 'LTRIM', 'MAKEDATE', 'MAKETIME', 'MAKE_SET',
         'MASTER_POS_WAIT', 'MAX', 'MBRCONTAINS', 'MBRDISJOINT', 'MBREQUAL', 'MBRINTERSECTS', 'MBROVERLAPS', 'MBRTOUCHES', 'MBRWITHIN', 'MD5', 'MICROSECOND',
         'MID', 'MIN', 'MINUTE', 'MLINEFROMTEXT', 'MLINEFROMWKB', 'MOD', 'MONTH', 'MONTHNAME', 'MPOINTFROMTEXT', 'MPOINTFROMWKB', 'MPOLYFROMTEXT', 'MPOLYFROMWKB',
-        'MULTILINESTRING', 'MULTILINESTRINGFROMTEXT', 'MULTILINESTRINGFROMWKB', 'MULTIPOINT',  'MULTIPOINTFROMTEXT', 'MULTIPOINTFROMWKB', 'MULTIPOLYGON',
-        'MULTIPOLYGONFROMTEXT', 'MULTIPOLYGONFROMWKB', 'NAME_CONST', 'NULLIF', 'NUMGEOMETRIES', 'NUMINTERIORRINGS',  'NUMPOINTS', 'OCT', 'OCTET_LENGTH',
+        'MULTILINESTRING', 'MULTILINESTRINGFROMTEXT', 'MULTILINESTRINGFROMWKB', 'MULTIPOINT', 'MULTIPOINTFROMTEXT', 'MULTIPOINTFROMWKB', 'MULTIPOLYGON',
+        'MULTIPOLYGONFROMTEXT', 'MULTIPOLYGONFROMWKB', 'NAME_CONST', 'NULLIF', 'NUMGEOMETRIES', 'NUMINTERIORRINGS', 'NUMPOINTS', 'OCT', 'OCTET_LENGTH',
         'OLD_PASSWORD', 'ORD', 'OVERLAPS', 'PASSWORD', 'PERIOD_ADD', 'PERIOD_DIFF', 'PI', 'POINT', 'POINTFROMTEXT', 'POINTFROMWKB', 'POINTN', 'POINTONSURFACE',
         'POLYFROMTEXT', 'POLYFROMWKB', 'POLYGON', 'POLYGONFROMTEXT', 'POLYGONFROMWKB', 'POSITION', 'POW', 'POWER', 'QUARTER', 'QUOTE', 'RADIANS', 'RAND',
         'RELATED', 'RELEASE_LOCK', 'REPEAT', 'REPLACE', 'REVERSE', 'RIGHT', 'ROUND', 'ROW_COUNT', 'RPAD', 'RTRIM', 'SCHEMA', 'SECOND', 'SEC_TO_TIME',
@@ -127,10 +127,10 @@ class SqlFormatter
         'TIME', 'TIMEDIFF', 'TIMESTAMP', 'TIMESTAMPADD', 'TIMESTAMPDIFF', 'TIME_FORMAT', 'TIME_TO_SEC', 'TOUCHES', 'TO_DAYS', 'TRIM', 'TRUNCATE', 'UCASE',
         'UNCOMPRESS', 'UNCOMPRESSED_LENGTH', 'UNHEX', 'UNIQUE_USERS', 'UNIX_TIMESTAMP', 'UPDATEXML', 'UPPER', 'USER', 'UTC_DATE', 'UTC_TIME', 'UTC_TIMESTAMP',
         'UUID', 'VARIANCE', 'VAR_POP', 'VAR_SAMP', 'VERSION', 'WEEK', 'WEEKDAY', 'WEEKOFYEAR', 'WITHIN', 'X', 'Y', 'YEAR', 'YEARWEEK'
-    );
+    ];
 
     // Punctuation that can be used as a boundary between other tokens
-    protected static $boundaries = array(',', ';',':', ')', '(', '.', '=', '<', '>', '+', '-', '*', '/', '!', '^', '%', '|', '&', '#');
+    protected static $boundaries = [',', ';', ':', ')', '(', '.', '=', '<', '>', '+', '-', '*', '/', '!', '^', '%', '|', '&', '#'];
 
     // For HTML syntax highlighting
     // Styles applied to different token types
@@ -191,12 +191,12 @@ class SqlFormatter
      */
     public static function getCacheStats()
     {
-        return array(
-            'hits'=>self::$cache_hits,
-            'misses'=>self::$cache_misses,
-            'entries'=>count(self::$token_cache),
-            'size'=>strlen(serialize(self::$token_cache))
-        );
+        return [
+            'hits' => self::$cache_hits,
+            'misses' => self::$cache_misses,
+            'entries' => count(self::$token_cache),
+            'size' => strlen(serialize(self::$token_cache))
+        ];
     }
 
     /**
@@ -204,7 +204,8 @@ class SqlFormatter
      */
     protected static function init()
     {
-        if (self::$init) return;
+        if (self::$init)
+            return;
 
         // Sort reserved word list from longest word to shortest, 3x faster than usort
         $reservedMap = array_combine(self::$reserved, array_map('strlen', self::$reserved));
@@ -212,12 +213,12 @@ class SqlFormatter
         self::$reserved = array_keys($reservedMap);
 
         // Set up regular expressions
-        self::$regex_boundaries = '('.implode('|',array_map(array(__CLASS__, 'quote_regex'),self::$boundaries)).')';
-        self::$regex_reserved = '('.implode('|',array_map(array(__CLASS__, 'quote_regex'),self::$reserved)).')';
-        self::$regex_reserved_toplevel = str_replace(' ','\\s+','('.implode('|',array_map(array(__CLASS__, 'quote_regex'),self::$reserved_toplevel)).')');
-        self::$regex_reserved_newline = str_replace(' ','\\s+','('.implode('|',array_map(array(__CLASS__, 'quote_regex'),self::$reserved_newline)).')');
+        self::$regex_boundaries = '(' . implode('|', array_map([__CLASS__, 'quote_regex'], self::$boundaries)) . ')';
+        self::$regex_reserved = '(' . implode('|', array_map([__CLASS__, 'quote_regex'], self::$reserved)) . ')';
+        self::$regex_reserved_toplevel = str_replace(' ', '\\s+', '(' . implode('|', array_map([__CLASS__, 'quote_regex'], self::$reserved_toplevel)) . ')');
+        self::$regex_reserved_newline = str_replace(' ', '\\s+', '(' . implode('|', array_map([__CLASS__, 'quote_regex'], self::$reserved_newline)) . ')');
 
-        self::$regex_function = '('.implode('|',array_map(array(__CLASS__, 'quote_regex'),self::$functions)).')';
+        self::$regex_function = '(' . implode('|', array_map([__CLASS__, 'quote_regex'], self::$functions)) . ')';
 
         self::$init = true;
     }
@@ -234,106 +235,124 @@ class SqlFormatter
     protected static function getNextToken($string, $previous = null)
     {
         // Whitespace
-        if (preg_match('/^\s+/',$string,$matches)) {
-            return array(
+        if (preg_match('/^\s+/', $string, $matches))
+        {
+            return [
                 self::TOKEN_VALUE => $matches[0],
-                self::TOKEN_TYPE=>self::TOKEN_TYPE_WHITESPACE
-            );
+                self::TOKEN_TYPE => self::TOKEN_TYPE_WHITESPACE
+            ];
         }
 
         // Comment
-        if ($string[0] === '#' || (isset($string[1])&&($string[0]==='-'&&$string[1]==='-') || ($string[0]==='/'&&$string[1]==='*'))) {
+        if ($string[0] === '#' || (isset($string[1]) && ($string[0] === '-' && $string[1] === '-') || ($string[0] === '/' && $string[1] === '*')))
+        {
             // Comment until end of line
-            if ($string[0] === '-' || $string[0] === '#') {
+            if ($string[0] === '-' || $string[0] === '#')
+            {
                 $last = strpos($string, "\n");
                 $type = self::TOKEN_TYPE_COMMENT;
-            } else { // Comment until closing comment tag
+            }
+            else
+            { // Comment until closing comment tag
                 $last = strpos($string, "*/", 2) + 2;
                 $type = self::TOKEN_TYPE_BLOCK_COMMENT;
             }
 
-            if ($last === false) {
+            if ($last === false)
+            {
                 $last = strlen($string);
             }
 
-            return array(
+            return [
                 self::TOKEN_VALUE => substr($string, 0, $last),
-                self::TOKEN_TYPE  => $type
-            );
+                self::TOKEN_TYPE => $type
+            ];
         }
 
         // Quoted String
-        if ($string[0]==='"' || $string[0]==='\'' || $string[0]==='`' || $string[0]==='[') {
-            $return = array(
-                self::TOKEN_TYPE => (($string[0]==='`' || $string[0]==='[')? self::TOKEN_TYPE_BACKTICK_QUOTE : self::TOKEN_TYPE_QUOTE),
+        if ($string[0] === '"' || $string[0] === '\'' || $string[0] === '`' || $string[0] === '[')
+        {
+            $return = [
+                self::TOKEN_TYPE => (($string[0] === '`' || $string[0] === '[') ? self::TOKEN_TYPE_BACKTICK_QUOTE : self::TOKEN_TYPE_QUOTE),
                 self::TOKEN_VALUE => self::getQuotedString($string)
-            );
+            ];
 
             return $return;
         }
 
         // User-defined Variable
-        if (($string[0] === '@' || $string[0] === ':') && isset($string[1])) {
-            $ret = array(
+        if (($string[0] === '@' || $string[0] === ':') && isset($string[1]))
+        {
+            $ret = [
                 self::TOKEN_VALUE => null,
                 self::TOKEN_TYPE => self::TOKEN_TYPE_VARIABLE
-            );
+            ];
 
             // If the variable name is quoted
-            if ($string[1]==='"' || $string[1]==='\'' || $string[1]==='`') {
-                $ret[self::TOKEN_VALUE] = $string[0].self::getQuotedString(substr($string,1));
+            if ($string[1] === '"' || $string[1] === '\'' || $string[1] === '`')
+            {
+                $ret[self::TOKEN_VALUE] = $string[0] . self::getQuotedString(substr($string, 1));
             }
             // Non-quoted variable name
-            else {
-                preg_match('/^('.$string[0].'[a-zA-Z0-9\._\$]+)/',$string,$matches);
-                if ($matches) {
+            else
+            {
+                preg_match('/^(' . $string[0] . '[a-zA-Z0-9\._\$]+)/', $string, $matches);
+                if ($matches)
+                {
                     $ret[self::TOKEN_VALUE] = $matches[1];
                 }
             }
 
-            if($ret[self::TOKEN_VALUE] !== null) return $ret;
+            if ($ret[self::TOKEN_VALUE] !== null)
+                return $ret;
         }
 
         // Number (decimal, binary, or hex)
-        if (preg_match('/^([0-9]+(\.[0-9]+)?|0x[0-9a-fA-F]+|0b[01]+)($|\s|"\'`|'.self::$regex_boundaries.')/',$string,$matches)) {
-            return array(
+        if (preg_match('/^([0-9]+(\.[0-9]+)?|0x[0-9a-fA-F]+|0b[01]+)($|\s|"\'`|' . self::$regex_boundaries . ')/', $string, $matches))
+        {
+            return [
                 self::TOKEN_VALUE => $matches[1],
-                self::TOKEN_TYPE=>self::TOKEN_TYPE_NUMBER
-            );
+                self::TOKEN_TYPE => self::TOKEN_TYPE_NUMBER
+            ];
         }
 
         // Boundary Character (punctuation and symbols)
-        if (preg_match('/^('.self::$regex_boundaries.')/',$string,$matches)) {
-            return array(
+        if (preg_match('/^(' . self::$regex_boundaries . ')/', $string, $matches))
+        {
+            return [
                 self::TOKEN_VALUE => $matches[1],
-                self::TOKEN_TYPE  => self::TOKEN_TYPE_BOUNDARY
-            );
+                self::TOKEN_TYPE => self::TOKEN_TYPE_BOUNDARY
+            ];
         }
 
         // A reserved word cannot be preceded by a '.'
         // this makes it so in "mytable.from", "from" is not considered a reserved word
-        if (!$previous || !isset($previous[self::TOKEN_VALUE]) || $previous[self::TOKEN_VALUE] !== '.') {
+        if (!$previous || !isset($previous[self::TOKEN_VALUE]) || $previous[self::TOKEN_VALUE] !== '.')
+        {
             $upper = strtoupper($string);
             // Top Level Reserved Word
-            if (preg_match('/^('.self::$regex_reserved_toplevel.')($|\s|'.self::$regex_boundaries.')/', $upper,$matches)) {
-                return array(
-                    self::TOKEN_TYPE=>self::TOKEN_TYPE_RESERVED_TOPLEVEL,
-                    self::TOKEN_VALUE=>substr($string,0,strlen($matches[1]))
-                );
+            if (preg_match('/^(' . self::$regex_reserved_toplevel . ')($|\s|' . self::$regex_boundaries . ')/', $upper, $matches))
+            {
+                return [
+                    self::TOKEN_TYPE => self::TOKEN_TYPE_RESERVED_TOPLEVEL,
+                    self::TOKEN_VALUE => substr($string, 0, strlen($matches[1]))
+                ];
             }
             // Newline Reserved Word
-            if (preg_match('/^('.self::$regex_reserved_newline.')($|\s|'.self::$regex_boundaries.')/', $upper,$matches)) {
-                return array(
-                    self::TOKEN_TYPE=>self::TOKEN_TYPE_RESERVED_NEWLINE,
-                    self::TOKEN_VALUE=>substr($string,0,strlen($matches[1]))
-                );
+            if (preg_match('/^(' . self::$regex_reserved_newline . ')($|\s|' . self::$regex_boundaries . ')/', $upper, $matches))
+            {
+                return [
+                    self::TOKEN_TYPE => self::TOKEN_TYPE_RESERVED_NEWLINE,
+                    self::TOKEN_VALUE => substr($string, 0, strlen($matches[1]))
+                ];
             }
             // Other Reserved Word
-            if (preg_match('/^('.self::$regex_reserved.')($|\s|'.self::$regex_boundaries.')/', $upper,$matches)) {
-                return array(
-                    self::TOKEN_TYPE=>self::TOKEN_TYPE_RESERVED,
-                    self::TOKEN_VALUE=>substr($string,0,strlen($matches[1]))
-                );
+            if (preg_match('/^(' . self::$regex_reserved . ')($|\s|' . self::$regex_boundaries . ')/', $upper, $matches))
+            {
+                return [
+                    self::TOKEN_TYPE => self::TOKEN_TYPE_RESERVED,
+                    self::TOKEN_VALUE => substr($string, 0, strlen($matches[1]))
+                ];
             }
         }
 
@@ -341,20 +360,21 @@ class SqlFormatter
         // this makes it so "count(" is considered a function, but "count" alone is not
         $upper = strtoupper($string);
         // function
-        if (preg_match('/^('.self::$regex_function.'[(]|\s|[)])/', $upper,$matches)) {
-            return array(
-                self::TOKEN_TYPE=>self::TOKEN_TYPE_RESERVED,
-                self::TOKEN_VALUE=>substr($string,0,strlen($matches[1])-1)
-            );
+        if (preg_match('/^(' . self::$regex_function . '[(]|\s|[)])/', $upper, $matches))
+        {
+            return [
+                self::TOKEN_TYPE => self::TOKEN_TYPE_RESERVED,
+                self::TOKEN_VALUE => substr($string, 0, strlen($matches[1]) - 1)
+            ];
         }
 
         // Non reserved word
-        preg_match('/^(.*?)($|\s|["\'`]|'.self::$regex_boundaries.')/',$string,$matches);
+        preg_match('/^(.*?)($|\s|["\'`]|' . self::$regex_boundaries . ')/', $string, $matches);
 
-        return array(
+        return [
             self::TOKEN_VALUE => $matches[1],
-            self::TOKEN_TYPE  => self::TOKEN_TYPE_WORD
-        );
+            self::TOKEN_TYPE => self::TOKEN_TYPE_WORD
+        ];
     }
 
     protected static function getQuotedString($string)
@@ -366,7 +386,8 @@ class SqlFormatter
         // 2. square bracket quoted string (SQL Server) using ]] to escape
         // 3. double quoted string using "" or \" to escape
         // 4. single quoted string using '' or \' to escape
-        if ( preg_match('/^(((`[^`]*($|`))+)|((\[[^\]]*($|\]))(\][^\]]*($|\]))*)|(("[^"\\\\]*(?:\\\\.[^"\\\\]*)*("|$))+)|((\'[^\'\\\\]*(?:\\\\.[^\'\\\\]*)*(\'|$))+))/s', $string, $matches)) {
+        if (preg_match('/^(((`[^`]*($|`))+)|((\[[^\]]*($|\]))(\][^\]]*($|\]))*)|(("[^"\\\\]*(?:\\\\.[^"\\\\]*)*("|$))+)|((\'[^\'\\\\]*(?:\\\\.[^\'\\\\]*)*(\'|$))+))/s', $string, $matches))
+        {
             $ret = $matches[1];
         }
 
@@ -398,17 +419,19 @@ class SqlFormatter
         $current_length = strlen($string);
 
         // Keep processing the string until it is empty
-        while ($current_length) {
+        while ($current_length)
+        {
             // If the string stopped shrinking, there was a problem
-            if ($old_string_len <= $current_length) {
-                $tokens[] = array(
-                    self::TOKEN_VALUE=>$string,
-                    self::TOKEN_TYPE=>self::TOKEN_TYPE_ERROR
-                );
+            if ($old_string_len <= $current_length)
+            {
+                $tokens[] = [
+                    self::TOKEN_VALUE => $string,
+                    self::TOKEN_TYPE => self::TOKEN_TYPE_ERROR
+                ];
 
                 return $tokens;
             }
-            $old_string_len =  $current_length;
+            $old_string_len = $current_length;
 
             // Determine if we can use caching
             if ($current_length >= self::$max_cachekey_size) {

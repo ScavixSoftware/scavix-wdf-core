@@ -161,7 +161,7 @@ class CheckTask extends Task
     private function pureCode($file,&$contains_at)
     {
         $res = '';
-        $commentTokens = array(T_COMMENT);
+        $commentTokens = [T_COMMENT];
         if (defined('T_DOC_COMMENT'))
             $commentTokens[] = T_DOC_COMMENT; // PHP 5
         if (defined('T_ML_COMMENT'))

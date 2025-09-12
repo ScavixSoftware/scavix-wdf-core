@@ -31,7 +31,7 @@ default_string('TITLE_WARNING', 'Warning');
 
 /**
  * Displays a uiDialog with an OK button.
- * 
+ *
  */
 class uiMessageBox extends uiDialog
 {
@@ -42,36 +42,36 @@ class uiMessageBox extends uiDialog
 	 */
     function __construct($message_text,$type='hint',$title='TITLE_WARNING')
 	{
-		$options = array(
-			'autoOpen'=>true,
-			'modal'=>true,
-			'width'=>450,
-			'height'=>300
+		$options = [
+            'autoOpen' => true,
+            'modal' => true,
+            'width' => 450,
+            'height' => 300
 
-		);
+        ];
 		parent::__construct($title,$options);
 		$this->class = $type;
 
 		$this->content($message_text);
 		$this->AddCloseButton(tds('BTN_OK','Ok'));
 	}
-	
+
 	/**
 	 * Creates a new uiMessageBox as hint.
-	 * 
+	 *
 	 * @param string $message Hint text
-	 * @return static A new uiMessagebox 
+	 * @return static A new uiMessagebox
 	 */
 	static function Hint($message)
 	{
 		return new uiMessageBox($message,'hint','');
 	}
-	
+
 	/**
 	 * Creates a new uiMessageBox as error.
-	 * 
+	 *
 	 * @param string $message Error text
-	 * @return static A new uiMessagebox 
+	 * @return static A new uiMessagebox
 	 */
 	static function Error($message)
 	{

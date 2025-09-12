@@ -183,7 +183,7 @@ function system_config_default($reset = true)
     $CONFIG['system']['modules'] = [];
     $CONFIG['system']['default_page'] = \ScavixWDF\Base\HtmlPage::class;
     $CONFIG['system']['default_event'] = false;
-	$CONFIG['system']['tpl_ext'] = array("tpl.php");
+	$CONFIG['system']['tpl_ext'] = ["tpl.php"];
 
 	$CONFIG['system']['admin']['enabled']  = false;
 	$CONFIG['system']['admin']['username'] = false;
@@ -314,8 +314,8 @@ function system_parse_request_path()
 		// test for *.less request -> need to compile that to css
 		if( ends_iwith($_REQUEST['wdf_route'],".less") )
 		{
-            Wdf::$Request->RouteArgs = array($_REQUEST['wdf_route']);
-			$GLOBALS['routing_args'] = array($_REQUEST['wdf_route']); // compat
+            Wdf::$Request->RouteArgs = [$_REQUEST['wdf_route']];
+            $GLOBALS['routing_args'] = [$_REQUEST['wdf_route']]; // compat
 			unset($_REQUEST['wdf_route']);
 			unset($_GET['wdf_route']);
 			return ['ScavixWDF\WdfResource','CompileLess'];
@@ -443,7 +443,7 @@ function system_execute()
     Wdf::$Request->CurrentController = $current_controller;
     Wdf::$Request->CurrentEvent = $current_event;
 
-    execute_hooks(HOOK_PRE_CONSTRUCT, array($current_controller, $current_event));
+    execute_hooks(HOOK_PRE_CONSTRUCT, [$current_controller, $current_event]);
 
     Wdf::$Request->CurrentController = $current_controller
         = system_instanciate_controller($current_controller);
@@ -458,10 +458,10 @@ function system_execute()
     }
 
     if (!isset($GLOBALS['wdf_route'])) // compat
-        $GLOBALS['wdf_route'] = array($current_controller, $current_event); // compat
+        $GLOBALS['wdf_route'] = [$current_controller, $current_event]; // compat
 
     if (!isset(Wdf::$Request->Route))
-        Wdf::$Request->Route = array($current_controller, $current_event);
+        Wdf::$Request->Route = [$current_controller, $current_event];
 
     $content = system_method_exists($current_controller, $current_event)
         ? system_invoke_request($current_controller, $current_event, HOOK_PRE_EXECUTE)
@@ -938,7 +938,7 @@ function system_stacktrace_to_string($stacktrace)
 	for($i=1; $i<=$stcnt; $i++)
 	{
 		$t0 = $stacktrace[$i-1];
-		$t1 = isset($stacktrace[$i]) ? $stacktrace[$i] : array("function" => "");
+		$t1 = isset($stacktrace[$i]) ? $stacktrace[$i] : ["function" => ""];
 
 		if( isset($t1['class']) && isset($t1['type']) )
 			$function = $t1['class'].$t1['type'].$t1['function'];
@@ -966,7 +966,7 @@ function __priorize_classpath($key_to_priorize)
 	global $CONFIG;
 
 	$cp = $CONFIG['class_path']['order'];
-	$CONFIG['class_path']['order'] = array($key_to_priorize);
+	$CONFIG['class_path']['order'] = [$key_to_priorize];
 	foreach( $cp as &$cp_item )
 		if( $CONFIG['class_path']['order'] != $key_to_priorize )
 			$CONFIG['class_path']['order'][] = $cp_item;
@@ -1685,11 +1685,11 @@ function name_from_constant($class_name,$constant_value,$prefix=false)
  * Will detect code that starts with '[jscode]' or 'function('
  * Example:
  * <code php>
- * array(
+ * [
  *		'test1'=>"function(){alert('1');}",   // <- works
  *		'test2'=>"[jscode]SomeFunctionName",  // <- SomeFunctionName must be defined in code
  *		'test3'=>"[jscode]alert('1')"         // <- wont work because it is a call!
- * )
+ * ]
  * <code>
  * will generate
  * <code javascript>
@@ -1888,7 +1888,7 @@ function create_class_alias($original,$alias,$strong=false)
 			return;
 
 		if( !is_array(Wdf::$ClassAliases[$alias]) )
-			Wdf::$ClassAliases[$alias] = array(Wdf::$ClassAliases[$alias]);
+			Wdf::$ClassAliases[$alias] = [Wdf::$ClassAliases[$alias]];
         elseif( in_array($original,Wdf::$ClassAliases[$alias]) )
             return;
 		Wdf::$ClassAliases[$alias][] = $original;

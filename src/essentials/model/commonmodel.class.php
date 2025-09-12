@@ -32,7 +32,7 @@ namespace ScavixWDF\Model;
 
 /**
  * Wrapper for anonymous chained database queries
- * 
+ *
  * Sometimes you will be too lazy to create a model class for each of your database tables.
  * Or perhaps there are some cross-tables that is not needed for, but you need to query them.
  * So this is for you:
@@ -44,10 +44,10 @@ namespace ScavixWDF\Model;
 class CommonModel extends Model
 {
 	public $_tableName = false;
-	
+
 	/**
 	 * Returns the table name
-	 * 
+	 *
 	 * In CommonModel this is what you wanted to query.
 	 * @return string Table name
 	 */
@@ -55,7 +55,7 @@ class CommonModel extends Model
 	{
 		return $this->_tableName;
 	}
-	
+
 	function __construct($datasource=null, $tablename=null)
     {
 		if( $tablename )
@@ -66,17 +66,17 @@ class CommonModel extends Model
 		}
 		parent::__construct($datasource);
 	}
-	
+
 	protected function __ensureResults($ctor_args=null)
 	{
 		if( !$ctor_args )
-			$ctor_args = array($this->_ds,$this->_tableName);
+			$ctor_args = [$this->_ds, $this->_tableName];
 		return parent::__ensureResults($ctor_args);
 	}
-	
+
     /**
      * Converts this instance to another Type.
-     * 
+     *
      * Can be called for single objects or for complete resultsets.
      * @param string $className Name of class to be used
      * @return Model|array The converted object/result array

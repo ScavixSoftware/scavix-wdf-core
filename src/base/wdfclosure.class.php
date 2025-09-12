@@ -26,7 +26,7 @@ namespace ScavixWDF\Base;
 
 /**
  * Implements persistable closures.
- * 
+ *
  * @see http://www.htmlist.com/development/extending-php-5-3-closures-with-serialization-and-reflection/
  * @todo Check if this is still needed in times of PHP8.1
  */
@@ -47,14 +47,14 @@ class WdfClosure
 		$this->code = $this->_fetchCode();
 		$this->used_variables = $this->_fetchUsedVariables();
     }
-    
+
 	public function __invoke(...$args)
 	{
 		return $this->reflection->invokeArgs($args);
 	}
 
 	/**
-	 * @internal 
+	 * @internal
 	 */
 	public function getClosure()
 	{
@@ -108,9 +108,9 @@ class WdfClosure
 
 		if (!preg_match('/function\s*\([^\)]*\)\s*use\s*\(([^\)]+)\)/U', $this->code, $m))
 			return;
-        
+
         $vars = explode(',',$m[1]);
-        
+
 		// Get the names of the variables inside the use statement
 //		$begin = strpos($this->code, '(', $use_index) + 1;
 //		$end = strpos($this->code, ')', $begin);
@@ -118,7 +118,7 @@ class WdfClosure
 
 		// Get the static variables of the function via reflection
 		$static_vars = $this->reflection->getStaticVariables();
-	
+
 		// Only keep the variables that appeared in both sets
 		$used_vars = [];
 		foreach ($vars as $var)
@@ -140,7 +140,7 @@ class WdfClosure
 
 	public function __sleep()
 	{
-		return array('code', 'used_variables');
+		return ['code', 'used_variables'];
 	}
 
 	public function __wakeup()

@@ -154,9 +154,9 @@ class DataSource
 		}catch(Exception $ex){ WdfDbException::Raise("Error connecting database",$dsn,$ex); }
 		if( !$this->_pdo )
 			WdfDbException::Raise("Something went horribly wrong with the PdoLayer");
-		$this->_pdo->setAttribute( PDO::ATTR_STATEMENT_CLASS, array( "\\ScavixWDF\\Model\\WdfPdoStatement", array($this,$this->_pdo) ) );
+		$this->_pdo->setAttribute( PDO::ATTR_STATEMENT_CLASS, ["\\ScavixWDF\\Model\\WdfPdoStatement", [$this, $this->_pdo]]);
 
-		$driver = $this->_pdo->getAttribute(PDO::ATTR_DRIVER_NAME);
+        $driver = $this->_pdo->getAttribute(PDO::ATTR_DRIVER_NAME);
 		switch( $driver )
 		{
 			case 'sqlite':
@@ -187,9 +187,9 @@ class DataSource
 		}catch(Exception $ex){ WdfDbException::Raise("Error connecting database",$this->_dsn,$ex); }
 		if( !$this->_pdo )
 			WdfDbException::Raise("Something went horribly wrong with the PdoLayer");
-		$this->_pdo->setAttribute( PDO::ATTR_STATEMENT_CLASS, array( "\\ScavixWDF\\Model\\WdfPdoStatement", array($this,$this->_pdo) ) );
+		$this->_pdo->setAttribute( PDO::ATTR_STATEMENT_CLASS, ["\\ScavixWDF\\Model\\WdfPdoStatement", [$this, $this->_pdo]]);
 
-		$driver = $this->_pdo->getAttribute(PDO::ATTR_DRIVER_NAME);
+        $driver = $this->_pdo->getAttribute(PDO::ATTR_DRIVER_NAME);
 		switch( $driver )
 		{
 			case 'sqlite':
@@ -218,7 +218,7 @@ class DataSource
 
 	function __sleep()
 	{
-		return array('_storage_id');
+		return ['_storage_id'];
 	}
 
 	function __wakeup()
@@ -228,7 +228,7 @@ class DataSource
 		{
 			$name = explode("::",$this->_storage_id,2);
 			if( count($name) < 2 )
-				$name = array($this->_storage_id,$this->_storage_id);
+				$name = [$this->_storage_id, $this->_storage_id];
 
 			$ds = model_datasource($name[1]);
 			if( $ds != null )
@@ -251,7 +251,7 @@ class DataSource
 	{
 		$name = explode("::",$this->_storage_id,2);
 		if( count($name) < 2 )
-			$name = array($this->_storage_id,$this->_storage_id);
+			$name = [$this->_storage_id, $this->_storage_id];
 
 		$ds = model_datasource($name[1]);
 		$this->_storage_id = $ds->_storage_id;
@@ -419,7 +419,7 @@ class DataSource
                 DataSource::$LogSlowQueriesSeconds = self::$registeredLogSlowQueries[$id];
             }
             if (!is_array($parameter))
-                $parameter = array($parameter);
+                $parameter = [$parameter];
 
             $stmt = $this->Prepare($sql);
 
