@@ -144,7 +144,7 @@ abstract class Task
     public function Fork($args = [], $method = 'run', $return_cmdline = false)
     {
         if (!function_exists("cli_run_taskprocessor"))
-            system_load_module('modules/cli.php');
+            system_load_module('essentials/cli.php');
 
         array_unshift($args, get_called_class() . "-{$method}");
         return cli_run_script(CLI_SELF, $args, $_SERVER, $return_cmdline);

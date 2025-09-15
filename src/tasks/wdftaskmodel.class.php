@@ -81,7 +81,7 @@ class WdfTaskModel extends Model
     {
         parent::__construct($datasource);
         if( !function_exists("cli_run_taskprocessor") )
-            system_load_module('modules/cli.php');
+            system_load_module('essentials/cli.php');
     }
 
     protected function CreateTable()
@@ -187,7 +187,7 @@ class WdfTaskModel extends Model
         $counter++;
 
         if( !function_exists("cli_run_taskprocessor") )
-            system_load_module('modules/cli.php');
+            system_load_module('essentials/cli.php');
         cli_run_taskprocessor($runtime_seconds);
 	}
 

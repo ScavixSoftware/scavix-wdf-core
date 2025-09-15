@@ -296,7 +296,10 @@ function cli_execute()
     // logging_add_category(getmypid());
     // logging_add_category(get_current_user());
 
-    $task = array_shift($argv);
+    do
+    {
+        $task = array_shift($argv);
+    } while (count($argv) > 0 && strpos($task, '-') === 0);
     if( !$task )
         \ScavixWDF\WdfException::Raise("Missing arguments");
 
