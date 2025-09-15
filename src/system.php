@@ -1001,8 +1001,11 @@ function system_spl_autoload($class_name)
 		{
 			$orig = $class_name;
 			$array = explode('\\',$class_name);
-			$class_name = $array[count($array)-1]; ;
+			$class_name = $array[count($array)-1];
+            if (strtolower($array[0]) != 'scavixwdf')
+                return;
 		}
+
         $file = __search_file_for_class($class_name) ?: __search_file_for_class($class_name, "trait.php");
         if( $file && is_readable($file) )
 		{
