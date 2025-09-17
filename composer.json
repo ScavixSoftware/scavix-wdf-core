@@ -1,6 +1,6 @@
 {
 	"name": "scavix/wdf-core",
-	"version": "1.0.1",
+	"version": "1.0.2",
 	"description": "Core components",
 	"type": "library",
 	"license": "LGPL-3.0-or-later",
@@ -26,7 +26,7 @@
 	},
 	"require": {
 		"php": ">=8.0",
-        "scavix/lessphp":"0.8.0"
+        "scavix/lessphp":"^0.8.1"
 	},
 	"suggest": {
 		"ext-xml": "Needed for some features",
@@ -39,8 +39,10 @@
             {
                 "name": "jQuery",
                 "version": "3.7.1",
+                "homepage": "https://jquery.com/",
                 "description": "jQuery is a fast, small, and feature-rich JavaScript library.",
                 "license": "MIT",
+                "author": "OpenJS Foundation and other contributors",
                 "files":
                 {
                     "res/jquery.js":"https://code.jquery.com/jquery-3.7.1.min.js"
@@ -49,8 +51,10 @@
             {
                 "name": "jQuery UI",
                 "version": "1.14.1",
+                "homepage": "https://jqueryui.com/",
                 "description": "jQuery UI is a curated set of user interface interactions, effects, widgets, and themes built on top of the jQuery JavaScript Library.",
                 "license": "MIT",
+                "author": "OpenJS Foundation and other contributors",
                 "files":
                 {
                     "res/jquery-ui/jquery-ui.js":"https://cdn.jsdelivr.net/npm/jquery-ui@1.14.1/dist/jquery-ui.min.js"
