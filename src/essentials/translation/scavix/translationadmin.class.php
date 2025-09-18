@@ -42,6 +42,7 @@ use ScavixWDF\Controls\Table\Table;
 use ScavixWDF\JQueryUI\Dialog\uiDialog;
 use ScavixWDF\Localization\Localization;
 use ScavixWDF\WdfException;
+use WdfAIHandler;
 
 /**
  * <SysAdmin> handler for translations.
@@ -579,7 +580,7 @@ class TranslationAdmin extends TranslationAdminBase
      */
 	function TranslateString($lang, $text)
 	{
-        return AjaxResponse::Json(['response' => ai_predict('Translate this text to '.strtoupper($lang).'. Please only return the translation:'.urldecode($text), [], 300)]);
+        return AjaxResponse::Json(['response' => WdfAIHandler::Predict('Translate this text to '.strtoupper($lang).'. Please only return the translation:'.urldecode($text), [], 300)]);
 	}
 
 	/**
