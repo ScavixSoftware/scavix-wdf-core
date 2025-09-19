@@ -138,8 +138,8 @@ EOPS;
      */
     function Run($args)
     {
-        $url = ifavail($args,'url');
-        $pdf = ifavail($args,'pdf');
+        $url = $args['url'] ?? '';
+        $pdf = $args['pdf'] ?? '';
         if( !$url || !$pdf )
         {
             log_info("Syntax: pdfprint url=<url> pdf=<filename>");
@@ -169,7 +169,7 @@ EOPS;
      */
     public static function IsPrinterCall()
     {
-        return stripos(ifavail($_SERVER,'HTTP_USER_AGENT')?:'',"WDF/Puppeteer") !== false;
+        return stripos($_SERVER['HTTP_USER_AGENT'] ?? '', "WDF/Puppeteer") !== false;
     }
 
     /**

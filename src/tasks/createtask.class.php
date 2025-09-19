@@ -45,8 +45,8 @@ class CreateTask extends Task
      */
     function App($args)
     {
-        $name = ifavail($args,'name');
-        $root = ifavail($args,'root');
+        $name = $args['name'] ?? '';
+        $root = $args['root'] ?? '';
         if( !$name || !$root )
         {
             $this->Run($args);

@@ -255,8 +255,8 @@ class DbTask extends Task
                 $exectime = microtime(true) - $exectime;
                 $cpuUsage = ($cputime / $exectime) * 100;
 
-                if (isDev() && $exectime>100 && $cpuUsage > 90)
-                    log_debug("High CPU-Usage: " . round($cpuUsage, 2) . "% for ".$exectime, ifavail($task, 'arguments'));
+                if (isDev() && $exectime > 100 && $cpuUsage > 90)
+                    log_debug("High CPU-Usage: " . round($cpuUsage, 2) . "% for " . $exectime, $task['arguments'] ?? null);
 
                 WdfTaskModel::SetState('idle');
                 usleep(10000);

@@ -284,7 +284,7 @@ class WdfTaskModel extends Model
             if($task->isVirtual)
                 $this->isVirtual = true;
             $task->children[] = $this;
-			$task = ifavail($task,'id');
+            $task = $task['id'] ?? null;
         }
 		if( !$task )
 			return $this;
@@ -578,7 +578,7 @@ class WdfTaskModel extends Model
 
             $exectime = round((microtime(true) - $exectime) * 1000);
 
-            $start = DateTimeEx::Make(ifavail($this,'start','created'));
+            $start = DateTimeEx::Make($this->start ?? $this->created ?? null);
             $runtime = max($exectime,round((microtime(true) - $start->getTimestamp()) * 1000));
             $worker->Finished($method,$runtime,$exectime);
 

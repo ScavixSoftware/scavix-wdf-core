@@ -81,8 +81,8 @@ abstract class WdfCronTask extends Task
     function RunInternal($args)
     {
         //log_debug(__METHOD__,$args);
-        $interval = ifavail($args,'interval')?:60;
-        if( !ifavail($args,'triggered') && !$this->mustRun($interval) )
+        $interval = $args['interval'] ?? 60;
+        if( empty($args['triggered']) && !$this->mustRun($interval) )
             return;
         try
         {

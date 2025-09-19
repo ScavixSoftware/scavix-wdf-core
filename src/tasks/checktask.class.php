@@ -61,7 +61,7 @@ class CheckTask extends Task
 
     function Strings($args)
     {
-        $dir = realpath(ifavail($args,'dir'));
+        $dir = realpath($args['dir'] ?? '');
         if( !$dir )
             return log_info("Syntax: check-strings dir=<base-folder>");
 
@@ -190,7 +190,7 @@ class CheckTask extends Task
 
     function php8($args)
     {
-        $dir = realpath(ifavail($args,'dir')?:'');
+        $dir = realpath($args['dir'] ?? '');
         if( !$dir || !avail($args,'dir') )
             return log_info("Syntax: check-php8 dir=<base-folder> [ignore=<wdf-folder>]");
 
@@ -224,7 +224,7 @@ class CheckTask extends Task
 
         $ignores = array_filter(array_map(
             'realpath',
-            force_array(ifavail($args,'ignore'))
+            force_array($args['ignore'] ?? null)
         ));
         $ignores[] = __SCAVIXWDF__;
 

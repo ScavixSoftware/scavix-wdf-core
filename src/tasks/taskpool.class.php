@@ -80,8 +80,8 @@ class TaskPool extends Task
      */
     function Run($args)
     {
-        $processors = max(1, min(100, intval(ifavail($args, 'processors') ?: '5')));
-        $delay = max(1000, min(10000, intval(ifavail($args, 'delay') ?: '1000')));
+        $processors = max(1, min(100, intval($args['processors'] ?? '5')));
+        $delay = max(1000, min(10000, intval($args['delay'] ?? '1000')));
         $min_tasks_required = $processors;
 
         while (true) // Loop for Reusable pools, (re-)load child-tasks from DB
