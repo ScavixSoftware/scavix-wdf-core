@@ -265,13 +265,12 @@ class FilesStore extends ObjectStore
             $filename = $this->getFile($id);
             if(@file_put_contents($filename, $content) === false)
             {
-//                log_error(__METHOD__, $filename, $GLOBALS['CONFIG']['session']['filesstore']['path'], $this->path, ifavail($GLOBALS, 'subsystem'));
                 usleep(100 * 1000);
                 $this->path = null;
                 $filename = $this->getFile($id);
                 if(@file_put_contents($filename, $content) !== false)
                 {
-//                    log_debug(__METHOD__, 'it worked', $filename, $GLOBALS['CONFIG']['session']['filesstore']['path'], $this->path, ifavail($GLOBALS, 'subsystem'));
+//                    log_debug(__METHOD__, 'it worked', $filename, $GLOBALS['CONFIG']['session']['filesstore']['path'], $this->path);
                 }
             }
         }

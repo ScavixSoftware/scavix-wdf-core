@@ -37,18 +37,18 @@ class jQueryTask extends \ScavixWDF\Tasks\Task
      */
     function GrabUI($args)
     {
-        $target = ifavail($args, 'target');
+        $target = $args['target'] ?? '';
         $target = $target?realpath($target.''):'';
         if( !$target || !is_dir($target) || !file_exists($target) )
         {
             log_error("Syntax: jquery-grabui target=<resource-folder> [version=<jq-version, default=1.14.1>] [<varname>=<value>|url=<url from downloaded themeroller file>]");
             return;
         }
-        $version = ifavail($args, 'version')?:'1.14.1';
-        if( $url = ifavail($args,'url') )
+        $version = $args['version'] ?? '1.14.1';
+        if ($url = ($args['url'] ?? null))
         {
             $url = parse_url($url);
-            if( count($url)==1 )
+            if (count($url) == 1)
                 parse_str(array_values($url)[0], $query);
             else
                 parse_str($url['query'], $query);
@@ -60,7 +60,7 @@ class jQueryTask extends \ScavixWDF\Tasks\Task
         {
             if (PHP_OS_FAMILY == "Linux")
             {
-                $decoded = shell_exec("echo " . ifavail($args, 'zThemeParams') . " | xxd -r -p - | lzma -dc 2>/dev/null");
+                $decoded = shell_exec("echo " . $args['zThemeParams'] . " | xxd -r -p - | lzma -dc 2>/dev/null");
                 if ($decoded && ($args = @json_decode($decoded, true)))
                     log_debug("Using overrides from zThemeParams, all other overrides are ignored", $args);
                 else
@@ -93,7 +93,7 @@ class jQueryTask extends \ScavixWDF\Tasks\Task
                 log_debug("Generating variable $name: $val;");
                 if( avail($args, $rawName) )
                 {
-                    $val = ifavail($args, $rawName);
+                    $val = $args[$rawName];
                     log_debug("-> value overwritten to $val");
                 }
 
@@ -106,7 +106,7 @@ class jQueryTask extends \ScavixWDF\Tasks\Task
                     $colName = str_replace('icons', 'iconColor', $rawName);
                     if( avail($args, $colName) )
                     {
-                        $hex = strtolower(trim(ifavail($args, $colName), ' #'));
+                        $hex = strtolower(trim($args[$colName] ?? '', ' #'));
                         $remote = str_replace("_{$match[1]}_", "_{$hex}_", $remote);
                         log_debug("-> icon color overwritten to $hex");
                     }
@@ -209,9 +209,9 @@ class jQueryTask extends \ScavixWDF\Tasks\Task
 
             $texture = str_replace("_", "-", $texture);
             $name = array_last(explode("exture", $k));
-            $op = ifavail($args, "bgImgOpacity{$name}") ?: '10';
-            $col = trim(ifavail($args, "bgColor{$name}") ?: '444444', ' #');
-            $size = ifavail($sizes, $texture) ?: '10x8';
+            $op = $args["bgImgOpacity{$name}"] ?? '10';
+            $col = trim($args["bgColor{$name}"] ?? '444444', ' #');
+            $size = $sizes[$texture] ?? '10x8';
 
             $args["bgImgUrl{$name}"] = "url(\"images/ui-bg_{$texture}_{$op}_{$col}_{$size}.png\")";
             $args["bg{$name}XPos"] = "50%";

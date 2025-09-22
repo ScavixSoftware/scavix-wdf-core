@@ -180,32 +180,32 @@ function unserializer_active()
  * @param bool $compare_classes Seems to be deprecated
  * @return bool true if eual, else false
  */
-function equals(&$o1, &$o2, $compare_classes=true)
+function equals(&$o1, &$o2, $compare_classes = true)
 {
-	if($o1 === $o2)
-		return true;
+    if ($o1 === $o2)
+        return true;
 
-	if( $compare_classes )
-	{
-		$iso1 = is_object($o1);
-		$iso2 = is_object($o2);
-		if(( !$iso1 && $iso2 ) || ( $iso1 && !$iso2 ))
-			return false;
-		if( !$iso1 && !$iso2 )
-			return ($o1 === $o2);
-	}
+    if ($compare_classes)
+    {
+        $iso1 = is_object($o1);
+        $iso2 = is_object($o2);
+        if ((!$iso1 && $iso2) || ($iso1 && !$iso2))
+            return false;
+        if (!$iso1 && !$iso2)
+            return ($o1 === $o2);
+    }
 
-	if( ($o1 instanceof Closure) || !($o2 instanceof Closure) )
-		return false;
-	if( !($o1 instanceof Closure) && ($o2 instanceof Closure) )
-		return false;
-	if( ($o1 instanceof Closure) && ($o2 instanceof Closure) && $o1==$o2 )
-		return true;
+    if (($o1 instanceof Closure) || !($o2 instanceof Closure))
+        return false;
+    if (!($o1 instanceof Closure) && ($o2 instanceof Closure))
+        return false;
+    if (($o1 instanceof Closure) && ($o2 instanceof Closure) && $o1 == $o2)
+        return true;
 
     return
-        (ifavail($o1, '_storage_id') ?: '-1')
+        ($o1->_storage_id ?? '-1')
         ==
-        (ifavail($o2, '_storage_id') ?: '-2');
+        ($o2->_storage_id ?? '-2');
 }
 
 /**

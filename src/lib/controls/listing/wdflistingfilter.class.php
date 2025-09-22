@@ -45,7 +45,7 @@ class WdfListingFilter extends Template
         $this->prefix = "lstfilter_{$controller}{$method}";
         if( $object )
         {
-            $id = ifavail($object,'id');
+            $id = $object->id ?? '';
             $this->prefix .= get_class_simple($object).$id;
         }
 

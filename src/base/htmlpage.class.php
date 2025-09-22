@@ -122,7 +122,7 @@ class HtmlPage extends Template implements ICallable
         $buffer = \ScavixWDF\Wdf::GetBuffer('wdf_js_strings')->mapToSession('wdf_js_strings');
         $jsstrings = $this->getJsRegisteredStrings();
         $jsstringsversion = md5(join('-', array_keys($jsstrings)) . '-' . join('-', $jsstrings));
-        if (ifavail($_SESSION, 'js_strings_version') != $jsstringsversion)
+        if (($_SESSION['js_strings_version'] ?? '') != $jsstringsversion)
         {
             foreach ($jsstrings as $id => $txt)
             {

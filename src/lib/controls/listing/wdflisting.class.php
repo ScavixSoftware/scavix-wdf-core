@@ -410,8 +410,8 @@ class WdfListing extends Control implements \ScavixWDF\ICallable
             if( count($sumcols)> 0 )
             {
                 $formats = [];
-                foreach( $this->formats as $n=>$v )
-                    $formats[$n] = $v ?: ifavail($this->columnCallbacks,$n);
+                foreach ($this->formats as $n => $v)
+                    $formats[$n] = $v ?: ($this->columnCallbacks[$n] ?? null);
 
                 $sql = preg_replace("/(\/\*BEG-ORDER\*\/)(.*)(\/\*END-ORDER\*\/)/", '$1$3', $sql);
                 $sql = str_replace('SELECT * ', 'SELECT '.implode(',', array_map(function($c) { return "`$c`"; }, $sumcols)).' ', $sql);
@@ -429,7 +429,7 @@ class WdfListing extends Control implements \ScavixWDF\ICallable
                         $i = array_search($name, $cols);
                         if ($i !== false)
                         {
-                            if ($f = ifavail($formats, $name))
+                            if ($f = ($formats[$name] ?? null))
                             {
                                 $f = new \ScavixWDF\Controls\Table\CellFormat($f);
                                 $val = $f->FormatContent($val, $this->ci);
@@ -899,7 +899,7 @@ class WdfListing extends Control implements \ScavixWDF\ICallable
         return $this;
     }
 
-    public $filter = false;
+    public WdfListingFilter|bool $filter = false;
 
     /**
      * Sets a data filter.
@@ -1139,16 +1139,16 @@ class WdfListing extends Control implements \ScavixWDF\ICallable
      */
     protected function isVisible($column_name)
     {
+        $is_optional = $this->optional_comluns[$column_name] ?? false;
         if( $this->gear_mode == self::GEAR_CHOOSE_OPTIONAL )
         {
-            if( !ifavail($this->optional_comluns, $column_name) )
+            if( !$is_optional )
                 return true;
-            // log_debug(__METHOD__, $column_name, $this->getSetting("hidden_{$column_name}", '???'));
             return !$this->getSetting("hidden_{$column_name}",false);
         }
         if( $this->hasSetting("hidden_{$column_name}") )
             return !$this->getSetting("hidden_{$column_name}",false);
-        return !ifavail($this->optional_comluns,$column_name);
+        return !$is_optional;
     }
 
     /**
@@ -1246,7 +1246,7 @@ class WdfListing extends Control implements \ScavixWDF\ICallable
         {
             if( $this->isVisible($name) )
             {
-                if( ifavail($this->optional_comluns,$name) )
+                if( $this->optional_comluns[$name] ?? false )
                     $this->delSetting("hidden_{$name}");
                 else
                     $this->setSetting("hidden_{$name}",true);
@@ -1365,9 +1365,9 @@ class WdfListing extends Control implements \ScavixWDF\ICallable
             {
                 if( is_string($this->javascript) )
                 {
-                    $js = preg_replace_callback('/\{([a-z0-9_]+)\}/i',function($m)use($row)
+                    $js = preg_replace_callback('/\{([a-z0-9_]+)\}/i', function ($m) use ($row)
                     {
-                        return ifavail($row,$m[1])?:'';
+                        return $row[$m[1]] ?? '';
                     },$this->javascript);
                     $tr->attr('onclick',"$js");
                 }
@@ -1376,9 +1376,9 @@ class WdfListing extends Control implements \ScavixWDF\ICallable
             }
             elseif( $this->details_link )
             {
-                $link = preg_replace_callback('/\{([a-z0-9_]+)\}/i',function($m)use($row)
+                $link = preg_replace_callback('/\{([a-z0-9_]+)\}/i', function ($m) use ($row)
                 {
-                    return ifavail($row,$m[1])?:''; //$m[0];
+                    return $row[$m[1]] ?? '';
                 },$this->details_link);
                 $tr->attr('onclick',"wdf.listings.rowclick(event,'$link')");
             }
@@ -1406,14 +1406,14 @@ class WdfListing extends Control implements \ScavixWDF\ICallable
                     $tr->NewCell(\ScavixWDF\Controls\Form\CheckBox::Make($this->_multiselectname)->setValue($row[$this->_multiselectidcolumn]));
                     break;
                 default:
-                    $td = $tr->NewCell(ifavail($row,$name));
+                    $td = $tr->NewCell($row[$name] ?? null);
                     if( !isset($this->columnCallbacks[$name]) )
                         $td->data('model-col',$name);
                     if( isset($this->colClasses[$name]) )
                     {
-                        $cls = preg_replace_callback('/\{([a-z0-9_]+)\}/i',function($m)use($raw_row_data)
+                        $cls = preg_replace_callback('/\{([a-z0-9_]+)\}/i', function ($m) use ($raw_row_data)
                         {
-                            return ifavail($raw_row_data,$m[1])?:'';
+                            return $raw_row_data[$m[1]] ?? '';
                         },$this->colClasses[$name]);
                         $td->addClass($cls);
                     }

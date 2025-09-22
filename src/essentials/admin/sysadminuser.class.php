@@ -29,38 +29,38 @@ namespace ScavixWDF\Admin;
 
 /**
  * Represents a user logged into <SysAdmin>.
- * 
+ *
  * @internal Has methods to login/logout/...
  */
-class SysAdminUser 
+class SysAdminUser
 {
     public $username, $role, $properties, $_storage_id;
-    
+
 	function __construct($data=[])
     {
         if( unserializer_active() )
             return;
-        $this->username = ifavail($data,'username');
-        $this->role = ifavail($data,'role')?:'admin';
+        $this->username = $data['username'] ?? '';
+        $this->role = $data['role'] ?? 'admin';
         $this->properties = array_filter
         (
-            $data, 
+            $data,
             function($k){ return !is_in($k,'username','password','role','enabled','actions'); },
             ARRAY_FILTER_USE_KEY
         );
     }
-    
+
     static function IsAuthenticated()
     {
         return restore_object('sysadmin_user') instanceof SysAdminUser;
     }
-    
+
     static function GetCurrent()
     {
         $user = restore_object('sysadmin_user');
         return ($user && ($user instanceof SysAdminUser))?$user:false;
     }
-    
+
     static function Login($username,$password)
     {
         $CFG = $GLOBALS['CONFIG']['system']['admin'];
@@ -78,21 +78,21 @@ class SysAdminUser
         }
         return false;
     }
-    
+
     function Logout()
     {
         delete_object('sysadmin_user');
     }
-    
+
     function hasAccess($controller,$method)
     {
         list($controller,$method) = array_map('strtolower',[$controller,$method]);
         $controller = array_last(explode("\\",$controller));
         switch( $controller )
         {
-            case 'login': 
+            case 'login':
                 return true;
-            case 'sysadmin': 
+            case 'sysadmin':
                 if( is_in($method,'forbidden','logout') )
                     return true;
                 break;
@@ -107,7 +107,7 @@ class SysAdminUser
         }
         return false;
     }
-    
+
     function getProperty($name, $default=false)
     {
         return isset($this->properties[$name])?$this->properties[$name]:$default;

@@ -8,7 +8,7 @@
     </div>
 <?php if( isset($user) && $user): ?>
     <span class="userinfo">
-        <?=ifavail($user,'username')?><br/>
+        <?=$user['username'] ?? ''?><br/>
         <a class="logout" href="<?=buildQuery('','')?>"><?=gethostname()?><i class="fas fa-backward"></i></a><br/>
         <a class="logout" href="<?=buildQuery('sysadmin', 'logout')?>">Logout<i class="fas fa-power-off"></i></a>
     </span>
@@ -17,7 +17,7 @@
 <?php if($hasmenu) { ?>
 <div class="side-menu">
     <div class="menu"><ul class="main">
-        <?php foreach($navlinks as $c) echo $c; ?>	
+        <?php foreach($navlinks as $c) echo $c; ?>
     </ul></div>
 </div>
 <?php } ?>
@@ -25,7 +25,7 @@
     <div class="content_header"><?=isset($page_title)&&$page_title?"<h4>$page_title</h4>":''?><?=(isset($pagetoolbar) && $pagetoolbar ? $pagetoolbar : '')?><?=$page->GenerateBreadcrumbNavigation()?></div>
     <div class="content <?=current_controller(true)?>_page <?=current_event()?>_subpage">
 		<?=(isset($intro)&&$intro)?"<p>$intro</p>":''?>
-		<?php foreach($content as $c) echo $c; ?>	
+		<?php foreach($content as $c) echo $c; ?>
 	</div>
     <div id="page_footer" class="no-print">
         <div class="copyright">

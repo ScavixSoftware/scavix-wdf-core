@@ -129,7 +129,7 @@ class RequestLogEntry extends Model
         $this->ip = get_ip_address();
         if (!$url)
         {
-            $url = ifavail(\ScavixWDF\Wdf::$Request, 'URL') ?: system_current_request(true);
+            $url = \ScavixWDF\Wdf::$Request['URL'] ?? system_current_request(true);
             $url = substr($url, strpos($url,"/",strpos($url, "://") + 3));
         }
         $this->url = $url;

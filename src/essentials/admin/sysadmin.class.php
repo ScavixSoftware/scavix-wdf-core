@@ -465,7 +465,7 @@ class SysAdmin extends HtmlPage
 
         $this->content("<h1>Database '$name'</h1>");
 
-        $versioning_mode = ifavail($_SESSION,'sysadmin_sql_versioning') == '1';
+        $versioning_mode = $_SESSION['sysadmin_sql_versioning'] ?? '0';
         if( $versioning_mode == '1' )
             \ScavixWDF\Controls\Form\Button::Textual("Show plain SQL create statements","wdf.controller.get('togglesqlmode',{on:0})")
                 ->appendTo($this);

@@ -725,8 +725,8 @@ function system_die_http($code)
         507 => "Insufficient Storage",
         511 => "Network Authentication Required",
     ];
-    $protocol = ifavail($_SERVER, 'SERVER_PROTOCOL') ?: 'HTTP/1.1';
-    header("$protocol $code " . (ifavail($codes, $code) ?: 'Unknown'), true, $code);
+    $protocol = $_SERVER['SERVER_PROTOCOL'] ?? 'HTTP/1.1';
+    header("$protocol $code " . ($codes[$code] ?? 'Unknown'), true, $code);
     die();
 }
 

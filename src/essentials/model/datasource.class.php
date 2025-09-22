@@ -85,12 +85,12 @@ class DataSource
 	 */
 	public static function Get($name=false)
 	{
-		if( !$name )
+        if (!$name)
         {
-            if( Model::$DefaultDatasource )
+            if (Model::$DefaultDatasource)
                 return Model::$DefaultDatasource;
-            foreach( $GLOBALS['CONFIG']['model'] as $name=>$mod )
-                if( ifavail($mod,'default') )
+            foreach ($GLOBALS['CONFIG']['model'] as $name => $mod)
+                if (($mod['default'] ?? false))
                     return model_datasource($name);
             \ScavixWDF\WdfException::Raise("No default datasource found! Use DataSource::SetDefault or CONFIG");
         }
@@ -139,9 +139,9 @@ class DataSource
 			if( $test['scheme'] == 'sqlite' )
 				$dsn = str_replace("://",":",$dsn);
 			else
-				$dsn = "{$test['scheme']}:host={$test['host']};dbname=".trim(ifavail($test,'path'),' /').";";
-			$username = ifavail($test,'user');
-			$password = ifavail($test,'pass');
+                $dsn = "{$test['scheme']}:host={$test['host']};dbname=" . trim($test['path'] ?? '', ' /') . ";";
+            $username = $test['user'] ?? '';
+            $password = $test['pass'] ?? '';
 		}
 
         $this->_storage_id = $alias;

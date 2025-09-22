@@ -1864,7 +1864,7 @@ function system_get_cookie_values($name, $raw_cookie_string)
         $cookies[ltrim($a[0])][] = urldecode($a[1].'');
         $tok                     = strtok(';');
     }
-    return ifavail($cookies, $name) ?: [];
+    return $cookies[$name] ?? [];
 }
 
 /** @see https://php.watch/versions/8.3/json_validate#polyfill */

@@ -115,7 +115,7 @@ function cli_run_script($php_script_path, $args=[], $extended_data=false, $retur
             if (array_key_exists($s, $inidata))
                 unset($inidata[$s]);
         }
-        foreach(array_unique(array_filter([ifavail($_SERVER, 'DOCUMENT_ROOT'), dirname($php_script_path), dirname($php_script_path).'/..', dirname($php_script_path).'/../..', dirname($php_script_path).'/../../..'])) as $dir)
+        foreach(array_unique(array_filter([$_SERVER['DOCUMENT_ROOT']??'', dirname($php_script_path), dirname($php_script_path).'/..', dirname($php_script_path).'/../..', dirname($php_script_path).'/../../..'])) as $dir)
         {
             if(@file_exists($ini_extrafile = $dir.'/.cli_php_extra.ini') && ($extra = parse_ini_file($ini_extrafile)) && ($extra !== false))
             {
