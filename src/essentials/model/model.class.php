@@ -1107,7 +1107,7 @@ abstract class Model implements Iterator, Countable, ArrayAccess, \ScavixWDF\ILo
 	 * Ensures a valid select query.
 	 *
 	 * Similar to <Model::noop> but will not add the `1=1` condition.
-	 * @return Model `clone $this`
+	 * @return static `clone $this`
 	 */
 	public function all()
 	{
@@ -1125,7 +1125,7 @@ abstract class Model implements Iterator, Countable, ArrayAccess, \ScavixWDF\ILo
 	 * // as andAll() is default that is the same like this
 	 * $q2 = MyModel::Make()->eq('id',1)->gt('sort',2);
 	 * </code>
-	 * @return Model `clone $this`
+	 * @return static `clone $this`
 	 */
 	function andAll()
 	{
@@ -1141,7 +1141,7 @@ abstract class Model implements Iterator, Countable, ArrayAccess, \ScavixWDF\ILo
 	 * <code php>
 	 * $q = MyModel::Make()->orAll()->eq('id',1)->eq('id',2);
 	 * </code>
-	 * @return Model `clone $this`
+	 * @return static `clone $this`
 	 */
 	function orAll()
 	{
@@ -1159,7 +1159,7 @@ abstract class Model implements Iterator, Countable, ArrayAccess, \ScavixWDF\ILo
 	 * // SELECT FROM my_model WHERE id=1 OR (sort>2 AND sort<10)
 	 * </code>
 	 * @param int $count How many following calls shall be AND-combined
-	 * @return Model `clone $this`
+	 * @return static `clone $this`
 	 */
 	function andX($count)
 	{
@@ -1177,7 +1177,7 @@ abstract class Model implements Iterator, Countable, ArrayAccess, \ScavixWDF\ILo
 	 * // SELECT FROM my_model WHERE id=1 OR (sort>2 AND sort<10)
 	 * </code>
 	 * @param int $count How many following calls shall be OR-combined
-	 * @return Model `clone $this`
+	 * @return static `clone $this`
 	 */
 	function orX($count)
 	{
@@ -1221,7 +1221,7 @@ abstract class Model implements Iterator, Countable, ArrayAccess, \ScavixWDF\ILo
 	 * Adds a HAVING statement.
 	 *
 	 * @param string $defaultOperator 'AND' or 'OR'
-	 * @return Model `clone $this`
+	 * @return static `clone $this`
 	 */
 	public function having($defaultOperator = "AND")
 	{
@@ -1236,7 +1236,7 @@ abstract class Model implements Iterator, Countable, ArrayAccess, \ScavixWDF\ILo
 	 *
 	 * @param string $sql_statement_part The raw SQL code
 	 * @param array $args The arguments of the raw SQL query part
-	 * @return Model `clone $this`
+	 * @return static `clone $this`
 	 */
 	public function sql($sql_statement_part,$args=[])
 	{
@@ -1252,7 +1252,7 @@ abstract class Model implements Iterator, Countable, ArrayAccess, \ScavixWDF\ILo
 	 * @param string $property Property-/Fieldname
 	 * @param mixed $value Value to check for
 	 * @param bool $value_is_sql if true, $value is treaded as SQL keyword/function/... and will remain unescaped (sample: now())
-	 * @return Model `clone $this`
+	 * @return static `clone $this`
 	 */
 	public function equal($property,$value,$value_is_sql=false)
 	{
@@ -1267,7 +1267,7 @@ abstract class Model implements Iterator, Countable, ArrayAccess, \ScavixWDF\ILo
 	 *
 	 * @param string $property Property-/Fieldname
 	 * @param mixed $value Value to check for
-	 * @return Model `clone $this`
+	 * @return static `clone $this`
 	 */
 	public function notEqual($property,$value)
 	{
@@ -1282,7 +1282,7 @@ abstract class Model implements Iterator, Countable, ArrayAccess, \ScavixWDF\ILo
 	 *
 	 * @param string $property Property-/Fieldname
 	 * @param mixed $value Value to check for
-	 * @return Model `clone $this`
+	 * @return static `clone $this`
 	 */
 	public function notBinary($property,$value)
 	{
@@ -1299,7 +1299,7 @@ abstract class Model implements Iterator, Countable, ArrayAccess, \ScavixWDF\ILo
 	 *
 	 * @param string $property Property-/Fieldname
 	 * @param mixed $value Value to check against
-	 * @return Model `clone $this`
+	 * @return static `clone $this`
 	 */
 	public function lowerThanOrEqualTo($property,$value)
 	{
@@ -1314,7 +1314,7 @@ abstract class Model implements Iterator, Countable, ArrayAccess, \ScavixWDF\ILo
 	 *
 	 * @param string $property Property-/Fieldname
 	 * @param mixed $value Value to check against
-	 * @return Model `clone $this`
+	 * @return static `clone $this`
 	 */
 	public function lowerThan($property,$value)
 	{
@@ -1329,7 +1329,7 @@ abstract class Model implements Iterator, Countable, ArrayAccess, \ScavixWDF\ILo
 	 *
 	 * @param string $property Property-/Fieldname
 	 * @param mixed $value Value to check against
-	 * @return Model `clone $this`
+	 * @return static `clone $this`
 	 */
 	public function greaterThanOrEqualTo($property,$value)
 	{
@@ -1345,7 +1345,7 @@ abstract class Model implements Iterator, Countable, ArrayAccess, \ScavixWDF\ILo
 	 * @param string $property Property-/Fieldname
 	 * @param mixed $value Value to check against
      * @param bool $value_is_sql if true, $value is treaded as SQL keyword/function/... and will fremain unescaped (sample: now())
-	 * @return Model `clone $this`
+	 * @return static `clone $this`
 	 */
 	public function greaterThan($property,$value,$value_is_sql=false)
 	{
@@ -1360,7 +1360,7 @@ abstract class Model implements Iterator, Countable, ArrayAccess, \ScavixWDF\ILo
 	 *
 	 * @param string $property Property-/Fieldname
 	 * @param mixed $value Value to check against
-	 * @return Model `clone $this`
+	 * @return static `clone $this`
 	 */
 	public function binary($property,$value)
 	{
@@ -1377,7 +1377,7 @@ abstract class Model implements Iterator, Countable, ArrayAccess, \ScavixWDF\ILo
 	 *
 	 * @param string $property Property-/Fieldname
 	 * @param mixed $value Value to check against
-	 * @return Model `clone $this`
+	 * @return static `clone $this`
 	 */
 	public function neqBinary($property,$value)
 	{
@@ -1396,7 +1396,7 @@ abstract class Model implements Iterator, Countable, ArrayAccess, \ScavixWDF\ILo
 	 * @param string $property Property-/Fieldname
 	 * @param mixed $value Value to check against
 	 * @param bool $flipped If true, expects the roles of $property and $value switched
-	 * @return Model `clone $this`
+	 * @return static `clone $this`
 	 */
 	public function like($property,$value,$flipped=false)
 	{
@@ -1417,7 +1417,7 @@ abstract class Model implements Iterator, Countable, ArrayAccess, \ScavixWDF\ILo
 	 * @param string $property Property-/Fieldname
 	 * @param mixed $value Value to check against
 	 * @param bool $flipped If true switches the roles of $property and $value
-	 * @return Model `clone $this`
+	 * @return static `clone $this`
 	 */
 	public function rlike($property,$value,$flipped=false)
 	{
@@ -1435,7 +1435,7 @@ abstract class Model implements Iterator, Countable, ArrayAccess, \ScavixWDF\ILo
 	 *
 	 * @param string $property Property-/Fieldname
 	 * @param array $values Array of values to check against
-	 * @return Model `clone $this`
+	 * @return static `clone $this`
 	 */
 	public function in($property,$values)
 	{
@@ -1453,7 +1453,7 @@ abstract class Model implements Iterator, Countable, ArrayAccess, \ScavixWDF\ILo
 	 *
 	 * @param string $property Property-/Fieldname
 	 * @param array $values Array of values to check against
-	 * @return Model `clone $this`
+	 * @return static `clone $this`
 	 */
 	public function notIn($property,$values)
 	{
@@ -1470,7 +1470,7 @@ abstract class Model implements Iterator, Countable, ArrayAccess, \ScavixWDF\ILo
 	 * Checks if a fields value is NULL.
 	 *
 	 * @param string $property Property-/Fieldname
-	 * @return Model `clone $this`
+	 * @return static `clone $this`
 	 */
 	public function isNull($property)
 	{
@@ -1484,7 +1484,7 @@ abstract class Model implements Iterator, Countable, ArrayAccess, \ScavixWDF\ILo
 	 * Checks if a fields value is NOT NULL.
 	 *
 	 * @param string $property Property-/Fieldname
-	 * @return Model `clone $this`
+	 * @return static `clone $this`
 	 */
 	public function notNull($property)
 	{
@@ -1500,7 +1500,7 @@ abstract class Model implements Iterator, Countable, ArrayAccess, \ScavixWDF\ILo
 	 * @param string $property Property-/Fieldname to order by
 	 * @param string $direction 'ASC' or 'DESC'
 	 * @param bool $checkfieldname Check the fieldname or not (true|false)
-	 * @return Model `clone $this`
+	 * @return static `clone $this`
 	 */
 	public function orderBy($property,$direction = "ASC",$checkfieldname=true)
 	{
@@ -1513,7 +1513,7 @@ abstract class Model implements Iterator, Countable, ArrayAccess, \ScavixWDF\ILo
 	/**
 	 * Like <Model::orderBy> but adds 'ORDER BY rand()'.
 	 *
-	 * @return Model `clone $this`
+	 * @return static `clone $this`
 	 */
 	public function shuffle()
 	{
@@ -1527,7 +1527,7 @@ abstract class Model implements Iterator, Countable, ArrayAccess, \ScavixWDF\ILo
 	 * Adds a groupBy statement to the query.
 	 *
 	 * @param string $property Property-/Fieldname to group by
-	 * @return Model `clone $this`
+	 * @return static `clone $this`
 	 */
 	public function groupBy($property)
 	{
@@ -1539,6 +1539,7 @@ abstract class Model implements Iterator, Countable, ArrayAccess, \ScavixWDF\ILo
 
 	/**
 	 * @shortcut <Model::page>(0,$limit);
+     * @return static `clone $this`
 	 */
 	public function limit($limit)
 	{
@@ -1550,7 +1551,7 @@ abstract class Model implements Iterator, Countable, ArrayAccess, \ScavixWDF\ILo
 	 *
 	 * @param int $offset Zero-based offset
 	 * @param int $items Maximum items to return
-	 * @return Model `clone $this`
+	 * @return static `clone $this`
 	 */
 	public function page($offset,$items)
 	{
@@ -1565,7 +1566,7 @@ abstract class Model implements Iterator, Countable, ArrayAccess, \ScavixWDF\ILo
 	 *
 	 * @param string $direction E.g. 'LEFT', 'RIGHT' or 'FULL'. Also 'LEFT OUTER'.
 	 * @param Model $model An instance of a Model subclass.
-	 * @return Model `clone $this`
+	 * @return static `clone $this`
 	 */
 	public function join($direction,$model)
 	{
@@ -1582,7 +1583,7 @@ abstract class Model implements Iterator, Countable, ArrayAccess, \ScavixWDF\ILo
 	 * @param string $property Properpy-/Fieldname
 	 * @param int $value Offset value
 	 * @param string $interval Unit
-	 * @return Model `clone $this`
+	 * @return static `clone $this`
 	 */
 	public function newerThan($property,$value,$interval)
 	{
@@ -1599,7 +1600,7 @@ abstract class Model implements Iterator, Countable, ArrayAccess, \ScavixWDF\ILo
 	 * @param string $property Properpy-/Fieldname
 	 * @param int $value Offset value
 	 * @param string $interval Unit
-	 * @return Model `clone $this`
+	 * @return static `clone $this`
 	 */
 	public function olderThan($property,$value,$interval)
 	{
@@ -1632,7 +1633,7 @@ abstract class Model implements Iterator, Countable, ArrayAccess, \ScavixWDF\ILo
      * @param string $startfieldname Name of the column containing the start date(-time)
      * @param string $endfieldname  Name of the column containing the end date(-time)
      * @param mixed $date The date value to be chacked against
-     * @return Model $this
+     * @return static $this
 	 */
 	public function isDateInRange($startfieldname, $endfieldname, $date = false)
 	{
@@ -1650,7 +1651,7 @@ abstract class Model implements Iterator, Countable, ArrayAccess, \ScavixWDF\ILo
 	 * $m1 = $q->eq('id',1)->current();
 	 * $m2 = $q->eq('id',2)->current();
 	 * </code>
-	 * @return Model `clone $this`
+	 * @return static `clone $this`
 	 */
 	public function noop()
 	{
@@ -1810,41 +1811,49 @@ abstract class Model implements Iterator, Countable, ArrayAccess, \ScavixWDF\ILo
 
 	/**
 	 * @shortcut <Model::equal>($property,$value,$value_is_sql)
+     * @return static
 	 */
 	function eq($property,$value,$value_is_sql=false) { return $this->equal($property,$value,$value_is_sql); }
 
 	/**
 	 * @shortcut <Model::notEqual>($property,$value)
+     * @return static
 	 */
 	function neq($property,$value) { return $this->notEqual($property,$value); }
 
 	/**
 	 * @shortcut <Model::lowerThanOrEqualTo>($property,$value)
+     * @return static
 	 */
 	function lte($property,$value) { return $this->lowerThanOrEqualTo($property,$value); }
 
 	/**
 	 * @shortcut <Model::newerThan>($property, $value, $interval)
+     * @return static
 	 */
 	public function yt($property,$value,$interval){ return $this->newerThan($property, $value, $interval); }
 
 	/**
 	 * @shortcut <Model::newerThan>($property, $value, $interval)
+     * @return static
 	 */
 	public function youngerThan($property,$value,$interval){ return $this->newerThan($property, $value, $interval); }
 
 	/**
 	 * @shortcut <Model::olderThan>($property, $value, $interval)
+     * @return static
 	 */
 	public function ot($property,$value,$interval){ return $this->olderThan($property, $value, $interval); }
 
 	/**
 	 * @shortcut <Model::lowerThan>($property, $value)
+     * @return static
 	 */
 	function lt($property,$value) { return $this->lowerThan($property,$value); }
 
 	/**
 	 * @shortcut <Model::greaterThanOrEqualTo>($property, $value)
+     * @return static
 	 */
 	function gte($property,$value) { return $this->greaterThanOrEqualTo($property,$value); }
 
@@ -1855,6 +1864,7 @@ abstract class Model implements Iterator, Countable, ArrayAccess, \ScavixWDF\ILo
 
     /**
      * @shortcut <Model::like>($property,"%$value%")
+     * @return static
      */
     function contains($property,$value)
     {
@@ -1864,6 +1874,7 @@ abstract class Model implements Iterator, Countable, ArrayAccess, \ScavixWDF\ILo
 
     /**
      * @shortcut <Model::like>($property,"$value%")
+     * @return static
      */
     function startsWith($property,$value)
     {
@@ -1873,6 +1884,7 @@ abstract class Model implements Iterator, Countable, ArrayAccess, \ScavixWDF\ILo
 
     /**
      * @shortcut <Model::like>($property,"%$value")
+     * @return static
      */
     function endsWith($property,$value)
     {
@@ -1886,7 +1898,7 @@ abstract class Model implements Iterator, Countable, ArrayAccess, \ScavixWDF\ILo
 	 * Callback function will receive each row as <Model> object and must return the (eventually changed) <Model> object.
 	 * Note that this method will not clone the result, but return the object itself!
 	 * @param mixed $callback Anonymous callback function
-	 * @return Model Returns `$this`
+	 * @return static Returns `$this`
 	 */
 	function process($callback)
 	{

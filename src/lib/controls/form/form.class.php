@@ -53,7 +53,7 @@ class Form extends Control
 	 * @param string $type See above for valid values
 	 * @param string $name name for the element created
 	 * @param string $value Value to be assigned (may be any valuetype)
-	 * @return Input|Control The created control
+	 * @return mixed The created control
 	 */
 	function AddInput($type,$name,$value='')
 	{
@@ -103,26 +103,31 @@ class Form extends Control
 
 	/**
 	 * @shortcut <Form::AddInput>('text',$name,$value)
+     * @return TextInput
 	 */
 	function AddText($name, $value=''){ return $this->AddInput('text', $name, $value); }
 
 	/**
 	 * @shortcut <Form::AddInput>('textarea',$name,$value)
+     * @return TextArea
 	 */
 	function AddTextArea($name, $value=''){ return $this->AddInput('textarea', $name, $value); }
 
 	/**
 	 * @shortcut <Form::AddInput>('password',$name,$value)
+     * @return PasswordInput
 	 */
 	function AddPassword($name, $value=''){ return $this->AddInput('password', $name, $value); }
 
 	/**
 	 * @shortcut <Form::AddInput>('hidden',$name,$value)
+     * @return HiddenInput
 	 */
 	function AddHidden($name, $value=''){ return $this->AddInput('hidden', $name, $value); }
 
 	/**
 	 * @shortcut <Form::AddInput>('file',$name,$value)
+     * @return FileInput
 	 */
 	function AddFile($name){ return $this->AddInput('file', $name); }
 

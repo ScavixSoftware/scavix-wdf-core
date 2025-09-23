@@ -721,6 +721,7 @@ function start_timer($name, $label=false)
  * @param string $name Timer  name
  * @param string $label Label to be written
  * @return void
+ * @suppress PHP0406,PHP0409
  */
 function hit_timer($name,$label='(no label)')
 {
