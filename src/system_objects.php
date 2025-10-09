@@ -28,6 +28,8 @@
 namespace ScavixWDF;
 
 use Exception;
+use ScavixWDF\Base\Renderable;
+use ScavixWDF\Model\ResultSet;
 
 if( !defined('FRAMEWORK_LOADED') || FRAMEWORK_LOADED != 'uSI7hcKMQgPaPKAQDXg5' ) die('');
 
@@ -240,6 +242,7 @@ class Wdf
                 {
                     if (time() >= $due)
                     {
+                        /** @var callable $cb */
                         $delay = $cb();
                         if ($delay > 0)
                             self::$timeouts[$id]['due'] = time() + $delay;
@@ -594,8 +597,6 @@ class WdfIncomingRequest
         if (!is_object($this->_currentController))
             return false;
         if (system_method_exists($this->_currentController, $this->_currentEvent))
-            return true;
-        if (system_method_exists($this->_currentController, '__method_exists') && $this->_currentController->__method_exists($this->_currentEvent))
             return true;
         return false;
     }
@@ -1076,8 +1077,8 @@ class WdfDbException extends WdfException
      */
     public static function RaiseStatement($statement)
 	{
-        if(!($statement instanceof Model\ResultSet))
-            $statement = new Model\ResultSet($statement->_ds, $statement);
+        if(!($statement instanceof ResultSet))
+            $statement = new ResultSet($statement->_ds, $statement);
 
         list($msg, $details) = self::_prepare(json_encode($statement->ErrorInfo()),$statement);
         $ex = new WdfDbException($msg);
