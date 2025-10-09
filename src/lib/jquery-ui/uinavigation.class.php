@@ -28,14 +28,15 @@
 namespace ScavixWDF\JQueryUI;
 
 use ScavixWDF\Controls\Anchor;
+use ScavixWDF\Reflection\Attributes\Resource;
 
 /**
  * This is a MenuBar like control.
- * 
+ *
  * Note: This is work in progress
- * @attribute[Resource('jquery-ui/ui.navigation.js')]
- * @attribute[Resource('jquery-ui/ui.navigation.css')]
  */
+#[Resource('jquery-ui/ui.navigation.js')]
+#[Resource('jquery-ui/ui.navigation.css')]
 class uiNavigation extends uiControl
 {
 	/**
@@ -52,7 +53,7 @@ class uiNavigation extends uiControl
 
 	/**
 	 * Adds an item to the menu.
-	 * 
+	 *
 	 * @param string $label Item label
 	 * @param string $href Link to open if clicked
 	 * @return uiNavigationItem The created item

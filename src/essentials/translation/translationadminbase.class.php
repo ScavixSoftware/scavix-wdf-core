@@ -30,12 +30,13 @@ namespace ScavixWDF\Translation;
 use ScavixWDF\Admin\SysAdmin;
 use ScavixWDF\Base\AjaxResponse;
 use ScavixWDF\Base\Template;
+use ScavixWDF\Reflection\Attributes\Text;
+use ScavixWDF\Reflection\NoMinifyAttribute;
 
 /**
  * Base class for translation handlers.
- *
- * @attribute[NoMinify]
  */
+#[NoMinifyAttribute()]
 abstract class TranslationAdminBase extends SysAdmin
 {
 	function __construct($title = "", $body_class = false)
@@ -96,8 +97,8 @@ abstract class TranslationAdminBase extends SysAdmin
 
     /**
 	 * @internal Delete a string
-     * @attribute[RequestParam('term','string')]
      */
+    #[Text('term')]
     function DeleteString($term)
     {
         $ds = model_datasource($GLOBALS['CONFIG']['translation']['sync']['datasource']);

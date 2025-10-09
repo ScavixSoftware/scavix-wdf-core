@@ -32,7 +32,7 @@ namespace ScavixWDF\Reflection;
 
 /**
  * Base class for ScavixWDF annotation implementation.
- * 
+ *
  * All attributes must inherit this class and can the be noted as attributes to classes and/or methods like this:
  * <at>attribute[classname(constructor arguments)]
  * - note that an argument class is named MyFirstAttribute the classname may be MyFirst or MyFirstAttribute
@@ -42,7 +42,7 @@ namespace ScavixWDF\Reflection;
  * <at>attribute[MyFirst('bla')]
  * <at>attribute[MyFirstAttribute()]
  * <at>attribute[MyFirst]
- * 
+ *
  * Some more samples can be found at <WdfReflector::GetClassAttributes>
  */
 class WdfAttribute
@@ -52,12 +52,16 @@ class WdfAttribute
 	public $Object = null;
 	public $Method = null;
 	public $Field = null;
-    
+
 	function __construct() {}
-	
-	function __sleep()
-	{
-		$this->Reflector = $this->Object = null;
-		return array_keys(get_object_vars($this));
-	}
+
+    function __sleep()
+    {
+        $this->Reflector = $this->Object = null;
+        $res = array_map(function ($a)
+        {
+            return $a->name;
+        }, WdfReflector::GetInstance($this)->getProperties(\ReflectionProperty::IS_PUBLIC));
+        return $res;
+    }
 }

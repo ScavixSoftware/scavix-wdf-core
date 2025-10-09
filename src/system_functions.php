@@ -41,7 +41,7 @@ define("HOOK_POST_EXECUTE",4);
 define("HOOK_PRE_FINISH",5);
 define("HOOK_POST_MODULE_INIT",6);
 define("HOOK_PING_RECIEVED",7);
-define("HOOK_ARGUMENTS_PARSED",300);
+define("HOOK_ARGUMENTS_PARSED",300); // deprecated
 define("HOOK_SYSTEM_DIE",999);
 
 /**

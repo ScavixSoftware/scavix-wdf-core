@@ -30,12 +30,16 @@
  */
 namespace ScavixWDF\Reflection;
 
+use Attribute;
+
 /**
  * Marks a class/method as public
- * 
+ *
  * Not sure if this is deprecated, but of course still usable to mark classes/methods as public.
  * Note: currently not used in ScavixWDF itself.
+ * @deprecated
  */
+#[Attribute(Attribute::TARGET_CLASS|Attribute::TARGET_METHOD)]
 class PublicAttribute extends WdfAttribute
 {
 }

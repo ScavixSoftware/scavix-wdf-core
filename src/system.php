@@ -39,12 +39,10 @@ require_once(__DIR__.'/system_functions.php');
 use ScavixWDF\Base\AjaxResponse;
 use ScavixWDF\Base\Args;
 use ScavixWDF\Base\Renderable;
-use ScavixWDF\ICallable;
 use ScavixWDF\Model\DataSource;
 use ScavixWDF\Reflection\WdfReflector;
 use ScavixWDF\Wdf;
 use ScavixWDF\WdfException;
-use ScavixWDF\WdfResource;
 
 // Homebrew CLI args if missing
 // see https://www.php.net/manual/en/ini.core.php#ini.register-argc-argv
@@ -123,6 +121,7 @@ function system_config_default($reset = true)
 		$CONFIG = [];
 
 	$CONFIG['class_path']['system'][]  = __DIR__.'/reflection/';
+    $CONFIG['class_path']['system'][]  = __DIR__.'/reflection/attributes/';
 	$CONFIG['class_path']['system'][]  = __DIR__.'/base/';
 	$CONFIG['class_path']['system'][]  = __DIR__.'/tasks/';
 	$CONFIG['class_path']['content'][] = __DIR__.'/lib/';
@@ -158,7 +157,7 @@ function system_config_default($reset = true)
 	$CONFIG['system']['header']['X-XSS-Protection'] = "1; mode=block";
     $CONFIG['system']['header']["Referrer-Policy"] = "strict-origin-when-cross-origin";
 
-    $path = explode("index.php",$_SERVER['PHP_SELF']);
+    $path = (strpos($_SERVER['PHP_SELF'], "index.php") !== false) ? explode("index.php", $_SERVER['PHP_SELF']) : ['/'];
     if(PHP_SAPI == 'cli')
         $path = ['/'];
 	if( !isset($_SERVER['REQUEST_SCHEME']) )
@@ -297,123 +296,6 @@ function system_init($application_name, $skip_header = false, $logging_category=
 }
 
 /**
- * Parses the request and returns a controller/event pair (if present).
- *
- * Note that your .htaccess files must contain these lines:
- * <code>
- * SetEnv WDF_FEATURES_REWRITE on
- * RewriteCond %{REQUEST_FILENAME} !-f
- * RewriteCond %{REQUEST_FILENAME} !-d
- * RewriteCond %{REQUEST_URI} !index.php
- * RewriteRule (.*) index.php?wdf_route=$1 [L,QSA]
- * </code>
- * @return array
- */
-function system_parse_request_path()
-{
-	if( isset($_REQUEST['wdf_route']) )
-	{
-		// test for *.less request -> need to compile that to css
-		if( ends_iwith($_REQUEST['wdf_route'],".less") )
-		{
-            Wdf::$Request->RouteArgs = [$_REQUEST['wdf_route']];
-            $GLOBALS['routing_args'] = [$_REQUEST['wdf_route']]; // compat
-			unset($_REQUEST['wdf_route']);
-			unset($_GET['wdf_route']);
-			return ['ScavixWDF\WdfResource','CompileLess'];
-		}
-
-		// now for the normal processing
-		if( isset($GLOBALS['CONFIG']['wdf_route_parser']) )
-        {
-            $path = $GLOBALS['CONFIG']['wdf_route_parser'];
-            $path = $path(explode("/",$_REQUEST['wdf_route']));
-        }
-        else
-            $path = explode("/",$_REQUEST['wdf_route']);
-        Wdf::$Request->Route = $path;
-		$GLOBALS['wdf_route'] = $path; // compat
-		unset($_REQUEST['wdf_route']);
-		unset($_GET['wdf_route']);
-
-		if( count($path)>0 )
-		{
-			if( $path[0]=='~' ) $path[0] = cfg_get('system','default_page');
-			$path[0] = fq_class_name($path[0]);
-			if( class_exists($path[0]) || in_object_storage($path[0]) )
-			{
-				$controller = $path[0];
-				if( count($path)>1 )
-				{
-                    $offset = 2;
-                    if( in_object_storage($path[0]) || system_method_exists($controller,$path[1]) )
-                        $event = $path[1];
-                    else
-                        $offset = 1;
-
-					if( count($path)>$offset )
-					{
-						foreach( array_slice($path,$offset) as $ra )
-                            if( $ra !== '' )
-                            {
-                                Wdf::$Request->RouteArgs[] = $ra;
-                                $GLOBALS['routing_args'][] = $ra; // compat
-                            }
-					}
-				}
-			}
-		}
-	}
-
-	if( !isset($controller) || !$controller )
-    {
-		$controller = Args::request('page', cfg_get('system','default_page')); // really oldschool
-        Wdf::$Request->UsingDefaultPage = true;
-    }
-	if( !isset($event) || !$event )
-    {
-		$event = Args::request('event', cfg_get('system','default_event')); // really oldschool
-        Wdf::$Request->UsingDefaultEvent = true;
-    }
-
-	$pattern = '/[^A-Za-z0-9\-_\\\\]/';
-	$controller = substr(preg_replace($pattern, "", $controller), 0, 256);
-	$event = substr(preg_replace($pattern, "", $event), 0, 256);
-	return [$controller,$event];
-}
-
-/**
- * Instanciates the previously chosen controller
- *
- * Checks what is requested: and object from the object-store, a controller via classname and loads/instaciates it.
- * Will also die in AJAX requests when something weird is called or throw an exception if in normal mode.
- * @param mixed $controller_id Whatever system_parse_request_path() returned
- * @return ICallable Fresh Instance of whatever is needed
- */
-function system_instanciate_controller($controller_id)
-{
-	if( in_object_storage($controller_id) )
-		$res = restore_object($controller_id);
-	elseif( class_exists($controller_id) )
-		$res = new $controller_id();
-	else
-		WdfException::Raise("ACCESS DENIED: Unknown controller '$controller_id'","REQ=",$_REQUEST);
-
-	if( system_is_ajax_call() )
-	{
-		if( !($res instanceof Renderable) && !($res instanceof WdfResource) )
-		{
-			log_fatal("ACCESS DENIED: $controller_id is no Renderable");
-			die("__SESSION_TIMEOUT__");
-		}
-	}
-	else if( !($res instanceof ICallable) )
-		WdfException::Raise("ACCESS DENIED: $controller_id is no ICallable");
-
-	return $res;
-}
-
-/**
  * Executes the current request.
  *
  * This is the second of two essential functions.
@@ -439,79 +321,11 @@ function system_execute()
 
     Args::strip_tags();
 
-    Wdf::$Request = new stdClass();
-    Wdf::$Request->URL = $GLOBALS['CONFIG']['system']['same_page'];
-    list($current_controller, $current_event) = system_parse_request_path();
-    Wdf::$Request->CurrentController = $current_controller;
-    Wdf::$Request->CurrentEvent = $current_event;
+    Wdf::$Request = Wdf::Request();
+    $content = Wdf::$Request->Invoke(HOOK_PRE_EXECUTE);
 
-    execute_hooks(HOOK_PRE_CONSTRUCT, [$current_controller, $current_event]);
-
-    Wdf::$Request->CurrentController = $current_controller
-        = system_instanciate_controller($current_controller);
-
-    if (system_method_exists($current_controller, '__translate_event'))
-        $current_event = call_user_func([$current_controller, '__translate_event'], $current_event);
-
-    if (!system_method_exists($current_controller, $current_event))
-    {
-        Wdf::$Request->CurrentEvent = $current_event
-            = cfg_get('system', 'default_event');
-    }
-
-    if (!isset($GLOBALS['wdf_route'])) // compat
-        $GLOBALS['wdf_route'] = [$current_controller, $current_event]; // compat
-
-    if (!isset(Wdf::$Request->Route))
-        Wdf::$Request->Route = [$current_controller, $current_event];
-
-    $content = system_method_exists($current_controller, $current_event)
-        ? system_invoke_request($current_controller, $current_event, HOOK_PRE_EXECUTE)
-        : '';
-
-    @set_time_limit(ini_get('max_execution_time'));
-    system_exit($content, false);
-}
-
-/**
- * Executes the given request.
- *
- * Will parse the target class/method for required parameters
- * and prepare the data given in the $_REQUEST variable to match them.
- * @param string $target_class Name of the class
- * @param string $target_event Name of the method
- * @param int $pre_execute_hook_type Type of Hook to be executed pre call
- * @return mixed The result of the target-methods
- */
-function system_invoke_request($target_class,$target_event,$pre_execute_hook_type)
-{
-	$ref = WdfReflector::GetInstance($target_class);
-	$params = $ref->GetMethodAttributes($target_event,"RequestParam");
-	$args = [];
-
-    if( count($params) > 0 )
-    {
-        $argscheck = [];
-        $failedargs = [];
-
-        $req_data = array_merge($_FILES,$_GET,$_POST);
-        $last = max(array_keys($params));
-        foreach( $params as $i=>$prm )
-        {
-            $argscheck[$prm->Name] = $prm->UpdateArgs($req_data,$args,$i==$last);
-            if( $argscheck[$prm->Name] !== true )
-            {
-                $failedargs[$prm->Name] = "ARGUMENT FAILED";
-                $args[$prm->Name] = "ARGUMENT FAILED";
-            }
-        }
-
-        if( count($failedargs) > 0 )
-            execute_hooks(HOOK_ARGUMENTS_PARSED, $failedargs);
-    }
-
-	execute_hooks($pre_execute_hook_type,array($target_class,$target_event,$args));
-	return call_user_func_array(array(&$target_class,$target_event), array_values($args));
+	@set_time_limit(ini_get('max_execution_time'));
+	system_exit($content,false);
 }
 
 /**
@@ -766,6 +580,9 @@ function register_hook($type,&$handler_obj,$handler_method,$prepend=false)
         array_unshift(Wdf::$Hooks[$type],[$handler_obj, $handler_method]);
 	else
         Wdf::$Hooks[$type][] = [$handler_obj, $handler_method];
+
+    if ($type == HOOK_ARGUMENTS_PARSED && isDev())
+        log_warn("Deprecated use of hook HOOK_ARGUMENTS_PARSED from " . system_get_caller());
 }
 
 /**
@@ -1283,15 +1100,7 @@ function buildQuery($controller,$event="",$data="", $url_root=false)
  */
 function samePage($data="")
 {
-    if( avail(Wdf::$Request,'URL') )
-    {
-        if( !$data )
-            return Wdf::$Request->URL;
-        if( is_array($data) )
-            $data = http_build_query($data);
-        return array_first(explode("?",Wdf::$Request->URL))."?{$data}";
-    }
-	return buildQuery(current_controller(),current_event(),$data);
+    return Wdf::Request()->samePage($data);
 }
 
 /**
@@ -1584,15 +1393,7 @@ function cache_list_keys($global_cache=true, $session_cache=true)
  */
 function current_controller($as_string=true)
 {
-	if( !isset(Wdf::$Request->CurrentController) )
-		return $as_string?'':null;
-	if( $as_string )
-		return strtolower(
-            is_object(Wdf::$Request->CurrentController)
-                ?get_class_simple(Wdf::$Request->CurrentController)
-                :Wdf::$Request->CurrentController
-            );
-	return Wdf::$Request->CurrentController;
+    return empty(Wdf::$Request) ? ($as_string ? '' : null) : Wdf::$Request->getController($as_string);
 }
 
 /**
@@ -1603,7 +1404,7 @@ function current_controller($as_string=true)
  */
 function current_event()
 {
-	return isset(Wdf::$Request->CurrentEvent)?strtolower(Wdf::$Request->CurrentEvent):'';
+	return empty(Wdf::$Request) ? '' : Wdf::$Request->getEvent();
 }
 
 /**

@@ -34,6 +34,8 @@ use ScavixWDF\Model\DataSource;
 use ScavixWDF\JQueryUI\Dialog\uiDialog;
 use ScavixWDF\Controls\Form\Select;
 use ScavixWDF\Controls\Table\DatabaseTable;
+use ScavixWDF\Reflection\Attributes\Integer;
+use ScavixWDF\Reflection\Attributes\Text;
 
 /**
  * High level listing control.
@@ -1252,8 +1254,8 @@ class WdfListing extends Control implements \ScavixWDF\ICallable
 
     /**
      * @internal Toggles a columns visibility
-     * @attribute[RequestParam('name','string',false)]
      */
+    #[Text('name','')]
     function ToggleColumn($name)
     {
         if( $this->gear_mode == self::GEAR_CHOOSE_OPTIONAL )
@@ -1286,8 +1288,8 @@ class WdfListing extends Control implements \ScavixWDF\ICallable
 
     /**
 	 * @internal Will be polled via AJAX to change the page if you defined a pager using <DatabaseTable::AddPager>
-	 * @attribute[RequestParam('number','int')]
 	 */
+    #[Integer('number',1)]
 	function GotoPage($number)
 	{
         $this->table->SetStorage(self::Storage());
@@ -1301,8 +1303,8 @@ class WdfListing extends Control implements \ScavixWDF\ICallable
 
     /**
 	 * @internal Will be polled via AJAX to reload listing. Optionally for a specific state.
-	 * @attribute[RequestParam('state_id','string','')]
 	 */
+    #[Text('state_id','')]
     function Reload($state_id)
     {
 //        log_debug("Reload($state_id)");
@@ -1341,8 +1343,8 @@ class WdfListing extends Control implements \ScavixWDF\ICallable
 
     /**
      * @internal Switch data sorting
-     * @attribute[RequestParam('name','string',false)]
      */
+    #[Text('name','')]
     function Sort($name)
     {
         if( !$name || !isset($this->columns[$name]) )
@@ -1585,9 +1587,9 @@ class WdfListing extends Control implements \ScavixWDF\ICallable
 
     /**
      * @internal Ajax callback for data export.
-     * @attribute[RequestParam('target','string',false)]
-     * @attribute[RequestParam('format','string',false)]
      */
+    #[Text('target',false)]
+    #[Text('format',false)]
     public function Export($target, $format)
     {
         WdfListing::$Exporting = true;

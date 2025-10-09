@@ -31,14 +31,15 @@
 namespace ScavixWDF\JQueryUI;
 
 use ScavixWDF\Base\Control;
+use ScavixWDF\Reflection\Attributes\Resource;
 
 /**
  * A TreeView control.
- * 
+ *
  * Nodes are represented by <uiTreeNode> objects
- * @attribute[Resource('jquery-ui/ui.treeview.js')]
- * @attribute[Resource('jquery-ui/ui.treeview.js')]
  */
+#[Resource('jquery-ui/ui.treeview.js')]
+#[Resource('jquery-ui/ui.treeview.css')]
 class uiTreeView extends uiControl
 {
 	public $Url = false;
@@ -69,7 +70,7 @@ class uiTreeView extends uiControl
 
 	/**
 	 * Adds a root node to the tree
-	 * 
+	 *
 	 * Returns the node object so you may chain adding subnodes:
 	 * <code php>
 	 * $sub = uiTreeView::Make()->AddRootNode("Root1")->AddNode("Subnode 1");
@@ -90,7 +91,7 @@ class uiTreeView extends uiControl
 
 /**
  * Represents a tree node in a <uiTreeView>.
- * 
+ *
  */
 class uiTreeNode extends Control
 {
@@ -113,7 +114,7 @@ class uiTreeNode extends Control
 
 	/**
 	 * Adds a subnode.
-	 * 
+	 *
 	 * This creates a new <uiTreeNode> object and returns it for method chaining:
 	 * <code php>
 	 * $sub = uiTreeView::Make()->AddRootNode("Root1")->AddNode("Subnode 1");

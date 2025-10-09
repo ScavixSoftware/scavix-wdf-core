@@ -30,6 +30,7 @@
  */
 namespace ScavixWDF\Base;
 
+use ScavixWDF\Reflection\Attributes\Resource;
 use ScavixWDF\WdfException;
 
 /**
@@ -37,8 +38,8 @@ use ScavixWDF\WdfException;
  *
  * Each template consist of a logic part and a layout part. The logic part is optional and can be handled
  * by this (base) class (see <Template::Make>).
- * @attribute[Resource('jquery.js')]
  */
+#[Resource('jquery.js')]
 class Template extends Renderable
 {
 	public $_data = [];

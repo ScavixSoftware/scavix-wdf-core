@@ -27,16 +27,18 @@
  */
 namespace ScavixWDF\JQueryUI;
 
+use ScavixWDF\Reflection\Attributes\Resource;
+
 default_string("TXT_UNKNOWN", 'Unknown');
-	
+
 /**
  * This is a container for UI elements.
- * 
- * May be deprecated, we used it in the past for widget based UI designs. 
+ *
+ * May be deprecated, we used it in the past for widget based UI designs.
  * It's kind of a dialog, but not exactly and contain clickable icons in the header.
- * @attribute[Resource('jquery-ui/ui.container.js')]
- * @attribute[Resource('jquery-ui/ui.container.css')]
  */
+#[Resource('jquery-ui/ui.container.js')]
+#[Resource('jquery-ui/ui.container.css')]
 class uiContainer extends uiControl
 {
 	/**
@@ -52,7 +54,7 @@ class uiContainer extends uiControl
 
 	/**
 	 * Adds a button to the header section.
-	 * 
+	 *
 	 * @param string $icon A valid <uiControl::Icon>
 	 * @param string $function JS code to be executed on click
 	 * @return static

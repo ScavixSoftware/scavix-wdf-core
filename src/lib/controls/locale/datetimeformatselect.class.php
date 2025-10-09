@@ -34,12 +34,13 @@ use ScavixWDF\Base\AjaxResponse;
 use ScavixWDF\Controls\Form\Select;
 use ScavixWDF\Localization\DateTimeFormat;
 use ScavixWDF\Localization\Localization;
+use ScavixWDF\Reflection\Attributes\Resource;
+use ScavixWDF\Reflection\Attributes\Text;
 
 /**
  * Selector for datetime formats.
- *
- * @attribute[Resource('locale_settings.js')]
  */
+#[Resource('locale_settings.js')]
 class DateTimeFormatSelect extends Select
 {
 	public $culture_code;
@@ -91,10 +92,10 @@ class DateTimeFormatSelect extends Select
 	 * Returns a list of option elements.
 	 *
 	 * Called via AJAX to dynamically update the control.
-	 * @attribute[RequestParam('culture_code','string')]
 	 * @param string $culture_code Selected culture code
 	 * @return <AjaxResponse::Text> Html string with options
 	 */
+    #[Text('culture_code')]
 	public function ListOptions($culture_code)
 	{
 		$this->culture_code = $culture_code;

@@ -33,12 +33,13 @@ namespace ScavixWDF\Controls\Locale;
 use ScavixWDF\Base\AjaxResponse;
 use ScavixWDF\Controls\Form\Select;
 use ScavixWDF\Localization\Localization;
- 
+use ScavixWDF\Reflection\Attributes\Resource;
+use ScavixWDF\Reflection\Attributes\Text;
+
 /**
  * Selector for currency formats.
- * 
- * @attribute[Resource('locale_settings.js')]
  */
+#[Resource('locale_settings.js')]
 class CurrencyFormatSelect extends Select
 {
 	/**
@@ -51,7 +52,7 @@ class CurrencyFormatSelect extends Select
 		$this->script("Locale_Settings_Init();");
 		$this->data('role', 'currenyformat');
 		$this->data('controller', buildQuery($this->id));
-		
+
 		if( $selected_format )
 			$this->setValue( $selected_format );
 		$samples = $this->getCurrencySamples($currency_code,1234.56,true);
@@ -59,15 +60,15 @@ class CurrencyFormatSelect extends Select
 			$this->AddOption($code, $label);
 		store_object($this);
 	}
-	
+
 	/**
 	 * Returns a list of option elements.
-	 * 
+	 *
 	 * Called via AJAX to dynamically update the control.
-	 * @attribute[RequestParam('currency','string')]
 	 * @param string $currency Valid currency string
 	 * @return <AjaxResponse::Text> Html string with options
 	 */
+    #[Text('currency')]
 	public function ListOptions($currency)
 	{
 		$samples = $this->getCurrencySamples($currency,1234.56,true);
@@ -76,7 +77,7 @@ class CurrencyFormatSelect extends Select
 			$res[] = "<option value='$code'>$item</option>";
 		return AjaxResponse::Text(implode("\n",$res));
 	}
-	
+
 	private function getCurrencySamples($currency_code, $sample_value, $unique_values = false)
 	{
 		$cultures = Localization::get_currency_culture_codes($currency_code);

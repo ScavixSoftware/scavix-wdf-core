@@ -29,13 +29,13 @@ namespace ScavixWDF\JQueryUI;
 
 use ScavixWDF\Base\Control;
 use ScavixWDF\Controls\Table\Table;
+use ScavixWDF\Reflection\Attributes\Resource;
 
 /**
  * Wrapper class to ensure jQueryUI is loaded.
- *
- * @attribute[Resource('jquery-ui/jquery-ui.js')]
- * @attribute[Resource('jquery-ui/jquery-ui.less')]
  */
+#[Resource('jquery-ui/jquery-ui.js')]
+#[Resource('jquery-ui/jquery-ui.less')]
 class uiTable extends Table
 {
 	/**

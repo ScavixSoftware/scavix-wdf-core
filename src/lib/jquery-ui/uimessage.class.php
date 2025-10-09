@@ -28,13 +28,14 @@
 namespace ScavixWDF\JQueryUI;
 
 use ScavixWDF\Base\Control;
+use ScavixWDF\Reflection\Attributes\Resource;
 
 /**
  * This is an inline message.
  *
  * Will use the jQueryUI standard theming.
- * @attribute[Resource('jquery-ui/ui.message.css')]
  */
+#[Resource('jquery-ui/ui.message.css')]
 class uiMessage extends uiControl
 {
 	public $sub;

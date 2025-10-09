@@ -38,14 +38,18 @@ use ScavixWDF\Controls\Form\Select;
 use ScavixWDF\Controls\Form\TextInput;
 use ScavixWDF\Controls\Table\Table;
 use ScavixWDF\Model\Model;
+use ScavixWDF\Reflection\Attributes\Boolean;
+use ScavixWDF\Reflection\Attributes\RequestParam;
+use ScavixWDF\Reflection\Attributes\Text;
+use ScavixWDF\Reflection\NoMinifyAttribute;
 
 /**
  * ScavixWDF sysadmin page
  *
  * This is a tweak mechanism that allows you to manage your application.
  * For example you can create strings, manage the cache and check the PHP configuration.
- * @attribute[NoMinify]
  */
+#[NoMinifyAttribute()]
 class SysAdmin extends HtmlPage
 {
 	public $PrefedinedCacheSearches = ['autoload_template', 'autoload_class',
@@ -186,9 +190,9 @@ class SysAdmin extends HtmlPage
 
     /**
 	 * @internal SysAdmin login page.
-     * @attribute[RequestParam('username','string','')]
-     * @attribute[RequestParam('password','string','')]
      */
+    #[Text('username')]
+    #[Text('password')]
 	function Login($username,$password)
 	{
         if( !$username || !$password )
@@ -217,10 +221,10 @@ class SysAdmin extends HtmlPage
 
 	/**
 	 * @internal SysAdmin cache manager.
-	 * @attribute[RequestParam('search','string',false)]
-	 * @attribute[RequestParam('show_info','bool',false)]
-	 * @attribute[RequestParam('kind','string','Search key')]
      */
+    #[Text('search','')]
+    #[Text('show_info','')]
+    #[Text('kind','Search key')]
     function Cache($search,$show_info,$kind)
     {
 		$this->setTitle('Cache contents');
@@ -278,7 +282,6 @@ class SysAdmin extends HtmlPage
 			$tabform->action = buildQuery('sysadmin','cachedelmany');
 			$tab = $tabform->content(new Table())->addClass('bordered');
 			$tab->SetHeader('','key','action');
-			$q = buildQuery('sysadmin','cachedel');
 			foreach( cache_list_keys() as $key )
 			{
 				$found = ($kind=='Search content')
@@ -290,7 +293,7 @@ class SysAdmin extends HtmlPage
 					$cb->value = $key;
 
 					$del = new Anchor('','delete');
-					$del->onclick = "$.post('$q',{key:'".addslashes($key)."'},function(){ $('#{$del->id}').parents('.tr').fadeOut(function(){ $(this).remove(); }); })";
+                    $del->onclick = "wdf.controller.post('cachedel',{key:'".addslashes($key)."'},function(){ $('#{$del->id}').parents('.tr').fadeOut(function(){ $(this).remove(); }); })";
 					$tab->AddNewRow($cb,$key,$del);
 				}
 			}
@@ -308,8 +311,8 @@ class SysAdmin extends HtmlPage
 
 	/**
 	 * @internal SysAdmin cache manager: delete event.
-	 * @attribute[RequestParam('key','string',false)]
      */
+    #[Text('key','')]
     function CacheDel($key)
 	{
 		cache_del($key);
@@ -318,8 +321,8 @@ class SysAdmin extends HtmlPage
 
 	/**
 	 * @internal SysAdmin cache manager: delete many event.
-	 * @attribute[RequestParam('keys','array',array())]
      */
+    #[RequestParam('keys','array',[])]
 	function CacheDelMany($keys)
 	{
 		foreach( $keys as $k )
@@ -338,10 +341,10 @@ class SysAdmin extends HtmlPage
 
 	/**
 	 * @internal SysAdmin phpinfo.
-	 * @attribute[RequestParam('extension','string',false)]
-	 * @attribute[RequestParam('search','string',false)]
-	 * @attribute[RequestParam('dump_server','bool',false)]
 	 */
+    #[Text('extension','')]
+    #[Text('search','')]
+    #[Boolean('dump_server')]
 	function PhpInfo($extension,$search,$dump_server)
 	{
         $this->setTitle('PHP info');
@@ -448,9 +451,9 @@ class SysAdmin extends HtmlPage
 
 	/**
 	 * @internal SysAdmin database info.
-	 * @attribute[RequestParam('name','string',false)]
-	 * @attribute[RequestParam('table','string',false)]
 	 */
+    #[Text('name','')]
+    #[Text('table','')]
 	function Database($name,$table)
 	{
         $this->setTitle('Database');
@@ -614,8 +617,8 @@ class SysAdmin extends HtmlPage
 
     /**
 	 * @internal SysAdmin toggle database info mode.
-	 * @attribute[RequestParam('on','bool',false)]
 	 */
+    #[Boolean('on')]
     function ToggleSqlMode($on)
     {
         $_SESSION['sysadmin_sql_versioning'] = $on?1:0;

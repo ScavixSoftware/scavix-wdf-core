@@ -32,12 +32,12 @@ namespace ScavixWDF\Controls\Locale;
 
 use ScavixWDF\Controls\Form\Select;
 use ScavixWDF\Localization\Localization;
+use ScavixWDF\Reflection\Attributes\Resource;
 
 /**
  * Timezone selector.
- *
- * @attribute[Resource('locale_settings.js')]
  */
+#[Resource('locale_settings.js')]
 class TimezoneSelect extends Select
 {
 	/**

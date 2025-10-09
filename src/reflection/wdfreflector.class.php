@@ -30,10 +30,15 @@
  */
 namespace ScavixWDF\Reflection;
 
+use Attribute;
 use Exception;
+use ReflectionAttribute;
 use ReflectionClass;
 use ReflectionProperty;
 use ScavixWDF\Base\Control;
+use ScavixWDF\Reflection\Attributes\ExternalResource;
+use ScavixWDF\Reflection\Attributes\RequestParam;
+use ScavixWDF\Reflection\Attributes\Resource;
 
 /**
  * Wraps ReflectionClass and provides additional functionality regarding Attributes and DocComments
@@ -180,6 +185,63 @@ class WdfReflector extends ReflectionClass
 		return $comment;
 	}
 
+    private function _getAttributes_PHP8($filter, $object = false, $method = false, $field = false, $allowAttrInheritance = true)
+    {
+        $newFilter = is_array($filter) ? $filter : [$filter];
+        foreach ($newFilter as $i => $f)
+        {
+            switch (strtolower($f))
+            {
+                case 'public':
+                case 'nominify':
+                    $f .= "Attribute";
+                    break;
+                case 'resource':
+                    $f = Resource::class;
+                    break;
+                case 'externalresource':
+                    $f = ExternalResource::class;
+                    break;
+                case 'requestparam':
+                    $f = RequestParam::class;
+                    break;
+            }
+            $newFilter[$i] = fq_class_name($f);
+        }
+
+        $ref = $method ?: $this;
+        $res = [];
+        foreach ($ref->getAttributes() as $attr)
+        {
+            $name = $attr->getName();
+            $add = count($newFilter) == 0;
+            foreach ($newFilter as $f)
+            {
+                // log_debug($name, $f,is_a($name,$f,true)?"IS":"ISNOT",is_subclass_of($name, $f)?"ISSUB":"ISNOTSUB");
+                if( is_a($name,$f,true) )
+                {
+                    $add = $allowAttrInheritance || !is_subclass_of($name, $f);
+                    break;
+                }
+            }
+
+            if ($add)
+            {
+                $attr = $attr->newInstance();
+                $attr->Reflector = $this;
+                $attr->Class = $this->Classname;
+                if ($object && is_object($object))
+                    $attr->Object = $object;
+                if ($method)
+                    $attr->Method = $method->getName();
+                if ($field)
+                    $attr->Field = $field;
+                $res[] = $attr;
+            }
+        }
+        return $res;
+    }
+
 	private function _getAttributes($comment,$filter,$object=false,$method=false,$field=false,$allowAttrInheritance=true)
 	{
 		$pattern = '/@attribute\[([^\]]*)\]/im';
@@ -237,7 +299,7 @@ class WdfReflector extends ReflectionClass
 				$attr->Reflector = $this;
 				$attr->Class = $this->Classname;
 				if( $object && is_object($object) ) $attr->Object = $object;
-				if( $method ) $attr->Method = $method;
+				if( $method ) $attr->Method = $method->getName();
 				if( $field ) $attr->Field = $field;
 				$res[] = $attr;
 			}
@@ -285,14 +347,20 @@ class WdfReflector extends ReflectionClass
 	public function GetClassAttributes($filter=[], $allowAttrInheritance=true)
 	{
 		if( !is_array($filter) )
-			$filter = [$filter];
+			$filter = array($filter);
 
 		$res = $this->_getCached($this->Classname,$filter);
 		if( $res )
 			return $res;
 
+        $res = $this->_getAttributes_PHP8($filter, $this->Instance, false, false, $allowAttrInheritance);
+        if( !empty($res) )
+            return $res;
+
 		$comment = $this->_getComment();
 		$res = $this->_getAttributes($comment,$filter,$this->Instance,false,false,$allowAttrInheritance);
+        if (!empty($res) && isDev())
+            log_warn($this->getName()." has attributes in DocComment. Consider using real attribute syntax instead.");
 		$this->_setCached("",$filter,$res);
 
 		return $res;
@@ -312,19 +380,20 @@ class WdfReflector extends ReflectionClass
 		$cache_key = $this->Classname."::".$method_name;
 		$res = $this->_getCached($cache_key,$filter);
 		if( $res !== false )
-		{
-//			die("cached ".render_var($res));
 			return $res;
-		}
+
 		if( !$this->hasMethod($method_name) )
 			return [];
 
 		$method = $this->getMethod($method_name);
-		$method_name = $method->getName();
+        $res = $this->_getAttributes_PHP8($filter, $this->Instance, $method, false, $allowAttrInheritance);
+        if( !empty($res) )
+            return $res;
 
 		$comment = $this->_getComment($method_name);
-
-		$res = $this->_getAttributes($comment,$filter,$this->Instance,$method_name,false,$allowAttrInheritance);
+        $res = $this->_getAttributes($comment, $filter, $this->Instance, $method, false, $allowAttrInheritance);
+        if (!empty($res) && isDev())
+            log_warn($this->getName()."::{$method_name} has attributes in DocComment. Consider using real attribute syntax instead.");
 		$this->_setCached($cache_key,$filter,$res);
 		return $res;
 	}

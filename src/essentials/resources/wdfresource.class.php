@@ -27,9 +27,12 @@
  */
 namespace ScavixWDF;
 
+use ScavixWDF\Reflection\Attributes\PathData;
+use ScavixWDF\Reflection\Attributes\Text;
+
 /**
  * This is a wrapper/router for system (ScavixWDF) resources.
- * 
+ *
  * It tries to map *WdfResource* urls to the file in the local filessystem and writes it out using readfile().
  * This is to let users place the ScavixWDF folder outside the doc root while still beeing able to access resources in there
  * without having to create a domain for that. Natually doing that would be better because faster!
@@ -38,7 +41,7 @@ class WdfResource implements ICallable
 {
 	/**
 	 * Writes out correct cache headers.
-	 * 
+	 *
 	 * Writes best matching and of course correct caching headers to the browser
 	 * for a given file (full path).
 	 * @param string $file Full path and filename
@@ -72,68 +75,75 @@ class WdfResource implements ICallable
 		}
 		cache_set("etag_$etag",$mtime);
 	}
-    
+
     /**
 	 * @internal Returns a resource
-	 * @attribute[RequestParam('res','string')]
 	 */
+    #[PathData('~~/{res}',res:'')]
+    #[Text('res','')]
     function res($res)
     {
-        if( ends_iwith($res, '.js') )
+        if( ends_iwith($res, '.less') )
+            $this->CompileLess($res);
+        elseif( ends_iwith($res, '.js') )
             $this->js($res);
         else
             $this->skin($res);
     }
-	
+
 	/**
 	 * @internal Returns a JS resource
-	 * @attribute[RequestParam('res','string')]
 	 */
+    #[PathData('~~/{res}',res:'')]
+    #[Text('res','')]
 	function js($res)
 	{
 		$res = array_first(explode("?",$res));
         $res = resFile($res,true);
-        
+
 		if( $res )
 		{
             header('Content-Type: text/javascript');
-            
+
 			WdfResource::ValidatedCacheResponse($res);
 			readfile($res);
             die();
 		}
         system_die_http(404);
 	}
-	
+
 	/**
 	 * @internal Returns a CSS resource
-	 * @attribute[RequestParam('res','string')]
 	 */
+    #[PathData('~~/{res}',res:'')]
+    #[Text('res','')]
 	function skin($res)
 	{
-		$url = array_first(explode("?",$res));
+        $url = array_first(explode("?", $res ?? ''));
 		$res = resFile($res,true);
 
 		if( $res )
 		{
             header('Content-Type: '.system_guess_mime($res));
-            
+
 			WdfResource::ValidatedCacheResponse($res);
             die( $this->resolveUrls($res,dirname($url)) );
 		}
         system_die_http(404);
 	}
-	
+
 	/**
 	 * @internal Compiles a LESS file to CSS and delivers that to the browser
-	 * @attribute[RequestParam('file','string')]
 	 */
+    #[PathData('~~/{file}',file:'')]
+    #[PathData('~/{file}',file:'')]
+    #[Text('file','')]
 	function CompileLess($file)
 	{
 		$vars = isset($_SESSION['resources_less_variables'])?$_SESSION['resources_less_variables']:[];
         $dirs = isset($_SESSION['resources_less_dirs'])?$_SESSION['resources_less_dirs']:false;
 		$file_key = md5($file.serialize($vars).serialize($dirs).substr(appendVersion('/'),1));
-		
+
 		$less = resFile(basename($file),true);
         if( !$less )
         {
@@ -145,14 +155,14 @@ class WdfResource implements ICallable
 		$tmpfolder = system_app_temp_dir('less',false);
 		$css = $tmpfolder.$file_key.'.css';
 		$cacheFile = $tmpfolder.$file_key.'.cache';
-		
+
 		header('Content-Type: text/css');
-		
+
 		if( file_exists($css) && file_exists($cacheFile) )
 			$cache = unserialize(file_get_contents($cacheFile))?:$less;
 		else
 			$cache = $less;
-		
+
 		//require_once(__DIR__.'/lessphp/lessc.inc.php');
 		$compiler = new LessCompiler();
 		$compiler->setVariables($vars);
@@ -168,16 +178,15 @@ class WdfResource implements ICallable
 		WdfResource::ValidatedCacheResponse($less);
         die( $this->resolveUrls($css) );
 	}
-	
+
 	/**
 	 * @internal Returns a JS file containing all for JS-usage registered texts
-	 * @attribute[RequestParam('file','string')]
 	 */
 	function Texts()
 	{
 		$buffer = \ScavixWDF\Wdf::GetBuffer('wdf_js_strings')
 			->mapToSession('wdf_js_strings');
-		
+
 		$data = [];
 		foreach( $buffer->dump() as $id=>$text )
 			$data[$id] = _text($text);
@@ -194,12 +203,12 @@ class WdfResource implements ICallable
 		self::ValidatedCacheResponse($fn);
 		die( $js );
 	}
-    
+
     private function resolveUrls($file,$base='')
     {
 		$res = file_get_contents($file);
 		$base = trim(trim($base,"."));
-		
+
         $res = preg_replace_callback("/url\s*\(['\"]*resfile\/(.*)['\"]*\)/siU",function($match)
         {
             $url = trim($match[1],"\"' ");
@@ -215,7 +224,7 @@ class WdfResource implements ICallable
 					return $match[0];
 				return "url('".resFile("{$base}/{$match[1]}")."')";
 			},$res);
-		
+
 		return $res;
     }
 }

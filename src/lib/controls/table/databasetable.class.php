@@ -33,6 +33,7 @@ namespace ScavixWDF\Controls\Table;
 use PDO;
 use ScavixWDF\ICallable;
 use ScavixWDF\Localization\CultureInfo;
+use ScavixWDF\Reflection\Attributes\Text;
 
 default_string("TXT_NO_DATA_FOUND","no data found");
 
@@ -475,8 +476,8 @@ class DatabaseTable extends Table implements ICallable
 
     /**
      * @internal Currently untested, so marked <b>internal</b>
-     * @attribute[RequestParam('format','string')]
      */
+    #[Text('format')]
 	function Export($format, $rowcallback = null)
 	{
 		switch( $format )

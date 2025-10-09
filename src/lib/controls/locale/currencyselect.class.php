@@ -32,16 +32,16 @@ namespace ScavixWDF\Controls\Locale;
 
 use ScavixWDF\Controls\Form\Select;
 use ScavixWDF\Localization\Localization;
+use ScavixWDF\Reflection\Attributes\Resource;
 
 /**
  * Selector for currencies.
- * 
- * @attribute[Resource('locale_settings.js')]
  */
+#[Resource('locale_settings.js')]
 class CurrencySelect extends Select
 {
 	public $current_currency_code = false;
-	
+
 	/**
 	 * @param string $current_currency_code Currently selected currency
 	 * @param array $supported_currencies Array of supported currencies or false
@@ -51,14 +51,14 @@ class CurrencySelect extends Select
 		parent::__construct();
 		$this->script("Locale_Settings_Init();");
 		$this->data('role', 'currency');
-		
+
 		$this->current_currency_code = $current_currency_code;
 		if( $current_currency_code )
 			$this->setValue($current_currency_code);
-		
+
 		if( !$supported_currencies )
 			$supported_currencies = Localization::get_currency_codes();
-		
+
 		foreach($supported_currencies as $code)
 		{
 			$ci = Localization::get_currency_culture($code);

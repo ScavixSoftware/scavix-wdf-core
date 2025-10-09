@@ -33,12 +33,12 @@ namespace ScavixWDF\Controls\Locale;
 use ScavixWDF\Controls\Form\Select;
 use ScavixWDF\Localization\CultureInfo;
 use ScavixWDF\Localization\Localization;
+use ScavixWDF\Reflection\Attributes\Resource;
 
 /**
  * Language selector.
- * 
- * @attribute[Resource('locale_settings.js')]
  */
+#[Resource('locale_settings.js')]
 class LanguageSelect extends Select
 {
 	/**
@@ -49,7 +49,7 @@ class LanguageSelect extends Select
 		parent::__construct();
 		$this->script("Locale_Settings_Init();");
 		$this->data('role', 'language');
-		
+
 		if( $current_language_code )
 		{
 			if( $current_language_code instanceof CultureInfo )

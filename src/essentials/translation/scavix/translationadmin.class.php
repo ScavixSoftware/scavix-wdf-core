@@ -27,6 +27,11 @@
  */
 namespace ScavixWDF\Translation;
 
+use ScavixWDF\Reflection\Attributes\Boolean;
+use ScavixWDF\Reflection\Attributes\Integer;
+use ScavixWDF\Reflection\Attributes\RequestParam;
+use ScavixWDF\Reflection\Attributes\Text;
+use ScavixWDF\Reflection\NoMinifyAttribute;
 use stdClass;
 use ScavixWDF\Base\AjaxAction;
 use ScavixWDF\Base\AjaxResponse;
@@ -46,9 +51,8 @@ use WdfAIHandler;
 
 /**
  * <SysAdmin> handler for translations.
- *
- * @attribute[NoMinify]
  */
+#[NoMinifyAttribute]
 class TranslationAdmin extends TranslationAdminBase
 {
 	public $ds;
@@ -98,7 +102,7 @@ class TranslationAdmin extends TranslationAdminBase
 		$counts = [];
 		foreach( $this->ds->ExecuteSql("SELECT lang,count(*) as cnt FROM wdf_translations GROUP BY lang") as $row )
 			$counts[$row['lang']] = intval($row['cnt']);
-		$total = count($counts)?max($counts):0;
+        $total = count($counts) ? max($counts) : 0;
         $def = $GLOBALS['CONFIG']['localization']['default_language'];
         $allowed = $this->user->getProperty('languages','all');
 		foreach( Localization::get_language_names() as $code=>$name )
@@ -130,8 +134,8 @@ class TranslationAdmin extends TranslationAdminBase
 
     /**
 	 * @internal Fetch action handler
-     * @attribute[RequestParam('languages','array',false)]
      */
+    #[RequestParam('languages','array',false)]
     function Fetch($languages = false)
     {
         global $CONFIG;
@@ -285,9 +289,9 @@ class TranslationAdmin extends TranslationAdminBase
 
     /**
 	 * @internal Fetch action handler
-     * @attribute[RequestParam('languages','array',false)]
-     * @attribute[RequestParam('clearbeforeimport','bool',false)]
      */
+    #[RequestParam('languages','array',false)]
+    #[Boolean('clearbeforeimport')]
     function Import($languages = false, $clearbeforeimport = false)
     {
         global $CONFIG;
@@ -355,14 +359,14 @@ class TranslationAdmin extends TranslationAdminBase
 
     /**
 	 * @internal Create new string handler
-     * @attribute[RequestParam('term','string')]
-     * @attribute[RequestParam('text','string','')]
      */
+    #[Text('term')]
+    #[Text('text','')]
     function CreateString($term,$text)
     {
         global $CONFIG;
 		$text = urldecode($text);
-		$this->ds->ExecuteSql("REPLACE INTO wdf_translations(lang,id,content)VALUES(?,?,?)",array($CONFIG['localization']['default_language'],$term,$text));
+		$this->ds->ExecuteSql("REPLACE INTO wdf_translations(lang,id,content)VALUES(?,?,?)", [$CONFIG['localization']['default_language'], $term, $text]);
         cache_del('lang_'.$term);
         return $this->DeleteString($term);
     }
@@ -386,11 +390,11 @@ class TranslationAdmin extends TranslationAdminBase
 
     /**
      * @internal Entry point for translation admin.
-     * @attribute[RequestParam('lang','string',false)]
-     * @attribute[RequestParam('offset','int',0)]
-     * @attribute[RequestParam('search','text','')]
-     * @attribute[RequestParam('untranslated','bool',false)]
      */
+    #[Text('lang',false)]
+    #[Integer('offset',0)]
+    #[Text('search','',false)]
+    #[Boolean('untranslated')]
 	function Translate($lang,$offset,$search,$untranslated)
 	{
 		global $CONFIG;
@@ -485,8 +489,8 @@ class TranslationAdmin extends TranslationAdminBase
 
     /**
      * @internal Allow to translate a term in all languages
-     * @attribute[RequestParam('term','string','')]
      */
+    #[Text('term','')]
 	function TranslateOne($term)
 	{
         global $CONFIG;
@@ -558,10 +562,10 @@ class TranslationAdmin extends TranslationAdminBase
 
 	/**
 	 * @internal Save string handler
-	 * @attribute[RequestParam('lang','string')]
-     * @attribute[RequestParam('term','string')]
-     * @attribute[RequestParam('text','string','')]
      */
+    #[Text('lang')]
+    #[Text('term')]
+    #[Text('text','',false)]
 	function SaveString($lang,$term,$text)
 	{
 		$text = urldecode($text);
@@ -575,9 +579,9 @@ class TranslationAdmin extends TranslationAdminBase
 
 	/**
 	 * @internal
-	 * @attribute[RequestParam('lang','string')]
-     * @attribute[RequestParam('text','string','')]
      */
+    #[Text('lang')]
+    #[Text('text','',false)]
 	function TranslateString($lang, $text)
 	{
         return AjaxResponse::Json(['response' => WdfAIHandler::Predict('Translate this text to '.strtoupper($lang).'. Please only return the translation:'.urldecode($text), [], 300)]);
@@ -602,8 +606,8 @@ class TranslationAdmin extends TranslationAdminBase
 	 * @param string $lang The language the contents are given in
 	 * @return void
 	 * @internal
-	 * @attribute[RequestParam('lang','string',false)]
 	 */
+    #[Text('lang',false)]
 	function ImportJSON($lang)
 	{
 		global $CONFIG;
@@ -657,9 +661,9 @@ class TranslationAdmin extends TranslationAdminBase
 	 * Sometimes you may want to correct a terms name, so use this one.
 	 * @param string $term The original term
 	 * @param string $new_term The new term name
-	 * @attribute[RequestParam('term','string')]
-	 * @attribute[RequestParam('new_term','string',false)]
 	 */
+    #[Text('term')]
+    #[Text('new_term',false)]
 	function Rename($term,$new_term)
 	{
 		if( !$new_term )
@@ -684,8 +688,8 @@ class TranslationAdmin extends TranslationAdminBase
 	 *
 	 * Removes a term from all translations.
 	 * @param string $term The term to remove
-	 * @attribute[RequestParam('term','string')]
 	 */
+    #[Text('term')]
 	function Remove($term)
 	{
 		default_string("TITLE_REMOVE_TERM","Remove term");

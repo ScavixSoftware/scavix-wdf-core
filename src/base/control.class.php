@@ -30,13 +30,13 @@
  */
 namespace ScavixWDF\Base;
 
+use ScavixWDF\Reflection\Attributes\Resource;
 use ScavixWDF\WdfException;
 
 /**
  * Base class for interactive webpage content like AJAX TextInputs.
- *
- * @attribute[Resource('jquery.js')]
  */
+#[Resource('jquery.js')]
 class Control extends Renderable
 {
     /**

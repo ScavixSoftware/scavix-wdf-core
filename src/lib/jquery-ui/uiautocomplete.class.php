@@ -27,13 +27,14 @@
  */
 namespace ScavixWDF\JQueryUI;
 
+use ScavixWDF\Reflection\Attributes\Resource;
+
 /**
  * Wraps a jQueryUI Autocomplete
  *
  * See http://jqueryui.com/autocomplete/
- *
- * @attribute[Resource('jquery-ui/ui.autocomplete.ex.js')]
  */
+#[Resource('jquery-ui/ui.autocomplete.ex.js')]
 class uiAutocomplete extends uiControl
 {
 	protected $hidden;

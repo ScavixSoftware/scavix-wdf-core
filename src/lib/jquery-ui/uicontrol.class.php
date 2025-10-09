@@ -28,15 +28,16 @@
 namespace ScavixWDF\JQueryUI;
 
 use ScavixWDF\Base\Control;
+use ScavixWDF\Reflection\Attributes\Resource;
 use ScavixWDF\WdfException;
 
 /**
  * Base class for all jQueryUI controls
  *
  * This ensures that all resources are loaded. Also provides some basic methods for Icon handling.
- * @attribute[Resource('jquery-ui/jquery-ui.js')]
- * @attribute[Resource('jquery-ui/jquery-ui.less')]
  */
+#[Resource('jquery-ui/jquery-ui.js')]
+#[Resource('jquery-ui/jquery-ui.less')]
 class uiControl extends Control
 {
 	private static $_icons = [

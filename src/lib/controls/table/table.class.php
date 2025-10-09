@@ -34,6 +34,9 @@ use ScavixWDF\Base\AjaxResponse;
 use ScavixWDF\Base\Control;
 use ScavixWDF\Controls\Anchor;
 use ScavixWDF\Localization\CultureInfo;
+use ScavixWDF\Reflection\Attributes\Integer;
+use ScavixWDF\Reflection\Attributes\RequestParam;
+use ScavixWDF\Reflection\Attributes\Text;
 use ScavixWDF\WdfException;
 
 /**
@@ -598,9 +601,9 @@ class Table extends Control
 
 	/**
 	 * @internal Handles row action clicks and calls the defined handlers (<Table::AddRowAction>)
-	 * @attribute[RequestParam('action','string')]
-	 * @attribute[RequestParam('row','string')]
 	 */
+    #[Text('action','')]
+    #[Text('row','')]
 	function OnActionClicked($action,$row)
 	{
 		if( isset($this->_actionHandler[$action]) )
@@ -632,8 +635,8 @@ class Table extends Control
 
 	/**
 	 * @internal Handles the sort-drop event and calls the hanlder (<Table::Sortable>)
-	 * @attribute[RequestParam('rows','array',array())]
 	 */
+    #[RequestParam('rows','array',[])]
 	function OnReordered($rows)
 	{
 		return call_user_func_array($this->_sortHandler,array($this,$rows));
@@ -736,8 +739,8 @@ class Table extends Control
 
 	/**
 	 * @internal Will be polled via AJAX to change the page if you defined a pager using <DatabaseTable::AddPager>
-	 * @attribute[RequestParam('number','int')]
 	 */
+    #[Integer('number',1)]
 	function GotoPage($number)
 	{
         $this->checkCallIsCorrectlyListingWrapped();

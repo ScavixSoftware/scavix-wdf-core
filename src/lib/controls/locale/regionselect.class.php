@@ -34,12 +34,13 @@ use ScavixWDF\Base\Renderable;
 use ScavixWDF\Controls\Form\Select;
 use ScavixWDF\Localization\CultureInfo;
 use ScavixWDF\Localization\Localization;
+use ScavixWDF\Reflection\Attributes\Resource;
+use ScavixWDF\Reflection\Attributes\Text;
 
 /**
  * Region selector.
- *
- * @attribute[Resource('locale_settings.js')]
  */
+#[Resource('locale_settings.js')]
 class RegionSelect extends Select
 {
 	/**
@@ -117,10 +118,10 @@ class RegionSelect extends Select
 	 * Returns a list of option elements.
 	 *
 	 * Called via AJAX to dynamically update the control.
-	 * @attribute[RequestParam('language','string')]
 	 * @param string $language Language code
 	 * @return <AjaxResponse::Text> Html string with options
 	 */
+    #[Text('language')]
 	public function ListOptions($language)
 	{
 		$lang = Localization::getLanguageCulture($language);

@@ -30,8 +30,10 @@
  */
 namespace ScavixWDF\Reflection;
 
+use Attribute;
+use ScavixWDF\IRequestAttribute;
 use ScavixWDF\Localization\Localization;
-use ScavixWDF\Wdf;
+use ScavixWDF\Reflection\Attributes\RequestParam;
 
 /**
  * Allows to automatically pass REQUEST parameters to methods arguments.
@@ -40,167 +42,136 @@ use ScavixWDF\Wdf;
  * in the doccomment will make the following usable:
  * function SomeMethod($joe){ log_debug($joe); }
  */
-class RequestParamAttribute extends WdfAttribute
+#[Attribute(Attribute::TARGET_METHOD | Attribute::IS_REPEATABLE)]
+class RequestParamAttribute extends WdfAttribute implements IRequestAttribute
 {
-	public $Name = null;
-	public $Type = null;
-	public $Default = null;
-	public $Filter = null;
+    use \ScavixWDF\Reflection\Attributes\RequestAttributeCommons;
 
-	function __construct($name,$type=null,$default=null,$filter=null)
-	{
-		$this->Name = $name;
-		$this->Type = $type;
-		$this->Default = $default;
-		$this->Filter = $filter;
+    public $Name = null;
+    public $Type = null;
+    public $Default = null;
+    public $Filter = null;
 
-		if( !is_null($this->Type) && is_null($this->Filter) )
-		{
-			switch( strtolower($this->Type) )
-			{
-				case 'string':
-					$this->Filter = FILTER_UNSAFE_RAW;
-					break;
-			}
-		}
-	}
+    function __construct($name, $type = null, $default = null, $filter = null)
+    {
+        $this->Name = $name;
+        $this->Type = $type;
+        $this->Default = $default;
+        $this->Filter = $filter;
 
-	/**
-	 * Checks if the argument is optional
-	 *
-	 * This is done by checking if there's a default value specified.
-	 * @return bool true or false
-	 */
-	function IsOptional()
-	{
-		return isset($this->Default);
-	}
-
-	/**
-	 * Checks a given array for data for this and updates another array accordingly
-	 *
-	 * This is kind of internal, so will not be documented further. Only that it ensures typed data in the $args argument
-	 * from the $data argument. We will most likely clean this procedure up in the future.
-	 * @param array $data Combined request data
-	 * @param array $args resulting typed values
-     * @param bool $is_last TRUE if this is the last arguement (used for nameless argument passing)
-	 * @return bool|string true if everything went fine, an error string if not
-	 */
-	function UpdateArgs($data, &$args, $is_last = false)
-	{
-		global $CONFIG;
-		if( $CONFIG['requestparam']['ignore_case'] )
-		{
-			$name = strtolower($this->Name);
-			foreach( $data as $k=>$v )
-			{
-				unset($data[$k]);
-				$data[strtolower($k)] = $v;
-			}
-		}
-		else
-			$name = $this->Name;
-
-		if( isset(Wdf::$Request->RouteArgs) && count(Wdf::$Request->RouteArgs)>0 && !isset($data[$name]) )
-			$data[$name] = $is_last
-                ?implode("/",Wdf::$Request->RouteArgs)
-                :array_shift(Wdf::$Request->RouteArgs);
-
-        if( !isset($data[$name]) )
-		{
-			if( !is_null($this->Default) )
-			{
-				$args[$this->Name] = $this->Default;
-				return true;
-			}
-			$args[$this->Name] = null;
-			return 'missing';
-		}
-
-		static $ci = false;
-        if( $ci === false )
+        if (!is_null($this->Type) && is_null($this->Filter))
         {
-			if( isset($CONFIG['requestparam']['ci_detection_func']) && function_exists($CONFIG['requestparam']['ci_detection_func']) )
-				$ci = $CONFIG['requestparam']['ci_detection_func']();
-			else
-				$ci = Localization::detectCulture();
+            switch (strtolower($this->Type))
+            {
+                case 'string':
+                    $this->Filter = FILTER_UNSAFE_RAW;
+                    break;
+            }
         }
+    }
 
-		if( !is_null($this->Type) )
-		{
-			switch( strtolower($this->Type) )
-			{
-				case 'object':
-					if( !in_object_storage($data[$name]) )
-						return 'object not found';
+    /**
+     * Checks if the argument is optional
+     *
+     * This is done by checking if there's a default value specified.
+     * @return bool true or false
+     */
+    function IsOptional()
+    {
+        return isset($this->Default);
+    }
 
-					$args[$this->Name] = restore_object($data[$name]);
-					return true;
-				case 'array':
-				case 'file':
-					if( isset($data[$name]) && is_array($data[$name]) )
-						$args[$this->Name] = $data[$name];
-					return true;
-				case 'string':
-				case 'text':
-                    if( is_array($data[$name]) )
-                        return 'invalid float value';
-					if( $this->Filter )
-						$args[$this->Name] = preg_replace('/\x00|<[^>]*>?/', '', "{$data[$name]}");      // see https://stackoverflow.com/questions/69207368/constant-filter-sanitize-string-is-deprecated
-					else
-						$args[$this->Name] = $data[$name];
-					return true;
-				case 'email':
-					$args[$this->Name] = filter_var($data[$name],FILTER_SANITIZE_EMAIL);
-					return true;
-				case 'url':
-				case 'uri':
-					$args[$this->Name] = filter_var($data[$name],FILTER_SANITIZE_URL);
-					return true;
-				case 'int':
-				case 'integer':
-					if( intval($data[$name])."" != $data[$name] )
-//						if( floatval($data[$name])."" != $data[$name] )
-							return 'invalid int value';
-					$args[$this->Name] = intval($data[$name]);
-					return true;
-				case 'float':
-				case 'double':
-				case 'currency':
-					if( $data[$name]."" == "" && $this->IsOptional() )
-					{
-						$data[$name] = $this->Default;
-						$args[$this->Name] = $this->Default;
-						return true;
-					}
+    function applyDefaults(&$args, $is_last = false)
+    {
+        $name = $GLOBALS['CONFIG']['requestparam']['ignore_case'] ? strtolower($this->Name) : $this->Name;
+        if (isset($args[$name]))
+            return;
+        if (!is_null($this->Default))
+            $args[$this->Name] = $this->Default;
+        elseif (is_in(get_class($this), RequestParamAttribute::class, RequestParam::class))
+        {
+            if (\ScavixWDF\Wdf::Request()->hasRouteArgs())
+            {
+                $argdata = \ScavixWDF\Wdf::Request()->shiftRouteArg($is_last ? '/' : '');
+                log_warn("Skipped use of indexed path argument '{$this->Name}={$argdata}'. Use a PathData attribute instead!");
+            }
+        }
+    }
 
-//					if( isset($CONFIG['localization']['float_conversion']) )
-//						$data[$name] = call_user_func($CONFIG['localization']['float_conversion'],$data[$name]);
-//					else if( !is_float(floatval($data[$name])) )
-//						$data[$name] = false;
+    function getParsedData(\ScavixWDF\WdfIncomingRequest $request)
+    {
+        $name = $GLOBALS['CONFIG']['requestparam']['ignore_case'] ? strtolower($this->Name) : $this->Name;
+        $request_data = $request->getInputArguments();
 
-					if( strtolower($this->Type) == 'currency' )
-						$data[$name] = $ci->CurrencyFormat->StrToCurrencyValue($data[$name]);
-					else
-						$data[$name] = $ci->NumberFormat->StrToNumber($data[$name]);
+        if (!isset($request_data[$name]))
+            return [];
+        if (is_null($this->Type))
+            return [$this->Name => $request_data[$name]];
 
-					if( $data[$name] === false )
-						return 'invalid float value';
-					else
-						$args[$this->Name] = $data[$name];
-					return true;
-				case 'bool':
-				case 'boolean':
-					if( $data[$name] == '' || $data[$name] == '0' || strtolower($data[$name]) == "false" )
-						$args[$this->Name] = false;
-					else
-						$args[$this->Name] = true;
-					return true;
-			}
-			return 'wrong type';
-		}
+        switch (strtolower($this->Type))
+        {
+            case 'object':
+                if (!in_object_storage($request_data[$name]))
+                    return $this->returnError('object not found');
+                return [$this->Name => restore_object($request_data[$name])];
+            case 'array':
+            case 'file':
+                if (isset($request_data[$name]) && is_array($request_data[$name]))
+                    return [$this->Name => $request_data[$name]];
+                else
+                    $this->returnError('invalid array value: ' . $request_data[$name]);
+            case 'string':
+            case 'text':
+                if (is_array($request_data[$name]))
+                    return $this->returnError("invalid {$this->Type} value");
+                if ($this->Filter)
+                    return [$this->Name => preg_replace('/\x00|<[^>]*>?/', '', "{$request_data[$name]}")];      // see https://stackoverflow.com/questions/69207368/constant-filter-sanitize-string-is-deprecated
+                else
+                    return [$this->Name => $request_data[$name]];
+            case 'email':
+                return [$this->Name => filter_var($request_data[$name], FILTER_SANITIZE_EMAIL)];
+            case 'url':
+            case 'uri':
+                return [$this->Name => filter_var($request_data[$name], FILTER_SANITIZE_URL)];
+            case 'int':
+            case 'integer':
+                if (intval($request_data[$name]) . "" != $request_data[$name])
+                    return $this->returnError('invalid int value: ' . $request_data[$name]);
+                return [$this->Name => intval($request_data[$name])];
+            case 'float':
+            case 'double':
+            case 'currency':
 
-		$args[$this->Name] = $data[$name];
-		return true;
-	}
+                static $ci = false;
+                if ($ci === false)
+                {
+                    if (isset($GLOBALS['CONFIG']['requestparam']['ci_detection_func']) && function_exists($GLOBALS['CONFIG']['requestparam']['ci_detection_func']))
+                        $ci = $GLOBALS['CONFIG']['requestparam']['ci_detection_func']();
+                    else
+                        $ci = Localization::detectCulture();
+                }
+
+                if (strtolower($this->Type) == 'currency')
+                    $v = $ci->CurrencyFormat->StrToCurrencyValue($request_data[$name]);
+                else
+                    $v = $ci->NumberFormat->StrToNumber($request_data[$name]);
+
+                if ($v === false)
+                    return $this->returnError('invalid float value: ' . $request_data[$name]);
+                else
+                    return [$this->Name => $request_data[$name]];
+            case 'bool':
+            case 'boolean':
+                switch( strtolower($request_data[$name]) )
+                {
+                    case '1': case 'true': case 'yes': case 'on':
+                        return [$this->Name => true];
+                    case '0': case 'false': case 'no': case 'off':
+                        return [$this->Name => false];
+                    default:
+                        return $this->returnError('invalid boolean value: ' . $request_data[$name]);
+                }
+        }
+        return [];
+    }
 }

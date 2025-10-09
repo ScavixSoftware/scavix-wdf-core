@@ -32,6 +32,8 @@ namespace ScavixWDF\Base;
 
 use ScavixWDF\ICallable;
 use ScavixWDF\Localization\Localization;
+use ScavixWDF\Reflection\Attributes\RequestParam;
+use ScavixWDF\Reflection\Attributes\Resource;
 
 default_string('ERR_JAVASCRIPT_AND_COOKIES_REQUIRED','This page requires JavaScript and Cookies.');
 define("WDF_HTMLPAGE_TEMPLATE", __DIR__."/htmlpage.tpl.php");
@@ -39,9 +41,10 @@ define("WDF_HTMLPAGE_TEMPLATE", __DIR__."/htmlpage.tpl.php");
  * Base class for all Html pages.
  *
  * Will perform all rendering and collect js, css, meta and more.
- * @attribute[Resource('jquery.js')]
- * @attribute[Resource('htmlpage.js')]
  */
+#[Resource('htmlpage.js')] // explicitely define here to have them loaded first
+#[Resource('htmlpage.less')]
+#[Resource('jquery.js')]
 class HtmlPage extends Template implements ICallable
 {
 	public $meta = [];
@@ -403,9 +406,8 @@ class HtmlPage extends Template implements ICallable
 
 	/**
 	 * @internal Will be called automatically if missing strings are detected browserside.
-	 *
-	 * @attribute[RequestParam('id','string','')]
 	 */
+    #[RequestParam('id','string','')]
 	function WdfGetText($id)
 	{
 		$buffer = \ScavixWDF\Wdf::GetBuffer('wdf_js_strings')->mapToSession('wdf_js_strings');
