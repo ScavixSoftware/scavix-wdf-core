@@ -574,9 +574,10 @@ class DataSource
 	{
 		$stmt = $this->Prepare($sql);
 		$stmt->ExecuteWithArguments($prms);
-		$this->_last_affected_rows_count = $stmt->Count();
         $stmt->FetchMode = PDO::FETCH_NUM;
-		return $stmt->fetchScalar();
+        $res = $stmt->fetchScalar();
+        $this->_last_affected_rows_count = $res === false ? 0 : 1;
+		return $res;
 	}
 
 	/**

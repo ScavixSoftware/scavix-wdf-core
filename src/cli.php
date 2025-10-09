@@ -20,7 +20,7 @@ if( PHP_SAPI == 'cli-server' )
     $_SERVER['WDF_FEATURES_REWRITE'] = 'on';
 
     $requested_script = $_SERVER['SCRIPT_FILENAME'];
-    if( dirname($requested_script) == __DIR__ )
+    if( realpath(dirname($requested_script)) == __DIR__ )
         $requested_script = __FILE__;
 
     if ($requested_script == __FILE__ || $_SERVER['SCRIPT_NAME'] == '/index.php' )

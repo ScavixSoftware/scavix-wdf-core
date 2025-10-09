@@ -31,6 +31,8 @@
 namespace ScavixWDF\Model;
 
 use ArrayAccess;
+use DateTime;
+use Exception;
 use Iterator;
 use PDO;
 use PDOStatement;
@@ -638,18 +640,25 @@ class ResultSet implements Iterator, ArrayAccess, \Serializable
 		{
 			if( $this->_ds->Driver instanceof MySql )
 				$this->_rowCount = $this->_stmt->rowCount();
-			elseif( !starts_with(trim(strtolower($this->_sql_used)),'select') )
+			elseif( !starts_iwith(trim($this->_sql_used),'select') )
 				$this->_rowCount = $this->_stmt->rowCount();
-			elseif( starts_with(trim(strtolower($this->_sql_used)),'select count(*)') )
+			elseif( starts_iwith(trim($this->_sql_used),'select count(*)') )
 				$this->_rowCount = $this->_stmt->rowCount();
-			else
-			{
-				$stmt = $this->_pdo->prepare("SELECT count(*) FROM( {$this->_sql_used} ) as x");
-                $args = is_null($this->_arguments_used)?null:array_clean_assoc_or_sequence($this->_arguments_used);
-				$stmt->execute($args);
-				$this->_rowCount = $stmt->finishScalar();
-
-			}
+            else
+            {
+                try
+                {
+                    $stmt = $this->_pdo->prepare("SELECT count(*) FROM( {$this->_sql_used} ) as x");
+                    $args = is_null($this->_arguments_used) ? null : array_clean_assoc_or_sequence($this->_arguments_used);
+                    $stmt->execute($args);
+                    $this->_rowCount = $stmt->finishScalar();
+                }
+                catch (Exception)
+                {
+                    log_debug("Unable to detect rowCount for SQL: {$this->_sql_used}");
+                    $this->_rowCount = 0;
+                }
+            }
 		}
 		return $this->_rowCount;
 	}

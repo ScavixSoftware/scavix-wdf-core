@@ -103,7 +103,7 @@
 					.addClass("ui-state-selected ui-state-active nav_borderless");
 
 			// disable all links without href
-			this.element.find('a[href=]')
+			this.element.find('a:not([href])')
 				.css({cursor:'default',textDecoration:'line-through'})
 				.click(function(){return false});
 		},
