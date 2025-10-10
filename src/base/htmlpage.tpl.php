@@ -121,7 +121,7 @@ $(function(){
 if( isset($sub_template_content) )
 	echo $sub_template_content;
 else
-	foreach($content as $c) echo $c;
+	foreach((array)$content as $c) echo $c;
 ?>
 </body>
 </html>

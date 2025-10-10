@@ -20,6 +20,15 @@ class DevServer extends Task
     function Run($args)
     {
         $endpoint = $this->getArg($args,0) ?: "127.0.0.1:80";
+
+        // echo "Testing endpoint: http://$endpoint...";
+        $test = @file_get_contents("http://$endpoint");
+        if( $test )
+        {
+            echo "There's already a server running at http://$endpoint\n";
+            return;
+        }
+
         $cmd = PHP_BINARY . " -S $endpoint ".__SCAVIXWDF__."/cli.php";
         $specs = [
             0 => ["file", "php://stdin", "r"],
