@@ -392,7 +392,7 @@ class WdfIncomingRequest
 
     function getMethod()
     {
-        return strtolower(ifavail($_SERVER, '') . 'REQUEST_METHOD');
+        return strtolower(ifavail($_SERVER, 'REQUEST_METHOD'));
     }
 
     function isMethod(string $name)
