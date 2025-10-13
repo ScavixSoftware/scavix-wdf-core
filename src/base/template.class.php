@@ -276,29 +276,27 @@ class Template extends Renderable
             return $result;
         };
 
-		if( ($this instanceof HtmlPage) && $this->isHtmlPageTemplate($this->file) )
-		{
-			$__template_file = __autoload__template($this,$this->SubTemplate?$this->SubTemplate:"");
-			if( $__template_file === false )
-				WdfException::Raise("SubTemplate for class '".get_class($this)."' not found: ".$this->file,$this->SubTemplate);
+        if (($this instanceof HtmlPage) && $this->isHtmlPageTemplate($this->file))
+        {
+            $__template_file = __autoload__template($this, $this->SubTemplate ? $this->SubTemplate : "");
+            if ($__template_file === false)
+                WdfException::Raise("SubTemplate for class '" . get_class($this) . "' not found: " . $this->file, $this->SubTemplate);
 
-			if( !$this->isHtmlPageTemplate($__template_file) )
-			{
-                $tempvars['sub_template_content'] = $render_in_context($__template_file,$tempvars);
+            if (!$this->isHtmlPageTemplate($__template_file))
+                $tempvars['sub_template_content'] = $render_in_context($__template_file, $tempvars);
 
-                foreach( Renderable::CategorizeResources(Renderable::__getLazyResources()) as $r )
-                {
-                    if( $r['ext'] == 'css' || $r['ext'] == 'less' )
-                        $this->addCss($r['url'],$r['key']);
-                    else
-                        $this->addjs($r['url'],$r['key']);
-                }
-                $tempvars['meta'] = $this->meta;
-                $tempvars['css'] = $this->css;
-                $tempvars['js'] = $this->js;
-			}
-			$this->file = WDF_HTMLPAGE_TEMPLATE;
-		}
+            foreach (Renderable::CategorizeResources(Renderable::__getLazyResources()) as $r)
+            {
+                if ($r['ext'] == 'css' || $r['ext'] == 'less')
+                    $this->addCss($r['url'], $r['key']);
+                else
+                    $this->addjs($r['url'], $r['key']);
+            }
+            $tempvars['meta'] = $this->meta;
+            $tempvars['css'] = $this->css;
+            $tempvars['js'] = $this->js;
+            $this->file = WDF_HTMLPAGE_TEMPLATE;
+        }
 
 		$__template_file = __autoload__template($this, $this->SubTemplate ?: $this->file);
 		if( $__template_file === false )
