@@ -8,7 +8,7 @@
     </div>
 <?php if( isset($user) && $user): ?>
     <span class="userinfo">
-        <?=$user['username'] ?? ''?><br/>
+        <?=$user->username ?? ''?><br/>
         <a class="logout" href="<?=buildQuery('','')?>"><?=gethostname()?><i class="fas fa-backward"></i></a><br/>
         <a class="logout" href="<?=buildQuery('sysadmin', 'logout')?>">Logout<i class="fas fa-power-off"></i></a>
     </span>
