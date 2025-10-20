@@ -145,7 +145,7 @@ function register_less_variable($name,$value)
 {
     if( !isset($_SESSION['resources_less_variables']) )
         $_SESSION['resources_less_variables'] = [];
-	$_SESSION['resources_less_variables'][$name] = $value;
+	$_SESSION['resources_less_variables'][str_replace('@@','@',"@$name")] = $value;
 }
 
 /**
@@ -186,7 +186,7 @@ function clear_less_cache()
  * Compiles LESS code to CSS.
  *
  * @param string $less The LESS code
- * @param bool $use_vars Switch if defined variables should be used (default: true).
+ * @param bool $use_vars (deprecated) Switch if defined variables should be used (default: true).
  * @return string The compiled CSS code
  */
 function compile_less_code($less,$use_vars=false)

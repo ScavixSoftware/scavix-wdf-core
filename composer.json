@@ -26,7 +26,7 @@
 	},
 	"require": {
 		"php": ">=8.0",
-        "scavix/lessphp":"^0.8.1"
+        "wikimedia/less.php": "^5.4"
 	},
 	"suggest": {
 		"ext-xml": "Needed for some features",

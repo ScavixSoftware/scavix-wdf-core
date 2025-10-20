@@ -24,13 +24,11 @@
  */
 namespace ScavixWDF;
 
-// require_once(__DIR__.'/lessphp/lessc.inc.php');
+use Less_Parser;
+use Less_Tree_Declaration;
 
 /**
  * This class creates a unique interface for LESS compilers.
- *
- * Currently just inherited from lessc, it may be used to add more abstraction
- * when another compiler is used.
  *
  * Some notes about LESS variables: There's a priority and some extensions to the LESS syntax.
  * This is the variable prio, highest first:
@@ -53,55 +51,40 @@ namespace ScavixWDF;
  * - "background: darkenBackground(<color>[ <opacity>])" to have a dark-colored background with opacity
  * - "<img-prop>: dataUri(<res_filename>)" will embed the contents of a resource-file data uri (automatically using the best encoding)
  */
-class LessCompiler extends \lessc implements \JsonSerializable
+class LessCompiler implements \JsonSerializable
 {
-    private $id, $injected, $verbose, $injecting;
+    private $id, $verbose, $registered = [], $forced = [];
+    private $libFunctions = [];
+	private $registeredVars = [];
+	public $importDir = '';
+	private $allParsedFiles = [];
 
-    function __construct($fname = null)
+    function __construct()
     {
-        parent::__construct($fname);
         $this->id = random_int(999, 9999);
-        $this->injected = [];
-        $this->verbose = cfg_getd('less','verbose',false);
+        $this->verbose = cfg_getd('less', 'verbose', false);
+        $this->registerFunctions();
+    }
 
-        $enhancedBackgound = function($a,$mode)
+    #region Less features
+
+    private function registerFunctions()
+    {
+        $this->registerFunction('lighten_background', function(...$args){ return $this->enhancedBackgound('lighten',...$args); });
+        $this->registerFunction('darken_background', function(...$args){ return $this->enhancedBackgound('darken',...$args); });
+        $this->registerFunction('data_uri', function (...$args)
         {
-            $color = '#fff';
-            $opacity = '0.7';
-            $getVal = function($v)use(&$color,&$opacity)
-            {
-                if( $v[0] == 'color' )
-                    $color = Base\Color::rgba($v[1], $v[2], $v[3]);
-                elseif( $v[0] == 'function' && $v[1] == 'var' )
-                {
-                    $v = $v[2][2];
-                    $color = "var({$v[0][1]})";
-                }
-                elseif( $v[0] == 'number' )
-                    $opacity = $v[1];
-            };
-            if( $a[0] == 'list' )
-                foreach( $a[2] as $v )
-                    $getVal($v);
-            else
-                $getVal($a);
+            if (count($args) != 1)
+                $this->error("'data_uri': Missing file argument");
 
-            $svg_col = Base\Color::hex($mode=='lighten'?'white':'black')->setAlpha($opacity);
-
-            return implode(", ",[
-                "linear-gradient(to right,$color 0%,$color 100%)",
-                "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1 1' style='background:$svg_col'%3E%3C/svg%3E%0A\")"
-            ]).";background-blend-mode:$mode;";
-        };
-
-        $this->registerFunction('lightenBackground', function($a)use($enhancedBackgound){ return $enhancedBackgound($a,'lighten'); });
-        $this->registerFunction('darkenBackground', function($a)use($enhancedBackgound){ return $enhancedBackgound($a,'darken'); });
-        $this->registerFunction('dataUri', function($a)
-        {
-            if( $a[0] != 'string' )
+            $name = $args[0]->value ?? 'none';
+            log_debug("dataUri($name)");
+            if( $name == 'none' )
                 return "none";
 
-            $fn = resFile(trim($a[2][0],"\"' "), true);
+            $name = str_ireplace("resfile/", "", $name);
+            $fn = resFile(trim($name,"\"' "), true);
+            log_debug("file $fn");
             if( !file_exists($fn) )
                 return "none";
 
@@ -131,7 +114,57 @@ class LessCompiler extends \lessc implements \JsonSerializable
             $c = base64_encode(file_get_contents($fn));
             return "url(\"data:$mime;base64,$c\")";
         });
+
+        $this->registerFunction('register', function ($a)
+        {
+            $n = system_get_caller_by_type(Less_Tree_Declaration::class)?->name;
+            if( is_string($n) )
+                $this->registered[$n] = $a->value;;
+            return $a;
+        });
+        $this->registerFunction('force', function ($a)
+        {
+            $n = system_get_caller_by_type(Less_Tree_Declaration::class)?->name;
+            if( is_string($n) )
+                $this->forced[$n] = $a->value;
+            return $a;
+        });
     }
+
+    private function enhancedBackgound($mode, ...$args)
+    {
+        switch (count($args))
+        {
+            case 0:
+                $color = \Less_Tree_Color::fromKeyword('white');
+                $opacity = '0.7';
+                break;
+            case 1:
+                $color = $args[0];
+                $opacity = '0.7';
+                break;
+            case 2:
+                $color = $args[0];
+                $opacity = $args[1];
+                break;
+            default:
+                $this->error("'{$mode}_background': Invalid number of arguments:", $args);
+                break;
+        }
+        if (!($color instanceof \Less_Tree_Color))
+            $this->error("'{$mode}_background': Invalid first argument ", $color);
+
+        $color = $color->toRGB();
+        $svg_col = Base\Color::hex($mode == 'lighten' ? 'white' : 'black')->setAlpha($opacity);
+        return implode(", ", [
+            "linear-gradient(to right,$color 0%,$color 100%)",
+            "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1 1' style='background:$svg_col'%3E%3C/svg%3E%0A\")"
+        ]) . ";background-blend-mode:$mode;";
+    }
+
+    #endregion
+
+    #region Logging
 
     /**
      * Set verbosity on/off.
@@ -151,59 +184,182 @@ class LessCompiler extends \lessc implements \JsonSerializable
 
     function error(...$args)
     {
-        log_error("[LESS][$this->id]",...$args);
+        log_debug("[LESS][$this->id]",...$args);
     }
 
-    /**
-     * @suppress PHP0416
-     */
-    function makeParser($name): \lessc_parser
+    #endregion
+
+    #region Internal compilation logic
+
+    private function processCompilation($fname, $content = null)
     {
-        /**
-         * Anonymous class acting as LESS parser
-         */
-        return new class($this,$name,$this->preserveComments) extends \lessc_parser
+        try
         {
-            public function __construct($compiler,$name,$preserveComments)
+            if (!$this->id || is_numeric($this->id))
             {
-                parent::__construct($compiler,$name);
-                $this->writeComments = $preserveComments;
+                $a = explode("/", $fname);
+                $b = explode("/", getcwd());
+                while (count($a) && count($b) && $a[0] == $b[0])
+                {
+                    array_shift($a);
+                    array_shift($b);
+                }
+                $this->id = implode("/", $a);
             }
 
-            /**
-             * @internal Overwritten to handle in-file verbosity flags
-             */
-            function parse($buffer = null)
+            // ensure contents
+            $content = $content ?: file_get_contents($fname);
+
+            // prepare import files/folders
+            $pi = pathinfo($fname);
+            $oldImport = $this->importDir;
+            $this->importDir = (array) $this->importDir;
+            $this->importDir[] = Less_Parser::AbsPath($pi['dirname']) . '/';
+            $this->allParsedFiles = [];
+            $this->addParsedFile($fname);
+
+            // prepare parser
+            $parser = new Less_Parser($this->getParserOptions());
+            $parser->SetImportDirs(array_fill_keys($this->importDir, ''));
+            foreach ($this->libFunctions as $name => $func)
+                $parser->registerFunction($name, $func);
+
+            // preprocess and compile less of all included files
+            foreach (array_reverse(cfg_getd('less', 'files', [])) as $f)
+                $parser->parse($this->preprocessLess(file_get_contents($f)), $f);
+            $raw_less = $this->preprocessLess($content);
+            $parser->parse($raw_less, $fname);
+
+            // update processed files, restore import folders
+            foreach ($parser->getParsedFiles() as $file)
+                $this->addParsedFile($file);
+            $this->importDir = $oldImport;
+
+            // finally apply variables, respecting the priority as documented in class comment
+            // return $parser->getCss();
+            return $this->applyVariables($parser);
+        }
+        catch (\Less_Exception_Compiler $ex)
+        {
+            $this->error($ex->getMessage());
+        }
+        return '';
+    }
+
+    private function getParserOptions()
+    {
+        // $plugins = [new class
+        // {
+        //     public $isPreEvalVisitor = false;
+        //     public $isPreVisitor = false;
+
+        //     public function run(Less_Tree_Ruleset $root)
+        //     {
+        //         // log_debug("POST visitor",$root);
+        //         foreach ($root->_variables as $var)
+        //         {
+        //             /** @var Less_Tree_Declaration $var */
+        //             $v = trim(str_replace("{$var->name}:", "", $var->toCSS()));
+        //             log_debug("Var ", "{$var->name}=$v", $var);
+        //         }
+        //     }
+        // }];
+        return [
+            'relativeUrls' => false,
+            'indentation' => "\t",
+            'compress' => !isDev(),
+            'sourceMap'=> false,
+        ];
+    }
+
+    private function preprocessLess($less)
+    {
+        // mediawiki less compiler is very strict on function names, we need to replace camelCase to snake_case
+        $less = str_replace (
+            [
+                'lightenBackground',
+                'darkenBackground',
+                'dataUri'
+            ],
+            [
+                'lighten_background',
+                'darken_background',
+                'data_uri'
+            ],
+            $less
+        );
+        if( stripos($less,"verbose_compilation = on") !== false )
+            $this->setVerbose();
+        elseif( stripos($less,"verbose_compilation = off") !== false )
+            $this->setVerbose(false);
+        return $less;
+    }
+
+    private function applyVariables(Less_Parser $parser)
+    {
+        $out = $parser->getCss();
+        $original = $vars = $parser->getVariables();
+
+        $apply = function ($variables, $logstring) use ($parser, &$vars)
+        {
+            $keys = array_map(fn($k) => str_replace('@@', '@', "@$k"), array_keys($variables));
+            $variables = array_combine($keys, array_values($variables));
+            $variables = array_diff_key($variables, $vars);
+            if (count($variables))
             {
-                if( stripos("$buffer","verbose_compilation = on") !== false )
-                {
-                    $this->lessc->setVerbose();
-                }
-                elseif( stripos("$buffer","verbose_compilation = off") !== false )
-                {
-                    $this->lessc->setVerbose(false);
-                }
-                return parent::parse($buffer);
+                $this->debug($logstring, $variables);
+                $parser->ModifyVars($variables);
+                $vars = array_merge($vars, $variables);
             }
         };
+
+        $apply($this->forced, "Setting less-forced variables");
+        $apply($this->registeredVars, "Setting code-registered variables");
+        $apply(cfg_getd('less', 'variables', []), "Setting code-configured variables");
+        $apply($this->registered, "Setting less-registered variables");
+
+        $out = $parser->getCss();
+        $out = preg_replace_callback('/generate_variable_index\(([^\)]+)\);*/', function ($match) use ($vars)
+        {
+            $node = trim($match[1], '\"\' ');
+            $res = [];
+            foreach ($vars as $k => $v)
+            {
+                $n = ltrim($k, '@');
+                $res[$k] = "--{$n}: $v;";
+            }
+            return "$node\n{\n\t" . implode("\n\t", $res) . "\n}";
+        }, $out);
+
+        $this->debug("Final variables", $vars);
+        $this->debug("Final css", $out);
+        return $out;
     }
+
+    protected function addParsedFile( $file )
+    {
+		$this->allParsedFiles[Less_Parser::AbsPath( $file )] = filemtime( $file );
+	}
+
+    private function array_map_assoc($callback, $array)
+    {
+        $res = [];
+        foreach( $array as $k => $v )
+            $res[$k] = $callback($k, $v);
+        return $res;
+    }
+
+    #endregion
+
+    #region External interface
 
     /**
      * @internal Compiles a LESS file to $outfile
      */
     function compileFile($fname, $outFname = null)
     {
-        if( !$this->id || is_numeric($this->id) )
-        {
-            $a = explode("/",$fname); $b = explode("/", __DIR__);
-            while( count($a) && count($b) && $a[0] == $b[0] )
-            {
-                array_shift($a); array_shift($b);
-            }
-            $this->id = implode("/",$a);
-            $this->injectVariables(cfg_getd('less','variables',[]));
-        }
-        return parent::compileFile($fname, $outFname);
+        $this->debug("Compiling file '$fname'");
+        return $this->processCompilation($fname);
     }
 
     /**
@@ -211,117 +367,51 @@ class LessCompiler extends \lessc implements \JsonSerializable
      */
     function compile($string, $name = null)
     {
-        $dirs = (array)$this->importDir;
-        foreach(array_reverse(cfg_getd('less','files',[])) as $f )
-        {
-            $dirs[] = dirname($f);
-            $string = "@import \"". basename($f)."\"; $string";
-            $this->debug("Added global LESS file '$f'");
-        }
-        $this->setImportDir(array_unique($dirs));
-        try
-        {
-            return parent::compile($string, $name);
-        }
-        catch (\Exception $ex)
-        {
-            $this->error($ex->getMessage());
-        }
-        return "";
+        $this->debug("Compiling string");
+        return $this->processCompilation($name, $string);
     }
 
     /**
-     * @internal Overwritten to process variable injection
+     * Code taken from the mediawiki leafo-"drop-in replacement"
+     * @param mixed $in
+     * @param mixed $force
+     * @return array|string|null
      */
-    function getRegisteredVariable($name)
+    public function cachedCompile($in, $force = false)
     {
-        if( isset($this->injected[$name]) )
-            return $this->injected[$name];
-        if( isset($this->injected[str_replace("@","",$name)]) )
-            return $this->injected[str_replace("@","",$name)];
-        return false;
-    }
-
-    /**
-     * @internal Overwritten to process variable injection
-     */
-    function injectVariables($args)
-    {
-        if( count($args)<1 )
-            return;
-        $this->injecting = true;
-        parent::injectVariables($args);
-        $this->injecting = false;
-    }
-
-    /**
-     * @internal Overwritten to catch some errors
-     */
-    function get($name)
-    {
-        try
+        $root = null;
+        if (is_string($in))
+            $root = $in;
+        elseif (is_array($in) && isset($in['root']))
         {
-            return parent::get($name);
-        }
-        catch(\Exception $ex)
-        {
-            $this->error($ex->getMessage());
-        }
-        return ["string","",[]];
-    }
-
-    /**
-     * @internal Overwritten handle extended logic
-     */
-    function set($name, $value)
-    {
-        $reg = false; $log = true;
-        if( $this->injecting )
-        {
-            $this->debug("Inject variable {$name} = ".json_encode($value));
-            $this->injected[$name] = $value;
-            $log = false;
-        }
-        else
-            $reg = $this->getRegisteredVariable($name);
-
-        if( $value[0] == "function" )
-        {
-            switch( $value[1] )
+            if ($force || !isset($in['files']))
+                $root = $in['root'];
+            elseif (isset($in['files']) && is_array($in['files']))
             {
-                case 'register':
-                    $reg = $this->getRegisteredVariable($name);
-                    if( !$reg )
+                foreach ($in['files'] as $fname => $ftime)
+                {
+                    if (!file_exists($fname) || filemtime($fname) > $ftime)
                     {
-                        $reg = parent::flattenList($value[2]);
-                        $this->injected[$name] = $reg;
-                        $this->debug("Register variable {$name} = ".json_encode($reg));
-                        $log = false;
+                        $root = $in['root'];
+                        break;
                     }
-                    break;
-                case 'force':
-                    $overwritten = $this->getRegisteredVariable($name);
-                    $reg = parent::flattenList($value[2]);
-                    $this->injected[$name] = $reg;
-                    if( $overwritten )
-                        $this->debug("Forced overwrite {$name} = ".json_encode($reg).", old value was ".json_encode($overwritten));
-                    else
-                        $this->debug("Forced variable {$name} = ".json_encode($reg));
-                    $log = false;
-                    break;
+                }
             }
         }
-        if( $reg )
+        else
+            return null;
+
+        if ($root !== null)
         {
-            if( $log )
-                $this->debug("Use variable {$name} = ". json_encode($reg).", ignored ".json_encode($value));
-            parent::set($name, $reg);
+            $out = [];
+            $out['root'] = $root;
+            $out['compiled'] = $this->compileFile($root);
+            $out['files'] = $this->allParsedFiles;
+            $out['updated'] = time();
+            return $out;
         }
         else
-        {
-            //$this->debug("{$name} = ".json_encode($value));
-            parent::set($name, $value);
-        }
+            return $in;
     }
 
     /**
@@ -332,4 +422,26 @@ class LessCompiler extends \lessc implements \JsonSerializable
         return ['LessCompiler'=>$this->id];
     }
 
+    public function setVariables( $variables )
+    {
+        $this->registeredVars = $variables;
+	}
+
+    public function registerFunction($name, $func)
+    {
+        $this->libFunctions[$name] = $func;
+    }
+
+    public function setImportDir($dirs)
+    {
+        $this->importDir = (array) $dirs;
+    }
+
+    public function addImportDir($dir)
+    {
+        $this->importDir = (array) $this->importDir;
+        $this->importDir[] = $dir;
+    }
+
+    #endregion
 }
