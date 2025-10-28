@@ -1108,9 +1108,9 @@ class WdfListing extends Control implements \ScavixWDF\ICallable
      * Returns the number of found rows.
      *
      * Note that this is not the total number of rows, but the number of rows on the current result page.
-     * @return mixed
+     * @return int
      */
-    function countRows()
+    function countRows(): int
     {
         $this->getResultSet();
         try
@@ -1120,6 +1120,25 @@ class WdfListing extends Control implements \ScavixWDF\ICallable
         {
             return -1;
         }
+    }
+
+    /**
+     * Returns true if there is at least one row in the table
+     * @return bool
+     */
+    function hasRows(): bool
+    {
+        if($this->table->ResultSet)
+            return ($this->table->ResultSet->Count() > 0);
+
+        try
+        {
+            $resultset = $this->table->DataSource->PageExecute($this->table->GetSQL(), 1, 1);
+            return ($resultset->Count() > 0);
+        } catch(\Exception $ex)
+        {
+        }
+        return false;
     }
 
     /**
