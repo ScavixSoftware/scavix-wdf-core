@@ -89,7 +89,7 @@ class WdfReflector extends ReflectionClass
 
 		// now using a filemtime cache to check if an update is needed
 		$fn = $res->getFileName();
-		$ftime = filemtime($fn);
+		$ftime = @filemtime($fn);
 		$mtime = cache_get("filemtime_$fn");
 		if( ($mtime === false) || ($ftime > $mtime) )
 		{
@@ -155,9 +155,9 @@ class WdfReflector extends ReflectionClass
 				$fn = $ref->getFileName();
 				if( !$fn )
 					return "";
-				$lines = file_get_contents($ref->getFileName());
+				$lines = @file_get_contents($ref->getFileName());
 //				log_error($lines);
-				$lines = explode("\n",$lines);
+                $lines = explode("\n", $lines ?: '');
 				$doc = [];
 				$collecting = false;
 				for( $i=$ref->getStartLine()-1; $i>1 && isset($lines[$i]); $i-- )

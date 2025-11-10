@@ -24,6 +24,8 @@
 
 namespace ScavixWDF\Base;
 
+use PhpToken;
+
 /**
  * Implements persistable closures.
  *
@@ -34,6 +36,7 @@ class WdfClosure
 {
 	protected $closure = NULL;
 	protected $reflection = NULL;
+    public $context = NULL;
 	public $code = NULL;
 	public $used_variables = [];
 
@@ -44,13 +47,14 @@ class WdfClosure
 
 		$this->closure = $function;
 		$this->reflection = new \ReflectionFunction($function);
+        $this->context = $this->reflection->getClosureThis();
+		$this->used_variables = $this->reflection->getClosureUsedVariables();
 		$this->code = $this->_fetchCode();
-		$this->used_variables = $this->_fetchUsedVariables();
     }
 
 	public function __invoke(...$args)
 	{
-		return $this->reflection->invokeArgs($args);
+        return $this->closure->call($this->context,...$args);
 	}
 
 	/**
@@ -63,23 +67,47 @@ class WdfClosure
 
 	protected function _fetchCode()
 	{
-		// Open file and seek to the first line of the closure
-		$file = new \SplFileObject($this->reflection->getFileName());
-		$file->seek($this->reflection->getStartLine()-1);
+        $content = file_get_contents($this->reflection->getFileName());
+        $start = $this->reflection->getStartLine();
+        $end = $this->reflection->getEndLine();
+        $tokens = array_filter(array_map(function ($t) use ($start, $end)
+        {
+            if( $t->line < $start || $t->line > $end )
+                return null;
+            return $t;
+        }, PhpToken::tokenize($content)));
 
-		// Retrieve all of the lines that contain code for the closure
-		$code = '';
-		while ($file->key() < $this->reflection->getEndLine())
-		{
-			$code .= $file->current();
-			$file->next();
-		}
-
-		// Only keep the code defining that closure
-		$begin = strpos($code, 'function');
-		$end = strrpos($code, '}');
-		$code = substr($code, $begin, $end - $begin + 1);
-
+        $start = 0;
+        $end = 0;
+        $brackets = ['{', '}'];
+        $def_okay = true;
+        $d = 0;
+        foreach( $tokens as $t )
+        {
+            if( !$start && $t->is([T_FUNCTION]) )
+                $start = $t->pos;
+            elseif( !$start && $t->is([T_FN]) )
+            {
+                $start = $t->pos;
+                $brackets = ['(', ')'];
+                $def_okay = false;
+            }
+            elseif ($start)
+            {
+                $end = $t->pos + strlen("{$t->text}");
+                if ($t->text == $brackets[0])
+                    $d++;
+                elseif ($t->text == $brackets[1])
+                {
+                    $d--;
+                    if ($d < 1 && $def_okay)
+                        break;
+                }
+                if ($t->text == "=>")
+                    $def_okay = true;
+            }
+        }
+        $code = substr($content, $start, $end - $start);
 		return $code;
 	}
 
@@ -99,37 +127,6 @@ class WdfClosure
 		return $this->reflection->getParameters();
 	}
 
-	protected function _fetchUsedVariables()
-	{
-		// Make sure the use construct is actually used
-		$use_index = stripos($this->code, 'use');
-		if ( ! $use_index)
-			return [];
-
-		if (!preg_match('/function\s*\([^\)]*\)\s*use\s*\(([^\)]+)\)/U', $this->code, $m))
-			return;
-
-        $vars = explode(',',$m[1]);
-
-		// Get the names of the variables inside the use statement
-//		$begin = strpos($this->code, '(', $use_index) + 1;
-//		$end = strpos($this->code, ')', $begin);
-//		$vars = explode(',', substr($this->code, $begin, $end - $begin));
-
-		// Get the static variables of the function via reflection
-		$static_vars = $this->reflection->getStaticVariables();
-
-		// Only keep the variables that appeared in both sets
-		$used_vars = [];
-		foreach ($vars as $var)
-		{
-			$var = trim($var,' $');
-			$used_vars[$var] = $static_vars[$var];
-		}
-
-		return $used_vars;
-	}
-
 	/**
 	 * @internal
 	 */
@@ -140,18 +137,17 @@ class WdfClosure
 
 	public function __sleep()
 	{
-		return ['code', 'used_variables'];
+		return ['code', 'used_variables', 'context'];
 	}
 
 	public function __wakeup()
 	{
-        extract($this->used_variables ?? []);
-
-		eval('$_function = '.$this->code.';');
-		if (isset($_function) AND $_function instanceOf \Closure)
+		extract($this->used_variables ?? []);
+        eval('$_function = '.$this->code.';');
+		if (isset($_function) && ($_function instanceOf \Closure))
 		{
-			$this->closure = $_function;
 			$this->reflection = new \ReflectionFunction($_function);
+            $this->closure = $this->reflection->getClosure();
 		}
 		else
 			throw new \Exception();
