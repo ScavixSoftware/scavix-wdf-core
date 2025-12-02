@@ -774,4 +774,77 @@ class DataSource
         $lock = (strlen($name)<500)?$name:sha1($name);
         system_release_lock($lock,$this);
     }
+
+    /**
+     * Optimizes a table.
+     *
+     * Optimization will be done by renaming the table, optimizing that new table and then renaming it back.
+     * If there's a new table created in the meantime, if will be renamed before and it's data will be integrated.
+     *
+     * @return void
+     */
+    public function OptimizeTable(string $tablename, $beforeOptimize = null, $afterOptimize = null, $skipTableCreation = false)
+    {
+        if (PHP_SAPI != "cli")
+        {
+            log_error(__METHOD__ . " can only run from a task");
+            return;
+        }
+        $old = "{$tablename}_old";
+        $buf = "{$tablename}_buffered";
+
+        $started = $this->TableExists("$old") || $this->TableExists("$buf");
+        if ($started)
+        {
+            log_info(__METHOD__, "Seems that process is already running");
+            return;
+        }
+
+        $reintegrate = false;
+        if ($skipTableCreation)
+        {
+            log_debug("Renaming '$tablename' to '$old'...");
+            $this->ExecuteSql("RENAME TABLE `$tablename` TO `$old`");
+        }
+        else
+        {
+            log_debug("Creating buffer table '$buf'...");
+            $this->ExecuteSql("CREATE TABLE `$buf` LIKE `$tablename`");
+            log_debug("Renaming tables '$tablename' -> '$old', `$buf` -> `$tablename`");
+            $this->ExecuteSql("RENAME TABLE `$tablename` TO `$old`, `$buf` TO `$tablename`");
+            $reintegrate = true;
+        }
+
+        if (!is_callable($beforeOptimize) || $beforeOptimize($this, $old))
+        {
+            log_debug("Optimizing table '$old'...");
+            $this->ExecuteSql("OPTIMIZE TABLE `$old`");
+            if( is_callable($afterOptimize) )
+                $afterOptimize($this, $old);
+        }
+        try
+        {
+            if ($skipTableCreation)
+            {
+                log_debug("Re-renaming table...");
+                $this->ExecuteSql("RENAME TABLE `$old` TO `$tablename`");
+            }
+        }
+        catch (WdfDbException $ex)
+        {
+            log_debug("Seems data has been collected, preparing to integrate...");
+            $reintegrate = true;
+        }
+
+        if( $reintegrate )
+        {
+            $this->ExecuteSql("RENAME TABLE `$tablename` TO `$buf`, `$old` TO `$tablename`");
+            log_debug("Integrating missed data...");
+            $this->ExecuteSql("INSERT IGNORE INTO `$tablename` SELECT * FROM `$buf`");
+            log_debug("Removing '$buf'...");
+            $this->ExecuteSql("DROP TABLE `$buf`");
+        }
+
+        log_debug("Done");
+    }
 }

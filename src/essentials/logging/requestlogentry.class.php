@@ -304,40 +304,7 @@ class RequestLogEntry extends Model
         $cls = get_called_class();
         $inst = new $cls();
         $tab = $inst->getTableName();
-        $old = "{$tab}_old";
-        $buf = "{$tab}_buffered";
-
-        $ds = DataSource::Get();
-        $started = $ds->TableExists("$old") || $ds->TableExists("$buf");
-        if ($started)
-        {
-            log_info(__METHOD__, "Seems that process is already running");
-            return;
-        }
-
-        log_debug("Renaming '$tab' to '$old'...");
-        $ds->ExecuteSql("RENAME TABLE `$tab` TO `$old`");
-        if (static::onBeforeOptimize($ds, $old))
-        {
-            log_debug("Optimizing table '$old'...");
-            $ds->ExecuteSql("OPTIMIZE TABLE `$old`");
-            static::onAfterOptimize($ds, $old);
-        }
-        log_debug("Re-renaming table...");
-        try
-        {
-            $ds->ExecuteSql("RENAME TABLE `$old` TO `$tab`");
-        }
-        catch (WdfDbException $ex)
-        {
-            log_debug("Seems data has been collected, preparing to integrate...");
-            $ds->ExecuteSql("RENAME TABLE `$tab` TO `$buf`, `$old` TO `$tab`");
-            log_debug("Integrating missed data...");
-            $ds->ExecuteSql("INSERT IGNORE INTO `$tab` SELECT * FROM `$buf`");
-            log_debug("Removing '$buf'...");
-            $ds->ExecuteSql("DROP TABLE `$buf`");
-        }
-        log_debug("Done");
+        DataSource::Get()->OptimizeTable($tab, "$cls::onBeforeOptimize", "$cls::onAfterOptimize", true);
     }
 
     /**
