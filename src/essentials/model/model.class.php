@@ -1710,7 +1710,7 @@ abstract class Model implements Iterator, Countable, ArrayAccess, \ScavixWDF\ILo
 	 * New datasets will be inserted, loaded ones will be updated automatically.
 	 * If $columns_to_update is given only those columns will be stored. This may be useful to avoid DB conflicts in multithread scenarios.
 	 *
-	 * @param array $columns_to_update (Optional) If given only these fields will be updated. If not Model tries to detect changed columns automatically.
+	 * @param array $columns_to_update (Optional) If given, only these fields will be updated. Might also be associated array with [column_name => value]. If not Model tries to detect changed columns automatically.
 	 * @param array $changed (Optional) Save will fill this array with all changes in the form ['name'=>['old','new'],...]
 	 * @return bool In fact always true, WdfDbException will be thrown in error case
 	 * @throws WdfDbException
@@ -1720,8 +1720,17 @@ abstract class Model implements Iterator, Countable, ArrayAccess, \ScavixWDF\ILo
         if ($changed !== null)
             $buf = $this->GetChanges();
 
-        if ($columns_to_update !== false && !is_array($columns_to_update))
-            WdfException::Raise("Please specify 'columns_to_update' as array");
+        if ($columns_to_update !== false)
+        {
+            if (!\is_array($columns_to_update))
+                WdfException::Raise("Please specify 'columns_to_update' as array");
+            if(is_assoc($columns_to_update))
+            {
+                foreach($columns_to_update as $col => $val)
+                    $this->$col = $val;
+                $columns_to_update = array_keys($columns_to_update);
+            }
+        }
 
         $args = [];
         $stmt = $this->_ds->Driver->getSaveStatement($this, $args, $columns_to_update);

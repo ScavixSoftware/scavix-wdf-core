@@ -1078,7 +1078,7 @@ class WdfListing extends Control implements \ScavixWDF\ICallable
     /**
      * Sets the order of the listing data.
      *
-     * Multiple setOrder calls will result in multiple ORDER BY clauses.
+     * Multiple setOrder calls will result in previous ORDER BY clause will be overwritten
      * @param mixed $orderby SQL ready ORDER BY clause (may be just a column name)
      * @return static
      */
