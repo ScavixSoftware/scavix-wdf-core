@@ -357,10 +357,10 @@ class DatabaseTable extends Table implements ICallable
 	{
 		if( ($this->ParsingBehaviour & self::PB_STRIPHTML) > 0 )
 			foreach( $row as $k=>$v )
-				$row[$k] = strip_tags($v);
+				$row[$k] = ($v && \is_string($v)) ? strip_tags($v) : $v;
 		if( ($this->ParsingBehaviour & self::PB_HTMLSPECIALCHARS) > 0 )
 			foreach( $row as $k=>$v )
-				$row[$k] = htmlspecialchars("$v");
+				$row[$k] = ($v && \is_string($v)) ? htmlspecialchars("$v") : $v;
 
 		if( $this->ParsingBehaviour == self::PB_NOPROCESSING )
 		{
