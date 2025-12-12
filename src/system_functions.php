@@ -1796,8 +1796,8 @@ function system_get_caller($skip = 0, $detailed = false)
                 break;
             }
         }
-
     }
+    $trace = array_values(array_filter($trace, fn($v) => !isset($v['function']) || $v['function'] != '{closure}'));
     while (count($trace) < 3)
         $trace[] = ['file' => '(unknown)', 'line' => '(unknown)', 'function' => '(unknown)'];
     if (starts_with($trace[1]['file'], dirname(__SCAVIXWDF__)))
