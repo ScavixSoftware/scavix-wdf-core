@@ -1216,10 +1216,14 @@ class WdfListing extends Control implements \ScavixWDF\ICallable
             }
         }
         $wrap = Control::Make()->append(array_pop($links))->append('&nbsp;');
-        if( $this->gear_mode != self::GEAR_OFF )
+        if ($this->gear_mode != self::GEAR_OFF)
+        {
+            foreach( $columns as $i=>$c )
+                $columns[$i]['label'] = __translate($c['label']);
             Anchor::Void("<span class='ui-icon ui-icon-gear'></span>")
-                ->data('column-state', $columns )
+                ->data('column-state', $columns)
                 ->appendTo($wrap);
+        }
         $links[] = $wrap;
 
         $table->Header()->NewRow($links);
