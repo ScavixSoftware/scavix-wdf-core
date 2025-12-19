@@ -79,8 +79,23 @@ if( file_exists("config.php") )
 	system_config("config.php",false);
 elseif( file_exists(__DIR__."/config.php") )
 	system_config(__DIR__."/config.php",false);
-elseif( !defined("NO_CONFIG_NEEDED") )
-	system_die("No valid configuration found!");
+elseif( PHP_SAPI == 'cli' && isset($argv[0]) && file_exists(dirname($argv[0])."/config.php") )
+	system_config(dirname($argv[0])."/config.php",false);
+elseif (!defined("NO_CONFIG_NEEDED"))
+{
+    if (PHP_SAPI == 'cli')
+    {
+        $debug = [
+            'cwd' => getcwd(),
+            'argv' => $argv,
+            'config' => (isset($GLOBALS['CONFIG']) ? $GLOBALS['CONFIG'] : false),
+            'extended-data' => (isset($data) ? $data : false),
+            'server' => $_SERVER,
+        ];
+        error_log("No valid configuration found, this is debug:\n" . json_encode($debug, JSON_PRETTY_PRINT));
+    }
+    system_die("No valid configuration found!");
+}
 
 /**
  * Loads a config file.
@@ -623,6 +638,9 @@ function system_die($reason,$details_internal='',$log_error=true)
         else
             error_log($logmsg);
     }
+    if(!isDev()) // reset message for non-dev
+        $logmsg = 'Oh no! A fatal system error occured. Please try again. Contact our technical support if this problem occurs again (ErrorID: '.$errid.')';
+
     if( isset(Wdf::$Hooks[HOOK_SYSTEM_DIE]) && count(Wdf::$Hooks[HOOK_SYSTEM_DIE]) > 0 )
 	{
 		execute_hooks(HOOK_SYSTEM_DIE,array(
@@ -630,16 +648,12 @@ function system_die($reason,$details_internal='',$log_error=true)
 			$stacktrace
 		));
 	}
+
     if( PHP_SAPI == 'cli' )
-    {
-        if(!isDev())
-            $logmsg = 'Oh no! A fatal system error occured. Please try again. Contact our technical support if this problem occurs again (ErrorID: '.$errid.')';
-		system_exit("$logmsg\n");
-    }
-    elseif( system_is_ajax_call() )
+		die("$logmsg\n"); // system_exit cannot render to CLI, so just die here
+
+    if( system_is_ajax_call() )
 	{
-        if(!isDev())
-            $logmsg = 'Oh no! A fatal system error occured. Please try again. Contact our technical support if this problem occurs again (ErrorID: '.$errid.')';
         $res = AjaxResponse::Error($logmsg, true);
 		system_exit($res->Render());
 	}
