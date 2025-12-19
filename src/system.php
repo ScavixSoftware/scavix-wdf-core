@@ -82,20 +82,7 @@ elseif( file_exists(__DIR__."/config.php") )
 elseif( PHP_SAPI == 'cli' && isset($argv[0]) && file_exists(dirname($argv[0])."/config.php") )
 	system_config(dirname($argv[0])."/config.php",false);
 elseif (!defined("NO_CONFIG_NEEDED"))
-{
-    if (PHP_SAPI == 'cli')
-    {
-        $debug = [
-            'cwd' => getcwd(),
-            'argv' => $argv,
-            'config' => (isset($GLOBALS['CONFIG']) ? $GLOBALS['CONFIG'] : false),
-            'extended-data' => (isset($data) ? $data : false),
-            'server' => $_SERVER,
-        ];
-        error_log("No valid configuration found, this is debug:\n" . json_encode($debug, JSON_PRETTY_PRINT));
-    }
     system_die("No valid configuration found!");
-}
 
 /**
  * Loads a config file.
