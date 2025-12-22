@@ -75,7 +75,7 @@ if( PHP_SAPI == 'cli' )
 
 // Config handling
 system_config_default( !defined("NO_DEFAULT_CONFIG") );
-if( file_exists("config.php") )
+if( @file_exists("config.php") )
 	system_config("config.php",false);
 elseif( file_exists(__DIR__."/config.php") )
 	system_config(__DIR__."/config.php",false);
