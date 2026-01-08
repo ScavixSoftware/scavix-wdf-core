@@ -1393,7 +1393,7 @@ function cache_list_keys($global_cache=true, $session_cache=true)
  */
 function current_controller($as_string=true)
 {
-    return empty(Wdf::$Request) ? ($as_string ? '' : null) : Wdf::$Request->getController($as_string);
+    return Wdf::Request()->getController($as_string);
 }
 
 /**
@@ -1404,7 +1404,7 @@ function current_controller($as_string=true)
  */
 function current_event()
 {
-	return empty(Wdf::$Request) ? '' : Wdf::$Request->getEvent();
+    return Wdf::Request()->getEvent();
 }
 
 /**

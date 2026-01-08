@@ -50,7 +50,9 @@ class Wdf
     public static $Hooks = [];
     public static $Modules = [];
     public static $ClassAliases = [];
-
+    /**
+     * @deprecated Use Wdf::Request() instead.
+     */
     public static $Request;
     public static $ClientIP;
     public static $SessionHandler;
@@ -345,6 +347,11 @@ class WdfIncomingRequest
         }
     }
 
+    function getUrl()
+    {
+        return $this->samePage();
+    }
+
     function getController(bool $as_string=true)
     {
         return $as_string ? strtolower(
@@ -551,7 +558,7 @@ class WdfIncomingRequest
         if (!is_string($this->_currentController))
             return;
 
-        execute_hooks(HOOK_PRE_CONSTRUCT, [$this->_currentController, Wdf::$Request->_currentEvent]);
+        execute_hooks(HOOK_PRE_CONSTRUCT, [$this->_currentController, $this->_currentEvent]);
         $controller_name = fq_class_name($this->_currentController);
 
         if( in_object_storage($controller_name) )
