@@ -309,12 +309,11 @@ class CheckTask extends Task
                 if (stripos($file, "\\$ign\\") || stripos($file, "/$ign/"))
                     return;
             $code = file_get_contents($file);
-            if (!stripos($code, '@attribute'))
-                return;
-
             if (preg_match_all('/@attribute\[(.*)\]/', $code, $matches, PREG_SET_ORDER))
                 foreach ($matches as $m)
                     $findings[$relfile][] = $m[1];
+            if ( strpos($code,"ARGUMENT FAILED") !== false )
+                $findings[$relfile][] = "Old 'ARGUMENT FAILED' handling detected";
         });
         echo "\033[2K\r";
         if (count($findings) > 0)
