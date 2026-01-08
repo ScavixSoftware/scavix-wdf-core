@@ -165,12 +165,14 @@ class WdfReflector extends ReflectionClass
 					$line = $lines[$i];
 					if($line == "")
 						continue;
+                    if (preg_match('/^\s*function\s/i', $line) !== false)
+                        break;
 					if( !$collecting && strpos($line,'*/') !== false )
 						$collecting = true;
 					if( $collecting )
 					{
 						$doc[] = trim($line);
-						if( (strpos($line,'/*') !== false || preg_match('/^\s*function\s/i',$line) > 0) )
+						if( strpos($line,'/*') !== false )
 							break;
 					}
 				}
