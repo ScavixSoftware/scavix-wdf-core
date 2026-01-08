@@ -290,4 +290,42 @@ class CheckTask extends Task
             }
         }
     }
+
+    function attributes($args)
+    {
+        $dir = realpath($args['dir'] ?? '');
+        if( !$dir || !avail($args,'dir') )
+            return log_info("Syntax: check-attributes dir=<base-folder>");
+
+        $findings = [];
+        $ignores = ['.git','scavix-wdf','vendor','node_modules','wp-content','wp-includes'];
+        system_walk_files($dir, "*.php", function ($file) use (&$findings, $dir, $ignores)
+        {
+            $file = realpath($file);
+            $relfile = trim(str_replace($dir, "", $file), "/");
+            echo "\033[2K\r$relfile\r";
+
+            foreach ($ignores as $ign)
+                if (stripos($file, "\\$ign\\") || stripos($file, "/$ign/"))
+                    return;
+            $code = file_get_contents($file);
+            if (!stripos($code, '@attribute'))
+                return;
+
+            if (preg_match_all('/@attribute\[(.*)\]/', $code, $matches, PREG_SET_ORDER))
+                foreach ($matches as $m)
+                    $findings[$relfile][] = $m[1];
+        });
+        echo "\033[2K\r";
+        if (count($findings) > 0)
+        {
+            foreach ($findings as $name => $f)
+            {
+                $f = implode("\n  - ", $f);
+                log_info("$name\n  - $f");
+            }
+        }
+        else
+            log_info("Nothing found, everything is fine");
+    }
 }
