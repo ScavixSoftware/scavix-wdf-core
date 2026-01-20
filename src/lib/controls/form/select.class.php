@@ -132,6 +132,9 @@ class Select extends Control
      */
 	function CreateOption($value, $label="", $selected = false, $opt_group=false)
 	{
+        if (isset($this->_options[$value]))
+            return $this;
+
 		$label = $label==""?$value:$label;
 		$this->_options[$value] = $label;
 		if( !$this->_first_option_value )
