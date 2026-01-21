@@ -132,14 +132,14 @@ class Select extends Control
      */
 	function CreateOption($value, $label="", $selected = false, $opt_group=false)
 	{
-        if (isset($this->_options[$value]))
-        {
-            foreach ($this->_content as $opt)
-            {
-                if (ifavail($opt->_attributes, 'value') == $value)
-                    return $opt;
-            }
-        }
+        // if (isset($this->_options[$value]))
+        // {
+        //     foreach ($this->_content as $opt)
+        //     {
+        //         if (ifavail($opt->_attributes, 'value') == $value)
+        //             return $opt;
+        //     }
+        // }
 
 		$label = $label==""?$value:$label;
 		$this->_options[$value] = $label;
