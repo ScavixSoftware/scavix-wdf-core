@@ -25,6 +25,7 @@ namespace ScavixWDF\Reflection\Attributes;
 
 use Attribute;
 use ScavixWDF\Reflection\RequestParamAttribute;
+use ScavixWDF\Wdf;
 
 /**
  * Allows to grab input-data from the request and apply it to the method arguments.
@@ -40,8 +41,30 @@ use ScavixWDF\Reflection\RequestParamAttribute;
 #[Attribute(Attribute::TARGET_METHOD|Attribute::IS_REPEATABLE)]
 class RequestParam extends RequestParamAttribute
 {
-    function __construct(string $name, $type = null, $default = null, $filter = null)
+    protected $path_definition = '';
+
+    function __construct(string $name, $type = null, $default = null, $filter = null, $path = '')
     {
         parent::__construct($name, $type, $default, $filter);
+        $this->path_definition = $path;
+    }
+
+    function applyDefaults(&$args, $is_last = false)
+    {
+        $name = $GLOBALS['CONFIG']['requestparam']['ignore_case'] ? strtolower($this->Name) : $this->Name;
+        if (isset($args[$name]))
+            return;
+
+        if( $this->path_definition )
+        {
+            $pd = new PathData($this->path_definition);
+            foreach ($pd->getParsedData(Wdf::Request()) as $n => $v)
+                if (!isset($args[$name]))
+                {
+                    $args[$name] = $v;
+                    // log_debug(get_class($this),"got $name from path: $v");
+                }
+        }
+        parent::applyDefaults($args, $is_last);
     }
 }

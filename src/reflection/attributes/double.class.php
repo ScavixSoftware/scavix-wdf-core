@@ -39,8 +39,8 @@ use Attribute;
 #[Attribute(Attribute::TARGET_METHOD|Attribute::IS_REPEATABLE)]
 class Double extends RequestParam
 {
-    function __construct(string $name, $default = null)
+    function __construct(string $name, $default = null, $path = '')
     {
-        parent::__construct($name, 'double', $default);
+        parent::__construct($name, 'double', $default, null, $path);
     }
 }

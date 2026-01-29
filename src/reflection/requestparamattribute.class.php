@@ -88,12 +88,22 @@ class RequestParamAttribute extends WdfAttribute implements IRequestAttribute
             return;
         if (!is_null($this->Default))
             $args[$this->Name] = $this->Default;
-        elseif (is_in(get_class($this), RequestParamAttribute::class, RequestParam::class))
+        elseif (($this instanceof RequestParamAttribute) || ($this instanceof RequestParam))
         {
             if (\ScavixWDF\Wdf::Request()->hasRouteArgs())
             {
+                $url = \ScavixWDF\Wdf::Request()->getUrl(false);
                 $argdata = \ScavixWDF\Wdf::Request()->shiftRouteArg($is_last ? '/' : '');
-                log_warn("Skipped use of indexed path argument '{$this->Name}={$argdata}'. Use a PathData attribute instead!");
+                $msg = "use of indexed path argument '{$this->Name}'! Add \"path:'".str_replace($argdata, '{' . $this->Name . '}', $url)."'\" or use PathData instead.";
+                if ($GLOBALS['CONFIG']['requestparam']['allow_indexed'])
+                {
+                    $args[$this->Name] = $argdata;
+                    $msg = "Deprecated $msg";
+                }
+                else
+                    $msg = "Skipped $msg";
+
+                log_warn("[$url] $msg","Location: ".\ScavixWDF\Wdf::Request()->getRequestedCodePath());
             }
         }
     }

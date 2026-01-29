@@ -142,6 +142,8 @@ function system_config_default($reset = true)
 
 	$CONFIG['requestparam']['ignore_case'] = true;
 	$CONFIG['requestparam']['tagstostrip'] = ['script'];
+    $CONFIG['requestparam']['allow_indexed'] = isDev();
+    $CONFIG['requestparam']['allow_get_evaluation'] = isDev();
 
 	$CONFIG['model']['internal']['auto_create_tables'] = true;
 	$CONFIG['model']['internal']['datasource_type']    = 'DataSource';

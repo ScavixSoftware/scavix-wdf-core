@@ -328,9 +328,13 @@ class WdfIncomingRequest
         foreach( $meth->getParameters() as $param )
         {
             $n = $param->getName();
-            $args[$n] = isset($this->_parsedArguments[$n]) ? $this->_parsedArguments[$n] : null;
+            if( isset($this->_parsedArguments[$n]) )
+                $args[$n] = $this->_parsedArguments[$n];
+            elseif ($param->isVariadic())
+                $args += $this->_parsedArguments;
+            else
+                $args[$n] = null;
         }
-        // log_debug("Invoking " . $meth->getName() . " with: ", $args);
         return $meth->invokeArgs($this->_currentController, $args);
     }
 
@@ -347,9 +351,19 @@ class WdfIncomingRequest
         }
     }
 
-    function getUrl()
+    function getRequestedCodePath()
     {
-        return $this->samePage();
+        $ref = \ScavixWDF\Reflection\WdfReflector::GetInstance($this->_currentController);
+        $meth = $ref->getMethod($this->_currentEvent);
+        return $meth->getFileName() . ":" . $meth->getStartLine();
+    }
+
+    function getUrl(bool $absolute=true)
+    {
+        $url = $this->samePage();
+        if( $absolute )
+            return $url;
+        return "/" . ltrim(str_replace($GLOBALS['CONFIG']['system']['url_root'], '', $url), '/');
     }
 
     function getController(bool $as_string=true)

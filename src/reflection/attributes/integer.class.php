@@ -39,8 +39,8 @@ use Attribute;
 #[Attribute(Attribute::TARGET_METHOD|Attribute::IS_REPEATABLE)]
 class Integer extends RequestParam
 {
-    function __construct($name, $default = null)
+    function __construct($name, $default = null, $path = '')
     {
-        parent::__construct($name, 'integer', $default);
+        parent::__construct($name, 'integer', $default, null, $path);
     }
 }

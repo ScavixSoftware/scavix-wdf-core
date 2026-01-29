@@ -44,8 +44,8 @@ use Attribute;
 #[Attribute(Attribute::TARGET_METHOD|Attribute::IS_REPEATABLE)]
 class Text extends RequestParam
 {
-    function __construct(string $name, $default = null, $filtered = true)
+    function __construct(string $name, $default = null, $filtered = true, $path = '')
     {
-        parent::__construct($name, $filtered ? 'string' : 'text', $default);
+        parent::__construct($name, $filtered ? 'string' : 'text', $default, null, $path);
     }
 }

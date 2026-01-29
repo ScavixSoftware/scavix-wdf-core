@@ -39,8 +39,8 @@ use Attribute;
 #[Attribute(Attribute::TARGET_METHOD|Attribute::IS_REPEATABLE)]
 class Boolean extends RequestParam
 {
-    function __construct(string $name, $default = null)
+    function __construct(string $name, $default = null, $path = '')
     {
-        parent::__construct($name, 'bool', $default);
+        parent::__construct($name, 'bool', $default, null, $path);
     }
 }

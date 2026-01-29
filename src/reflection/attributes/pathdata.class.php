@@ -24,8 +24,10 @@
 namespace ScavixWDF\Reflection\Attributes;
 
 use Attribute;
+use ScavixWDF\Base\Args;
 use ScavixWDF\IRequestAttribute;
 use ScavixWDF\Reflection\WdfAttribute;
+use ScavixWDF\Wdf;
 use ScavixWDF\WdfIncomingRequest;
 
 /**
@@ -57,6 +59,20 @@ class PathData extends WdfAttribute implements IRequestAttribute
         foreach ($this->defaults as $k => $v)
             if (!isset($args[$k]))
                 $args[$k] = $v;
+
+        foreach ($this->detectedNames as $n)
+            if (!isset($args[$n]) && ($v = Args::get($n)))
+            {
+                $msg = "GET['{$n}'] that should be in the path '{$this->path}'";
+                if ($GLOBALS['CONFIG']['requestparam']['allow_get_evaluation'])
+                {
+                    $args[$n] = $v;
+                    $msg = "Use of $msg";
+                }
+                else
+                    $msg = "Ignored $msg";
+                log_warn("[" . Wdf::Request()->getUrl(false) . "] $msg", "Location: " . Wdf::Request()->getRequestedCodePath());
+            }
     }
 
     function getParsedData(WdfIncomingRequest $request)
