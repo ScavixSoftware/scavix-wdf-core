@@ -226,8 +226,11 @@ class LessCompiler implements \JsonSerializable
 
             // preprocess and compile less of all included files
             foreach (array_reverse(cfg_getd('less', 'files', [])) as $f)
-                $parser->parse($this->preprocessLess(file_get_contents($f)), $f);
-            $raw_less = $this->preprocessLess($content);
+                if( !$this->isAlreadyParsed($f ) )
+                    $parser->parse($this->preprocessLess($parser, $f), $f);
+                else
+                    $this->debug("File $f already parsed");
+            $raw_less = $this->preprocessLess($parser, $fname, $content);
             $parser->parse($raw_less, $fname);
 
             // update processed files, restore import folders
@@ -236,34 +239,17 @@ class LessCompiler implements \JsonSerializable
             $this->importDir = $oldImport;
 
             // finally apply variables, respecting the priority as documented in class comment
-            // return $parser->getCss();
             return $this->applyVariables($parser);
         }
         catch (\Less_Exception_Compiler $ex)
         {
-            $this->error($ex->getMessage());
+            $this->error($ex->getMessage(),$ex->getTraceAsString());
         }
         return '';
     }
 
     private function getParserOptions()
     {
-        // $plugins = [new class
-        // {
-        //     public $isPreEvalVisitor = false;
-        //     public $isPreVisitor = false;
-
-        //     public function run(Less_Tree_Ruleset $root)
-        //     {
-        //         // log_debug("POST visitor",$root);
-        //         foreach ($root->_variables as $var)
-        //         {
-        //             /** @var Less_Tree_Declaration $var */
-        //             $v = trim(str_replace("{$var->name}:", "", $var->toCSS()));
-        //             log_debug("Var ", "{$var->name}=$v", $var);
-        //         }
-        //     }
-        // }];
         return [
             'relativeUrls' => false,
             'indentation' => "\t",
@@ -272,10 +258,15 @@ class LessCompiler implements \JsonSerializable
         ];
     }
 
-    private function preprocessLess($less)
+    private function isAlreadyParsed($lessFile)
+    {
+        return isset($this->allParsedFiles[$lessFile]);
+    }
+
+    private function preprocessLess(Less_Parser $parser, $lessFile, $less = '')
     {
         // mediawiki less compiler is very strict on function names, we need to replace camelCase to snake_case
-        $less = str_replace (
+        $less = str_replace(
             [
                 'lightenBackground',
                 'darkenBackground',
@@ -286,12 +277,28 @@ class LessCompiler implements \JsonSerializable
                 'darken_background',
                 'data_uri'
             ],
-            $less
+            $less ?: file_get_contents($lessFile)
         );
         if( stripos($less,"verbose_compilation = on") !== false )
             $this->setVerbose();
         elseif( stripos($less,"verbose_compilation = off") !== false )
             $this->setVerbose(false);
+
+        preg_replace_callback('/@import\s+["\']([^"\']+)["\']/', function ($match) use ($parser, $lessFile)
+        {
+            $rel = realpath(dirname($lessFile) . '/' . $match[1]);
+            if( !$this->isAlreadyParsed($rel ))
+            {
+                $this->debug("@import detected, preparsing", $match[1], $rel);
+                $parser->parse(file_get_contents($rel), $match[1]);
+            }
+            else
+                $this->debug("@import detected but already parsed", $match[1], $rel);
+
+            return '';
+        }, $less);
+        $this->addParsedFile($lessFile);
+
         return $less;
     }
 

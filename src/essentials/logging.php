@@ -231,6 +231,9 @@ function global_error_handler($errno, $errstr, $errfile, $errline)
         }
     }
 
+    if ($errno == E_WARNING && substr($errfile, -10) == 'Parser.php' && $errline == 353)
+        return;
+
     $sev = 'NOTICE';
 	foreach( $error_names as $n )
     {
