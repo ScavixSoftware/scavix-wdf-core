@@ -52,10 +52,12 @@ class WdfClosure
 		$this->code = $this->_fetchCode();
     }
 
-	public function __invoke(...$args)
-	{
-        return $this->closure->call($this->context,...$args);
-	}
+    public function __invoke(...$args)
+    {
+        if ($this->context === null)
+            return ($this->closure)(...$args);
+        return $this->closure->call($this->context, ...$args);
+    }
 
 	/**
 	 * @internal
