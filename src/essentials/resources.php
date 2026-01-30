@@ -186,16 +186,11 @@ function clear_less_cache()
  * Compiles LESS code to CSS.
  *
  * @param string $less The LESS code
- * @param bool $use_vars (deprecated) Switch if defined variables should be used (default: true).
+ * @param bool $use_vars (deprecated) Does nothing
  * @return string The compiled CSS code
  */
 function compile_less_code($less,$use_vars=false)
 {
-//    require_once(__DIR__.'/resources/lessphp/lessc.inc.php');
     $compiler = new ScavixWDF\LessCompiler();
-
-    if( $use_vars && isset($_SESSION['resources_less_variables']) )
-        $compiler->setVariables($_SESSION['resources_less_variables']);
-
     return $compiler->compile($less,__FUNCTION__);
 }

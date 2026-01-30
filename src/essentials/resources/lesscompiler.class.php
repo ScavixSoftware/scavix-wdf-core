@@ -24,6 +24,7 @@
  */
 namespace ScavixWDF;
 
+use Less_Exception_Compiler;
 use Less_Parser;
 use Less_Tree_Declaration;
 
@@ -56,8 +57,8 @@ class LessCompiler implements \JsonSerializable
     private $id, $verbose, $registered = [], $forced = [];
     private $libFunctions = [];
 	private $registeredVars = [];
-	public $importDir = '';
 	private $allParsedFiles = [];
+    private $debug_buffer = [];
 
     function __construct()
     {
@@ -78,13 +79,13 @@ class LessCompiler implements \JsonSerializable
                 $this->error("'data_uri': Missing file argument");
 
             $name = $args[0]->value ?? 'none';
-            log_debug("dataUri($name)");
+            $this->debug("dataUri($name)");
             if( $name == 'none' )
                 return "none";
 
             $name = str_ireplace("resfile/", "", $name);
             $fn = resFile(trim($name,"\"' "), true);
-            log_debug("file $fn");
+            $this->debug("file $fn");
             if( !file_exists($fn) )
                 return "none";
 
@@ -171,19 +172,27 @@ class LessCompiler implements \JsonSerializable
      *
      * @param bool $on True=on, False=off
      */
-    function setVerbose($on=true)
+    function setVerbose($on = true)
     {
+        if ($this->verbose && !$on)
+            $this->debug("verbose=off");
         $this->verbose = $on;
+        if ($on)
+            $this->debug("verbose=on");
     }
 
     function debug(...$args)
     {
         if( $this->verbose )
             log_debug("[LESS][$this->id]",...$args);
+        else
+            $this->debug_buffer[] = $args;
     }
 
     function error(...$args)
     {
+        foreach ($this->debug_buffer as $info)
+            log_debug("[LESS][$this->id]", ...$info);
         log_debug("[LESS][$this->id]",...$args);
     }
 
@@ -212,38 +221,32 @@ class LessCompiler implements \JsonSerializable
 
             // prepare import files/folders
             $pi = pathinfo($fname);
-            $oldImport = $this->importDir;
-            $this->importDir = (array) $this->importDir;
-            $this->importDir[] = Less_Parser::AbsPath($pi['dirname']) . '/';
+            $importDirs = $_SESSION['resources_less_dirs'] ?? [];
+            $importDirs[] = Less_Parser::AbsPath($pi['dirname']) . '/';
+
             $this->allParsedFiles = [];
-            $this->addParsedFile($fname);
+            $content = $this->preprocessLess($fname, $content);
 
             // prepare parser
             $parser = new Less_Parser($this->getParserOptions());
-            $parser->SetImportDirs(array_fill_keys($this->importDir, ''));
+            $parser->SetImportDirs(array_fill_keys($importDirs, ''));
             foreach ($this->libFunctions as $name => $func)
                 $parser->registerFunction($name, $func);
 
             // preprocess and compile less of all included files
             foreach (array_reverse(cfg_getd('less', 'files', [])) as $f)
-                if( !$this->isAlreadyParsed($f ) )
-                    $parser->parse($this->preprocessLess($parser, $f), $f);
-                else
-                    $this->debug("File $f already parsed");
-            $raw_less = $this->preprocessLess($parser, $fname, $content);
-            $parser->parse($raw_less, $fname);
+                $this->parseImportedFile($parser, $f);
+            $raw_less = $this->preprocessImports($parser, $fname, $content);
 
-            // update processed files, restore import folders
-            foreach ($parser->getParsedFiles() as $file)
-                $this->addParsedFile($file);
-            $this->importDir = $oldImport;
+            $parser->parse($raw_less, $fname);
+            $this->addParsedFile($fname);
 
             // finally apply variables, respecting the priority as documented in class comment
             return $this->applyVariables($parser);
         }
-        catch (\Less_Exception_Compiler $ex)
+        catch (Less_Exception_Compiler $ex)
         {
-            $this->error($ex->getMessage(),$ex->getTraceAsString());
+            $this->error($ex->getMessage(),$ex->getTraceAsString(),$parser->getVariables());
         }
         return '';
     }
@@ -258,12 +261,26 @@ class LessCompiler implements \JsonSerializable
         ];
     }
 
-    private function isAlreadyParsed($lessFile)
+    private function parseImportedFile(Less_Parser $parser, $lessFile, $lessUri=null)
     {
-        return isset($this->allParsedFiles[$lessFile]);
+        if( !file_exists($lessFile) )
+        {
+            $this->error("Import not found ".$lessFile);
+            return;
+        }
+        if( isset($this->allParsedFiles[$lessFile]) )
+        {
+            $this->debug("Import already parsed ".($lessUri?:$lessFile));
+            return;
+        }
+        $this->debug("Importing " . ($lessUri ?: $lessFile));
+        $lc = $this->preprocessLess($lessFile);
+        $lc = $this->preprocessImports($parser, $lessFile, $lc);
+        $parser->parse($lc, $lessUri ?: $lessFile);
+        $this->addParsedFile($lessFile);
     }
 
-    private function preprocessLess(Less_Parser $parser, $lessFile, $less = '')
+    private function preprocessLess($lessFile, $less = '')
     {
         // mediawiki less compiler is very strict on function names, we need to replace camelCase to snake_case
         $less = str_replace(
@@ -284,34 +301,29 @@ class LessCompiler implements \JsonSerializable
         elseif( stripos($less,"verbose_compilation = off") !== false )
             $this->setVerbose(false);
 
-        preg_replace_callback('/@import\s+["\']([^"\']+)["\']/', function ($match) use ($parser, $lessFile)
+        return $less;
+    }
+
+    private function preprocessImports(Less_Parser $parser, $lessFile, $less = '')
+    {
+        $less = preg_replace_callback('/@import\s+["\']([^"\']+)["\']/', function ($match) use ($parser, $lessFile)
         {
             $rel = realpath(dirname($lessFile) . '/' . $match[1]);
-            if( !$this->isAlreadyParsed($rel ))
-            {
-                $this->debug("@import detected, preparsing", $match[1], $rel);
-                $parser->parse(file_get_contents($rel), $match[1]);
-            }
-            else
-                $this->debug("@import detected but already parsed", $match[1], $rel);
-
+            $this->parseImportedFile($parser, $rel, $match[1]);
             return '';
-        }, $less);
-        $this->addParsedFile($lessFile);
-
+        }, $less ?: file_get_contents($lessFile));
         return $less;
     }
 
     private function applyVariables(Less_Parser $parser)
     {
         $out = $parser->getCss();
-        $original = $vars = $parser->getVariables();
+        $vars = $parser->getVariables();
 
         $apply = function ($variables, $logstring) use ($parser, &$vars)
         {
             $keys = array_map(fn($k) => str_replace('@@', '@', "@$k"), array_keys($variables));
             $variables = array_combine($keys, array_values($variables));
-            $variables = array_diff_key($variables, $vars);
             if (count($variables))
             {
                 $this->debug($logstring, $variables);
@@ -320,10 +332,29 @@ class LessCompiler implements \JsonSerializable
             }
         };
 
-        $apply($this->forced, "Setting less-forced variables");
-        $apply($this->registeredVars, "Setting code-registered variables");
-        $apply(cfg_getd('less', 'variables', []), "Setting code-configured variables");
         $apply($this->registered, "Setting less-registered variables");
+        $apply(cfg_getd('less', 'variables', []), "Setting code-configured variables");
+        $apply($_SESSION['resources_less_variables'] ?? [], "Setting code-registered variables");
+        $apply($this->forced, "Setting less-forced variables");
+
+        foreach( $vars as $n=>$value )
+        {
+            foreach (force_array($value) as $v)
+            {
+                if (!is_string($v) || !preg_match_all('/(@[^\s]+)/', $v, $matches))
+                    continue;
+                foreach ($matches[1] as $m)
+                {
+                    if (isset($vars[$m]))
+                        continue;
+                    $this->debug("Missing variable reference '$m', using default");
+                    $vars[$m] = '0';
+                    $parser->ModifyVars([$m => '0']);
+                }
+            }
+        }
+
+        $this->debug("Final variables: ".json_encode($vars));
 
         $out = $parser->getCss();
         $out = preg_replace_callback('/generate_variable_index\(([^\)]+)\);*/', function ($match) use ($vars)
@@ -338,23 +369,15 @@ class LessCompiler implements \JsonSerializable
             return "$node\n{\n\t" . implode("\n\t", $res) . "\n}";
         }, $out);
 
-        $this->debug("Final variables", $vars);
         $this->debug("Final css", $out);
         return $out;
     }
 
     protected function addParsedFile( $file )
     {
-		$this->allParsedFiles[Less_Parser::AbsPath( $file )] = filemtime( $file );
+        if( $file = realpath($file) )
+		    $this->allParsedFiles[$file] = filemtime( $file );
 	}
-
-    private function array_map_assoc($callback, $array)
-    {
-        $res = [];
-        foreach( $array as $k => $v )
-            $res[$k] = $callback($k, $v);
-        return $res;
-    }
 
     #endregion
 
@@ -437,17 +460,6 @@ class LessCompiler implements \JsonSerializable
     public function registerFunction($name, $func)
     {
         $this->libFunctions[$name] = $func;
-    }
-
-    public function setImportDir($dirs)
-    {
-        $this->importDir = (array) $dirs;
-    }
-
-    public function addImportDir($dir)
-    {
-        $this->importDir = (array) $this->importDir;
-        $this->importDir[] = $dir;
     }
 
     #endregion
