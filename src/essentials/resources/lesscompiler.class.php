@@ -246,7 +246,7 @@ class LessCompiler implements \JsonSerializable
         }
         catch (Less_Exception_Compiler $ex)
         {
-            $this->error($ex->getMessage(),$ex->getTraceAsString(),$parser->getVariables());
+            $this->error($ex->getMessage(),$ex->getTraceAsString());
         }
         return '';
     }

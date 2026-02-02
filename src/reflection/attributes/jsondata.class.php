@@ -48,7 +48,7 @@ class JsonData extends WdfAttribute implements IRequestAttribute
 
     function __construct($name, $path = '', $default = null)
     {
-        log_debug("JsonData: $name, path: $path, default: ". var_export($default, true));
+        // log_debug("JsonData: $name, path: $path, default: ". var_export($default, true));
         $this->name = $name;
         $this->path = $path;
         $this->default = $default;
@@ -70,7 +70,7 @@ class JsonData extends WdfAttribute implements IRequestAttribute
 
         if ($this->path)
         {
-            log_debug($data);
+            // log_debug($data);
             if (is_array($data))
                 $data = array_change_key_case($data, CASE_LOWER);
             $path = explode('.', strtolower($this->path));
