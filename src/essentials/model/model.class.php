@@ -355,13 +355,14 @@ abstract class Model implements Iterator, Countable, ArrayAccess, \ScavixWDF\ILo
 	function __init_db_values($known_as_empty=false, $convert_now_values=false, $column_filter=false)
 	{
 		$this->_saved = !$known_as_empty;
-		$this->_dbValues = [];
+        if($column_filter === false)
+		    $this->_dbValues = [];
 		if( !$this->_tableSchema )
 			$this->__ensureTableSchema();
 		foreach( $this->_tableSchema->Columns as $column )
 		{
             $col = $column->Name;
-            if (is_array($column_filter) && !in_array($col, $column_filter))
+            if (\is_array($column_filter) && !\in_array($col, $column_filter))
                 continue;
 
 			if( $known_as_empty )
@@ -372,7 +373,7 @@ abstract class Model implements Iterator, Countable, ArrayAccess, \ScavixWDF\ILo
 			else
 			{
 				$this->$col = $this->__typedValue($col,$convert_now_values); // do not use $this->TypedValue because may be overridden
-                if( $column->Type == 'json' && (is_object($this->$col) || is_array($this->$col)) )
+                if( $column->Type == 'json' && (\is_object($this->$col) || \is_array($this->$col)) )
                     $this->_dbValues[$col] = json_decode(json_encode($this->$col));
                 else
                     $this->_dbValues[$col] = $this->$col;
@@ -887,13 +888,12 @@ abstract class Model implements Iterator, Countable, ArrayAccess, \ScavixWDF\ILo
 			return $this->__ensureTableSchema()->ColumnNames();
 
 		$res = [];
-		//$cols = array_diff(array_keys(get_object_vars($this)), array_keys(get_class_vars(get_class($this))));
 		foreach( $this->__ensureTableSchema()->Columns as $column )
 		{
             $col = $column->Name;
 			if( $this->HasValue($col) )
 			{
-				if( !array_key_exists($col,$this->_dbValues) )
+				if( !\array_key_exists($col,$this->_dbValues) )
 					$res[] = $col;
 				else
 				{
@@ -911,17 +911,16 @@ abstract class Model implements Iterator, Countable, ArrayAccess, \ScavixWDF\ILo
                         $v2 = @json_encode($v2);
                     }
 
-					if((is_null($v1) || is_null($v2)) && ($v1 !== $v2))
+					if((\is_null($v1) || \is_null($v2)) && ($v1 !== $v2))
 						$res[] = $col;
 					elseif( $v1 != $v2 )
 						$res[] = $col;
 				}
 			}
-			elseif( array_key_exists($col,$this->_dbValues) )
+			elseif( \array_key_exists($col,$this->_dbValues) )
                 $res[] = $col;
 		}
 		return $res;
-		//return array_keys($this->_changedColumns);
     }
 
     /**
@@ -944,7 +943,7 @@ abstract class Model implements Iterator, Countable, ArrayAccess, \ScavixWDF\ILo
             elseif( $type=='json' )
                 $v1 = @json_encode($v1);
 
-            if( array_key_exists($col,$this->_dbValues) )
+            if( \array_key_exists($col,$this->_dbValues) )
             {
                 $v2 = $this->__toTypedValue($col,$this->_dbValues[$col]);
                 if( $v2 instanceof DateTime )
@@ -967,22 +966,7 @@ abstract class Model implements Iterator, Countable, ArrayAccess, \ScavixWDF\ILo
      */
     public function HasChanged($col)
     {
-        if( $this->HasValue($col) )
-        {
-            if( !array_key_exists($col,$this->_dbValues) )
-                return true;
-
-            $v1 = $this->$col;
-            if( $v1 instanceof DateTime )
-                $v1 = $v1->format('U');
-
-            $v2 = $this->_dbValues[$col];
-            if( $v2 instanceof DateTime )
-                $v2 = $v2->format('U');
-
-            return $v1 != $v2;
-        }
-        return array_key_exists($col,$this->_dbValues);
+        return \in_array($col, $this->GetColumnNames(true));
     }
 
 	/**
@@ -1017,9 +1001,9 @@ abstract class Model implements Iterator, Countable, ArrayAccess, \ScavixWDF\ILo
 	public function AsArray(...$filter)
 	{
 		$res = [];
-		if( count($filter)>0 )
+		if( \count($filter)>0 )
 		{
-            if( count($filter)==1 && is_array($filter[0]) )
+            if( \count($filter)==1 && is_array($filter[0]) )
                 $filter = $filter[0];
 
 			foreach( $filter as $cn )
@@ -1029,7 +1013,7 @@ abstract class Model implements Iterator, Countable, ArrayAccess, \ScavixWDF\ILo
 		else
 		{
 			foreach( $this->GetColumnNames() as $cn )
-				if( count($filter)==0 || in_array($cn, $filter) )
+				if( \count($filter)==0 || in_array($cn, $filter) )
 					$res[$cn] = $this->__typedValue($cn);
 		}
 		return $res;
@@ -1050,7 +1034,7 @@ abstract class Model implements Iterator, Countable, ArrayAccess, \ScavixWDF\ILo
 	 */
     public function AsDbArgs(...$names)
     {
-        if( count($names)>0 )
+        if( \count($names)>0 )
         {
             $d = [];
             foreach( $names as $cn )
@@ -1717,9 +1701,6 @@ abstract class Model implements Iterator, Countable, ArrayAccess, \ScavixWDF\ILo
 	 */
     public function Save($columns_to_update = false, &$changed = null)
     {
-        if ($changed !== null)
-            $buf = $this->GetChanges();
-
         if ($columns_to_update !== false)
         {
             if (!\is_array($columns_to_update))
@@ -1732,6 +1713,9 @@ abstract class Model implements Iterator, Countable, ArrayAccess, \ScavixWDF\ILo
             }
         }
 
+        if ($changed !== null)
+            $buf = $this->GetChanges();
+
         $args = [];
         $stmt = $this->_ds->Driver->getSaveStatement($this, $args, $columns_to_update);
 
@@ -1742,7 +1726,7 @@ abstract class Model implements Iterator, Countable, ArrayAccess, \ScavixWDF\ILo
             WdfDbException::RaiseStatement($stmt);
 
         $pkcols = $this->GetPrimaryColumns();
-        if (count($pkcols) != 1)
+        if (\count($pkcols) != 1)
         {
             $this->__init_db_values(false, true, $columns_to_update);
             return true;
@@ -1757,11 +1741,11 @@ abstract class Model implements Iterator, Countable, ArrayAccess, \ScavixWDF\ILo
         else
             $this->__init_db_values(false, true, $columns_to_update);
 
-        if (isset($buf) && count($args) > 0)
+        if (isset($buf) && \count($args) > 0)
         {
             $changed = [];
-            foreach ($buf as $i => list($o, $n))
-                if( $columns_to_update === false || in_array($i, $columns_to_update)  )
+            foreach ($buf as $i => [$o, $n])
+                if( $columns_to_update === false || \in_array($i, $columns_to_update)  )
                    $changed[$i] = [$o, $this->$i];
         }
         return true;
