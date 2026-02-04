@@ -24,6 +24,8 @@
  */
 namespace ScavixWDF\Tasks;
 
+use ScavixWDF\LessCompiler;
+
 /**
  * @internal CLI only Task run `php index.php check` for info
  */
@@ -326,5 +328,22 @@ class CheckTask extends Task
         }
         else
             log_info("Nothing found, everything is fine");
+    }
+
+    function less($args)
+    {
+        $this->startTerminalMode();
+        $compiler = new LessCompiler();
+        foreach( $args as $lessfile )
+        {
+            $compiler->setVerbose(false);
+            if ($compiler->compileFile($lessfile))
+                log_info("File okay: $lessfile");
+            else
+            {
+                log_warn("Error detected in file: $lessfile");
+                break;
+            }
+        }
     }
 }

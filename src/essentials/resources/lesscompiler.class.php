@@ -202,6 +202,7 @@ class LessCompiler implements \JsonSerializable
 
     private function processCompilation($fname, $content = null)
     {
+        $this->debug_buffer = [];
         try
         {
             if (!$this->id || is_numeric($this->id))
