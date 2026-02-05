@@ -352,9 +352,9 @@ abstract class Model implements Iterator, Countable, ArrayAccess, \ScavixWDF\ILo
 		$this->__init_db_values();
 	}
 
-	function __init_db_values($known_as_empty=false, $convert_now_values=false, $column_filter=false)
+	function __init_db_values($is_new_dataset=false, $convert_now_values=false, $column_filter=false)
 	{
-		$this->_saved = !$known_as_empty;
+		$this->_saved = !$is_new_dataset;
         if($column_filter === false)
 		    $this->_dbValues = [];
 		if( !$this->_tableSchema )
@@ -365,7 +365,7 @@ abstract class Model implements Iterator, Countable, ArrayAccess, \ScavixWDF\ILo
             if (\is_array($column_filter) && !\in_array($col, $column_filter))
                 continue;
 
-			if( $known_as_empty )
+			if( $is_new_dataset )
 			{
 				$this->$col = null;
 				$this->_dbValues[$col] = null;
@@ -1703,13 +1703,18 @@ abstract class Model implements Iterator, Countable, ArrayAccess, \ScavixWDF\ILo
     {
         if ($columns_to_update !== false)
         {
-            if (!\is_array($columns_to_update))
-                WdfException::Raise("Please specify 'columns_to_update' as array");
-            if(is_assoc($columns_to_update))
+            if (!$this->_saved) // always save everything if the model is not present in the db
+                $columns_to_update = false;
+            else
             {
-                foreach($columns_to_update as $col => $val)
-                    $this->$col = $val;
-                $columns_to_update = array_keys($columns_to_update);
+                if (!\is_array($columns_to_update))
+                    WdfException::Raise("Please specify 'columns_to_update' as array");
+                if (is_assoc($columns_to_update))
+                {
+                    foreach ($columns_to_update as $col => $val)
+                        $this->$col = $val;
+                    $columns_to_update = array_keys($columns_to_update);
+                }
             }
         }
 

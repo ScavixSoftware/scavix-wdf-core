@@ -176,7 +176,7 @@ class RequestParamAttribute extends WdfAttribute implements IRequestAttribute
                 {
                     case '1': case 'true': case 'yes': case 'on':
                         return [$this->Name => true];
-                    case '0': case 'false': case 'no': case 'off':
+                    case '0': case 'false': case 'no': case 'off': case '':
                         return [$this->Name => false];
                     default:
                         return $this->returnError('invalid boolean value: ' . $request_data[$name]);
