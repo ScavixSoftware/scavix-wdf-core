@@ -93,7 +93,6 @@ class TranslationAdmin extends TranslationAdminBase
 
 	private function _languageSelect($lang)
 	{
-		global $CONFIG;
 		$sel = new Select();
 		$sel->setValue($lang);
 		$known = $sel->CreateGroup('Languages with translations');
@@ -112,7 +111,7 @@ class TranslationAdmin extends TranslationAdminBase
 			if( isset($counts[$code]) )
 			{
 				$name = "$name ({$counts[$code]})";
-				if( $code == $CONFIG['localization']['default_language'] )
+				if( $code == $def )
 					$name .= " [default]";
 				else
 					$name .= " [". floor($counts[$code]/$total*100) ."%]";
@@ -401,6 +400,8 @@ class TranslationAdmin extends TranslationAdminBase
 		if( $untranslated ) $search = '';
         if (!$lang && avail($_SESSION, 'trans_admin_lang'))
             $lang = $_SESSION['trans_admin_lang'];
+        if (!$lang && ($browserlanguage = ($c = Localization::getBrowserCulture()) && ($lc = $c->ResolveToLanguage()) ? $lc->Code : false))
+            $lang = $browserlanguage;
         if(!$lang)
 		    $lang = $CONFIG['localization']['default_language'];
 		$_SESSION['trans_admin_lang'] = $lang;
