@@ -226,7 +226,7 @@ class FilesStore extends ObjectStore
             if( !$time || (time() - $time <= 300) )
                 continue;
             foreach( glob($d.'/*') as $f )
-                if( $d != "$d/." && $d != "$d/.." )
+                if( $f != "$d/." && $f != "$d/.." )
                     @unlink($f);
             @rmdir($d);
             //log_debug(__METHOD__,"Session removed:",$d);
@@ -249,12 +249,18 @@ class FilesStore extends ObjectStore
     function Update($keep_alive=false)
     {
         $start = microtime(true);
+        $indexfile = $this->getPath() . "/index." . request_id();
 
         if( $keep_alive )
         {
-            foreach( system_glob_rec($this->getFile(''),'*') as $f )
-                touch($f);
-            touch( $this->getPath() );
+            $ids = json_decode(@file_get_contents($indexfile) ?: '[]', true);
+            if ($ids)
+            {
+                foreach ($ids as $id)
+                    touch($this->getFile($id));
+                touch($indexfile);
+            }
+            touch($this->getPath());
             return;
         }
 
@@ -274,7 +280,9 @@ class FilesStore extends ObjectStore
                 }
             }
         }
-        touch( $this->getPath() );
+        if (($keys = array_keys(ObjectStore::$buffer)) && \count($keys))
+            file_put_contents($indexfile, json_encode($keys));
+        touch($this->getPath());
         $this->_stats(__METHOD__.($keep_alive?"/KA":''),$start);
     }
 
