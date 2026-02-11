@@ -101,8 +101,7 @@ class PhpSession extends SessionBase
 		}
 		else
 			$obj->_storage_id = $id;
-		$serializer = new Serializer();
-		$content = $serializer->Serialize($obj);
+		$content = Serializer::Get()->Serialize($obj);
 		$_SESSION[$CONFIG['session']['prefix']."session"][$id] = $content;
 		ObjectStore::$buffer[$id] = $obj;
 	}
@@ -154,8 +153,7 @@ class PhpSession extends SessionBase
 		}
 		$data = $_SESSION[$CONFIG['session']['prefix']."session"][$id];
 
-		$serializer = new Serializer();
-		$res = $serializer->Unserialize($data);
+		$res = Serializer::Get()->Unserialize($data);
 		ObjectStore::$buffer[$id] = $res;
 		return ObjectStore::$buffer[$id];
 	}

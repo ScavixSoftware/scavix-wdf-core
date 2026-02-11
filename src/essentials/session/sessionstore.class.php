@@ -31,24 +31,24 @@ use ScavixWDF\WdfException;
 
 /**
  * Stores objects in the SESSION.
- * 
+ *
  * Well...this is the storage that does what we did not want anymore: Blow up the PHP Session.
  * It ist straight and some cases it can be useful, because it's configurationless.
  */
 class SessionStore extends ObjectStore
 {
     protected $serializer;
-    
+
     public function __construct()
     {
         if( isset($_SESSION['object_id_storage']) )
     		ObjectStore::$ids = $_SESSION['object_id_storage'];
         else
             ObjectStore::$ids = [];
-        
-        $this->serializer = new Serializer();
+
+        $this->serializer = Serializer::Get();
     }
-    
+
     /**
      * @override <ObjectStore::Store>
      */
@@ -65,16 +65,16 @@ class SessionStore extends ObjectStore
 		}
 		else
 			$obj->_storage_id = $id;
-        
+
         $content = $this->serializer->Serialize($obj);
         $_SESSION[$CONFIG['session']['prefix']."session"][$id] = $content;
-        
+
 		ObjectStore::$buffer[$id] = $obj;
-        
+
         $_SESSION[$CONFIG['session']['prefix']."object_access"][$obj->_storage_id] = time();
         $this->_stats(__METHOD__,$start);
     }
-    
+
     /**
      * @override <ObjectStore::Delete>
      */
@@ -82,24 +82,24 @@ class SessionStore extends ObjectStore
     {
         global $CONFIG;
         $start = microtime(true);
-        
+
 		if( is_object($id) && isset($id->_storage_id) )
 			$id = $id->_storage_id;
-        
+
         if( isset($_SESSION[$CONFIG['session']['prefix']."object_access"][$id]) )
             unset($_SESSION[$CONFIG['session']['prefix']."object_access"][$id]);
         if( isset($_SESSION['object_id_storage'][$id]) )
             unset($_SESSION['object_id_storage'][$id]);
         if( isset(ObjectStore::$ids[$id]) )
             unset(ObjectStore::$ids[$id]);
-        
+
 		$id = strtolower($id);
 		if(isset($_SESSION[$CONFIG['session']['prefix']."session"][$id]))
 			unset($_SESSION[$CONFIG['session']['prefix']."session"][$id]);
 		unset(ObjectStore::$buffer[$id]);
         $this->_stats(__METHOD__,$start);
     }
-    
+
     /**
      * @override <ObjectStore::Exists>
      */
@@ -107,7 +107,7 @@ class SessionStore extends ObjectStore
     {
         global $CONFIG;
         $start = microtime(true);
-        
+
 		if( is_object($id) && isset($id->_storage_id) )
 			$id = $id->_storage_id;
 		$id = strtolower($id);
@@ -118,7 +118,7 @@ class SessionStore extends ObjectStore
         $this->_stats(__METHOD__,$start);
 		return $res;
     }
-    
+
     /**
      * @override <ObjectStore::Restore>
      */
@@ -134,20 +134,20 @@ class SessionStore extends ObjectStore
         {
             if(!isset($_SESSION[$CONFIG['session']['prefix']."session"][$id]))
                 return null;
-            
+
             $data = $_SESSION[$CONFIG['session']['prefix']."session"][$id];
 
             $res = $this->serializer->Unserialize($data);
             ObjectStore::$buffer[$id] = $res;
 
         }
-        
-        if( $res && is_object($res) && isset($res->_storage_id) )// update objects last access       
+
+        if( $res && is_object($res) && isset($res->_storage_id) )// update objects last access
             $_SESSION[$CONFIG['session']['prefix']."object_access"][$res->_storage_id] = time();
         $this->_stats(__METHOD__,$start);
 		return $res;
     }
-    
+
     /**
      * @override <ObjectStore::CreateId>
      */
@@ -182,7 +182,7 @@ class SessionStore extends ObjectStore
         $this->_stats(__METHOD__,$start);
 		return $obj->_storage_id;
     }
-    
+
     /**
      * @override <ObjectStore::Cleanup>
      */
@@ -190,7 +190,7 @@ class SessionStore extends ObjectStore
     {
         global $CONFIG;
         $start = microtime(true);
-        
+
         if( $classname )
         {
             $classname = strtolower($classname);
@@ -202,7 +202,7 @@ class SessionStore extends ObjectStore
             $this->_stats(__METHOD__."/CN",$start);
             return;
         }
-        
+
         if(isset($_SESSION[$CONFIG['session']['prefix']."object_access"]))
         {
             foreach( $_SESSION[$CONFIG['session']['prefix']."object_access"] as $id=>$time )
@@ -214,7 +214,7 @@ class SessionStore extends ObjectStore
         }
         $this->_stats(__METHOD__,$start);
     }
-    
+
     /**
      * @override <ObjectStore::Update>
      */
@@ -222,14 +222,14 @@ class SessionStore extends ObjectStore
     {
         global $CONFIG;
         $start = microtime(true);
-        
+
         if( $keep_alive )
         {
             foreach( $_SESSION[$CONFIG['session']['prefix']."object_access"] as $id=>$time )
                 $_SESSION[$CONFIG['session']['prefix']."object_access"][$id] = time();
             return;
         }
-        
+
         foreach( ObjectStore::$buffer as $id=>&$obj )
 		{
 			try
@@ -243,7 +243,7 @@ class SessionStore extends ObjectStore
 		}
         $this->_stats(__METHOD__.($keep_alive?"/KA":''),$start);
     }
-    
+
     /**
      * @override <ObjectStore::Migrate>
      */

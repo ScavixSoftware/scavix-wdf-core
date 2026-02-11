@@ -34,14 +34,12 @@ use Closure;
 use DateTime;
 use Exception;
 use PDOStatement;
-use Reflector;
 use ScavixWDF\Base\DateTimeEx;
 use ScavixWDF\Model\DataSource;
 use ScavixWDF\Model\Model;
 use ScavixWDF\Reflection\WdfReflector;
 use ScavixWDF\WdfException;
 use SimpleXMLElement;
-use Serializable;
 
 /**
  * Serializer/Unserializer
@@ -52,62 +50,20 @@ use Serializable;
  */
 class Serializer
 {
+    private static ?Serializer $_instance = null;
+    public static function Get()
+    {
+        if( self::$_instance === null)
+            self::$_instance = new Serializer();
+        return self::$_instance;
+    }
+
 	public $Stack;
-	public $clsmap;
 	public $sleepmap;
 	public $Lines;
     public $Index;
 
     public static $unserializing_level = 0;
-
-    private static function prepareSerialization($data,$stack=null)
-    {
-        if( !$stack )
-            $stack = new \SplObjectStorage();
-
-        if( $data instanceof Serializable )
-            return $data;
-        if( $data instanceof PDOStatement )
-            return null;
-        elseif( $data instanceof Closure )
-            return null;
-        elseif( $data instanceof Reflector )
-            return null;
-        elseif( $data instanceof \PDO )
-            return null;
-        elseif( is_array($data) )
-        {
-            foreach( $data as $k=>$v)
-                $data[$k] = self::prepareSerialization($v, $stack);
-        }
-        elseif( is_object($data) )
-        {
-            if( isset($stack[$data]) )
-                return $data;
-            $stack[$data] = true;
-            $ref = WdfReflector::GetInstance($data);
-            if( $ref->hasMethod('__sleep') )
-            {
-                foreach( $data->__sleep() as $k )
-                    $data->$k = self::prepareSerialization($data->$k, $stack);
-            }
-            else
-            {
-                $properties = $ref->getProperties(\ReflectionProperty::IS_PRIVATE | \ReflectionProperty::IS_PROTECTED | \ReflectionProperty::IS_PUBLIC);
-                foreach( $properties as $property )
-                {
-                    $property->setAccessible(true);
-                    $value = $property->getValue($data);
-                    $value = self::prepareSerialization($value, $stack);
-                    try
-                    {
-                        @$property->setValue($data, $value);
-                    } catch (Exception $ex) { /* ignore read-only exceptions */ }
-                }
-            }
-        }
-        return $data;
-    }
 
 	/**
 	 * Serializes a value
@@ -118,47 +74,40 @@ class Serializer
 	 */
 	function Serialize(&$data)
 	{
-//        if( $data instanceof \Listing )
-//            log_debug(__METHOD__,"A", $data);
-//        $data = self::prepareSerialization($data);
-//        if( $data instanceof \Listing )
-//            log_debug(__METHOD__,"B", $data);
-//        return serialize($data);
-
-		$this->Stack  = [];
-		$this->clsmap = [];
+		$stack  = new \SplObjectStorage();
 		$this->sleepmap = [];
-		return $this->Ser_Inner($data);
+		$r = $this->Ser_Inner($data, $stack);
+        return $r;
 	}
 
-	private function Ser_Inner(&$data,$level=0)
+	private function Ser_Inner(&$data,$stack)
 	{
-		if( is_string($data) )
+		if( \is_string($data) )
 		{
             if( strpos($data,"\n") === false )
                 return "s:". $data ."\n";
 			return "S:". json_encode($data) ."\n";
 		}
-		elseif( is_int($data) )
+		elseif( \is_int($data) )
 		{
 			return "i:$data\n";
 		}
-		elseif( is_array($data) )
+		elseif( \is_array($data) )
 		{
-			$res = "a:".count($data)."\n";
+			$res = "a:".\count($data)."\n";
 			$keys = array_keys($data);
 			foreach( $keys as $key )
 			{
-				$res .= $this->Ser_Inner($key,$level+1);
-				$res .= $this->Ser_Inner($data[$key],$level+1);
+				$res .= $this->Ser_Inner($key,$stack);
+				$res .= $this->Ser_Inner($data[$key],$stack);
 			}
 			return $res;
 		}
-		elseif( is_bool($data) )
+		elseif( \is_bool($data) )
 		{
 			return "b:".($data?'1':'0')."\n";
 		}
-		elseif( is_float($data) )
+		elseif( \is_float($data) )
 		{
 			return "f:$data\n";
 		}
@@ -191,29 +140,31 @@ class Serializer
 			if( $data instanceof SimpleXMLElement )
 				return "z:".addcslashes($data->asXML(),"\n")."\n";
 
-			$index = array_search($data, $this->Stack, true);
+            $index = $stack[$data] ?? false;
 			if( $index !== false  )
 				return "r:$index\n";
-			$id = count($this->Stack);
-			$this->Stack[] = $data;
+			$id = \count($stack);
+			$stack[$data] = $id;
 
-			$classname = get_class($data);
-			if( !isset($this->sleepmap[$classname]) )
-				$this->sleepmap[$classname] = method_exists($data,'__sleep');
-			$vars = $this->sleepmap[$classname]
-				?$data->__sleep()
-				:array_keys(get_object_vars($data));
-            $max = count($vars);
+			$classname = \get_class($data);
+            if (!isset($this->sleepmap[$classname]))
+            {
+                $this->sleepmap[$classname] = method_exists($data, '__sleep')
+                    ? array_fill_keys($data->__sleep(), true)
+                    : false;
+            }
 
-			$res = ( $data instanceof Model)
-				?"o:$id:$max:$classname:{$data->DataSourceName()}\n"
-				:"o:$id:$max:$classname:\n";
-
-			foreach( $vars as $field )
-			{
-				$res .= $this->Ser_Inner($field,$level+1);
-				$res .= $this->Ser_Inner($data->$field,$level+1);
-			}
+            $vars = get_object_vars($data);
+            if( $this->sleepmap[$classname] )
+                $vars = array_diff_key($vars, $this->sleepmap[$classname]);
+            $res = ($data instanceof Model)
+                ? "o:$id:" . \count($vars) . ":$classname:{$data->DataSourceName()}\n"
+                : "o:$id:" . \count($vars) . ":$classname:\n";
+            foreach( $vars as $n=>$v )
+            {
+                $res .= $this->Ser_Inner($n,$stack);
+                $res .= $this->Ser_Inner($v,$stack);
+            }
 
 			return $res;
 		}
@@ -230,11 +181,13 @@ class Serializer
     {
         try
         {
+            $mem = [$this->Index, $this->Lines, $this->Stack];
             self::$unserializing_level++;
             $this->Index = 0;
             $this->Lines = explode("\n", trim($data));
             $this->Stack = [];
             $res = $this->Unser_Inner();
+            [$this->Index, $this->Lines, $this->Stack] = $mem;
             return $res;
 
         }
@@ -277,7 +230,7 @@ class Serializer
 				case 's':
                     return $line;
 				case 'i':
-					return intval($line);
+					return \intval($line);
 				case 'a':
 					$res = [];
 					for($i=0; $i<$line; $i++)
@@ -299,7 +252,7 @@ class Serializer
 				case 'z':
 					return simplexml_load_string(stripcslashes($line));
 				case 'o':
-					list($id,$len,$type,$alias) = explode(':',$line);
+                    [$id, $len, $type, $alias] = explode(':',$line);
 					$datasource = $alias?model_datasource($alias):null;
 
                     if( $alias )
@@ -315,7 +268,7 @@ class Serializer
 					for($i=0; $i<$len; $i++)
 					{
 						$field = $this->Unser_Inner();
-						if( !is_string($field) || $field == "" )
+						if( !\is_string($field) || $field == "" )
 							continue;
 						$this->Stack[$id]->$field = $this->Unser_Inner();
 					}
@@ -328,17 +281,17 @@ class Serializer
 					return $this->Stack[$id];
 
 				case 'r':
-					if( !isset($this->Stack[intval($line)]) )
+					if( !isset($this->Stack[\intval($line)]) )
 						WdfException::Raise("Trying to reference unknown object.");
-					if( $this->Stack[intval($line)] instanceof DataSource )
-						return model_datasource($this->Stack[intval($line)]->_storage_id);
-					return $this->Stack[intval($line)];
+					if( $this->Stack[\intval($line)] instanceof DataSource )
+						return model_datasource($this->Stack[\intval($line)]->_storage_id);
+					return $this->Stack[\intval($line)];
 				case 'm':
 					return model_datasource($line);
 				case 'n':
 					return null;
 				case 'f':
-					return floatval($line);
+					return \floatval($line);
 				case 'b':
 					return $line==1;
 				default:

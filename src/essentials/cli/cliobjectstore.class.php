@@ -29,7 +29,7 @@ use ScavixWDF\WdfException;
 
 /**
  * Stores objects in the filesystem.
- * 
+ *
  * This is by far the fastets <ObjectStore> implementation. As we use it mostly,
  * it is most commonly updated!
  */
@@ -37,11 +37,11 @@ class CliObjectStore extends FilesStore
 {
     public function __construct() // hides the parent constructor!
     {
-        $this->serializer = new Serializer();
+        $this->serializer = Serializer::Get();
         if( !isset($_SESSION['object_ids']) )
             $_SESSION['object_ids'] = [];
     }
-    
+
     /**
      * @override <ObjectStore::Delete>
      */
@@ -50,12 +50,12 @@ class CliObjectStore extends FilesStore
         $start = microtime(true);
 		if( is_object($id) && isset($id->_storage_id) )
 			$id = $id->_storage_id;
-        
+
         if( isset(ObjectStore::$buffer[$id]) )
             unset(ObjectStore::$buffer[$id]);
         $this->_stats(__METHOD__,$start);
     }
-    
+
     /**
      * @override <ObjectStore::Exists>
      */
@@ -72,7 +72,7 @@ class CliObjectStore extends FilesStore
         $this->_stats(__METHOD__,$start);
 		return $res;
     }
-    
+
     /**
      * @override <ObjectStore::Restore>
      */
@@ -92,7 +92,7 @@ class CliObjectStore extends FilesStore
         }
 		return $res;
     }
-    
+
     /**
      * @override <ObjectStore::Cleanup>
      */
@@ -112,14 +112,14 @@ class CliObjectStore extends FilesStore
         }
         $this->_stats(__METHOD__,$start);
     }
-    
+
     /**
      * @override <ObjectStore::Update>
      */
     function Update($keep_alive=false)
     {
     }
-    
+
     /**
      * @override <ObjectStore::Migrate>
      */

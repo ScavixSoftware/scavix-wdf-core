@@ -61,7 +61,7 @@ class RedisStore extends ObjectStore
         if( !isset($CONFIG['session']['redisstore']['server']) )
             $CONFIG['session']['redisstore']['server'] = 'localhost:6379';
 
-        $this->serializer = new Serializer();
+        $this->serializer = Serializer::Get();
 
         if( !isset($_SESSION['object_ids']) )
             $_SESSION['object_ids'] = [];

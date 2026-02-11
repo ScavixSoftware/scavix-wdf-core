@@ -115,8 +115,7 @@ class DbSession extends SessionBase
         }
         else
             $obj->_storage_id = $id;
-        $serializer = new Serializer();
-        $content = $serializer->Serialize($obj);
+        $content = Serializer::Get()->Serialize($obj);
 
         $vals = "id=?, request_id=?, storage_id=?, last_access=NOW(), content=?";
         $updates = "last_access=NOW(), content=?, request_id=?";
@@ -187,8 +186,7 @@ class DbSession extends SessionBase
 		}
 		$data = $rs['content'];
 
-		$serializer = new Serializer();
-		$res = $serializer->Unserialize($data);
+		$res = Serializer::Get()->Unserialize($data);
 		ObjectStore::$buffer[strtolower($id)] = $res;
 		return ObjectStore::$buffer[strtolower($id)];
 	}

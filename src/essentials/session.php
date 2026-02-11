@@ -374,10 +374,7 @@ function session_serialize($value)
     try
     {
         if(class_exists('ScavixWDF\Session\Serializer'))
-        {
-            $s = new Serializer();
-            return $s->Serialize($value);
-        }
+            return Serializer::Get()->Serialize($value);
     } catch(Exception $exc)
     {
         error_log($exc->getTraceAsString());
@@ -390,9 +387,7 @@ function session_serialize($value)
  */
 function session_unserialize($value)
 {
-	$s = new Serializer();
-	$res = $s->Unserialize($value);
-	return $res;
+	return Serializer::Get()->Unserialize($value);
 }
 
 /**

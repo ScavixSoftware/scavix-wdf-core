@@ -29,14 +29,14 @@ namespace ScavixWDF\Session;
 
 /**
  * Implements <ObjectStore> for use with APC.
- * 
+ *
  * @suppress PHP0417
  */
 class APCStore extends ObjectStore
 {
     private $serializer;
     public static $apcstore_key_prefix = 'wdf_apcstore_';
-    
+
     public function __construct()
     {
         global $CONFIG;
@@ -46,12 +46,12 @@ class APCStore extends ObjectStore
         else
             APCStore::$apcstore_key_prefix = "apcstore_".md5($servername."-".session_name()."-".getAppVersion('nc')).'_';
 
-        $this->serializer = new Serializer();
-        
+        $this->serializer = Serializer::Get();
+
         if( !isset($_SESSION['object_ids']) )
             $_SESSION['object_ids'] = [];
     }
-    
+
     /**
      * @override <ObjectStore::Store>
      */
@@ -67,15 +67,15 @@ class APCStore extends ObjectStore
 		}
 		else
 			$obj->_storage_id = $id;
-        
+
         $content = $this->serializer->Serialize($obj);
-        
+
         apc_store(APCStore::$apcstore_key_prefix.session_id().'_'.$id, $content, (ini_get('session.gc_maxlifetime')?:300));
 
         ObjectStore::$buffer[$id] = $obj;
         $this->_stats(__METHOD__,$start);
     }
-    
+
     /**
      * @override <ObjectStore::Delete>
      */
@@ -84,15 +84,15 @@ class APCStore extends ObjectStore
         $start = microtime(true);
 		if( is_object($id) && isset($id->_storage_id) )
 			$id = $id->_storage_id;
-        
+
         if( isset(ObjectStore::$buffer[$id]) )
             unset(ObjectStore::$buffer[$id]);
-        
+
 		apc_delete(APCStore::$apcstore_key_prefix.session_id().'_'.$id);
-        
+
         $this->_stats(__METHOD__,$start);
     }
-    
+
     /**
      * @override <ObjectStore::Exists>
      */
@@ -109,7 +109,7 @@ class APCStore extends ObjectStore
         $this->_stats(__METHOD__,$start);
 		return $res;
     }
-    
+
     /**
      * @override <ObjectStore::Restore>
      */
@@ -130,10 +130,10 @@ class APCStore extends ObjectStore
         $this->_stats(__METHOD__,$start);
 		return $res;
     }
-    
+
     /**
      * @override <ObjectStore::CreateId>
-     */    
+     */
     function CreateId(&$obj)
     {
         $start = microtime(true);
@@ -154,7 +154,7 @@ class APCStore extends ObjectStore
         $this->_stats(__METHOD__,$start);
         return $obj->_storage_id;
     }
-    
+
     /**
      * @override <ObjectStore::Cleanup>
      */
@@ -162,14 +162,14 @@ class APCStore extends ObjectStore
     {
         // not necessary for APC
     }
-    
+
     /**
      * @override <ObjectStore::Update>
      */
     function Update($keep_alive=false)
     {
         $start = microtime(true);
-        
+
         if( $keep_alive )
         {
             $data = apc_cache_info('user');
@@ -185,7 +185,7 @@ class APCStore extends ObjectStore
             $this->_stats(__METHOD__."/KA",$start);
             return;
         }
-        
+
         $sql = [];
         foreach( ObjectStore::$buffer as $id=>$obj )
 		{
@@ -200,7 +200,7 @@ class APCStore extends ObjectStore
 		}
         $this->_stats(__METHOD__,$start);
     }
-    
+
     /**
      * @override <ObjectStore::Migrate>
      */
