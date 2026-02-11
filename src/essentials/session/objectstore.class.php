@@ -29,7 +29,7 @@ namespace ScavixWDF\Session;
 
 /**
  * ObjectStore class is used to store objects without blowing up the PHP session.
- * 
+ *
  * When objects are serialized into the $_SESSION variable, PHP startup time increases
  * dramatically once a fair number of objects is reached. To avoid this we use a special
  * ObjectStore. In fact, we implemented different stores for different scenarios, all inherited from this
@@ -39,9 +39,9 @@ abstract class ObjectStore
 {
     public static $buffer = [];
     public static $ids = [];
-    
+
     public $Statistics = [];
-    
+
     protected function _stats($name,$started)
     {
         if(!isDev())
@@ -55,7 +55,7 @@ abstract class ObjectStore
         else
             $this->Statistics[$name] = [1,($now-$started)*1000];
     }
-    
+
     /**
      * @internal Used for performance testing
      */
@@ -71,61 +71,61 @@ abstract class ObjectStore
         $this->Statistics['total_time'] = $t;
         return $this->Statistics;
     }
-    
+
     /**
      * Stores an object.
-     * 
+     *
      * @param mixed $obj Object to be stored
      * @param string $id Optional id
      * @return void
      */
 	abstract function Store(&$obj,$id="");
-	
+
     /**
      * Removes an object from the store.
-     * 
+     *
      * @param string $id The object ID
      * @return void
      */
 	abstract function Delete($id);
-	
+
     /**
      * Checks, if an object is stored.
-     * 
+     *
      * @param string $id The object ID
      * @return bool true or false
      */
 	abstract function Exists($id);
-	
+
     /**
      * Loads an object from the store.
-     * 
+     *
      * @param string $id The object ID
      * @return mixed The object or false
      */
 	abstract function Restore($id);
-    
+
     /**
      * @internal Creates a unique object ID
      */
 	abstract function CreateId(&$obj);
-    
+
     /**
      * @internal Cleans things up
      */
-    abstract function Cleanup($classname=false);
-    
+    abstract function Cleanup();
+
     /**
      * Updates used objects.
-     * 
+     *
      * @param bool $keep_alive If true, updates the 'used' timestamps too
      * @return void
      */
     abstract function Update($keep_alive=false);
-    
+
     /**
      * Changes the session ID.
-     * 
+     *
      * @param string $old_session_id The old session ID
      * @param string $new_session_id The new session ID
      * @return void

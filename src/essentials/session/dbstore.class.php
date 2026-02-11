@@ -192,21 +192,9 @@ class DbStore extends ObjectStore
     /**
      * @override <ObjectStore::Cleanup>
      */
-    function Cleanup($classname=false)
+    function Cleanup()
     {
         $start = microtime(true);
-        if( $classname )
-        {
-            $classname = strtolower($classname);
-            foreach( ObjectStore::$buffer as $id=>&$obj )
-            {
-                if( get_class_simple($obj,true) == $classname )
-                    $this->Delete($id);
-            }
-            $this->_stats(__METHOD__."/CN",$start);
-            return;
-        }
-
         $this->exec(
             "DELETE FROM wdf_objects WHERE
                 (session_id=? AND (last_access<now()-interval 60 second OR ISNULL(data)) )

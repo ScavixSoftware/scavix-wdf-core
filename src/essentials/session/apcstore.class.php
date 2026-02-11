@@ -158,7 +158,7 @@ class APCStore extends ObjectStore
     /**
      * @override <ObjectStore::Cleanup>
      */
-    function Cleanup($classname=false)
+    function Cleanup()
     {
         // not necessary for APC
     }

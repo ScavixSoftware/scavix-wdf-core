@@ -186,22 +186,10 @@ class SessionStore extends ObjectStore
     /**
      * @override <ObjectStore::Cleanup>
      */
-    function Cleanup($classname=false)
+    function Cleanup()
     {
         global $CONFIG;
         $start = microtime(true);
-
-        if( $classname )
-        {
-            $classname = strtolower($classname);
-            foreach( ObjectStore::$buffer as $id=>&$obj )
-            {
-                if( get_class_simple($obj,true) == $classname )
-                    $this->Delete($id);
-            }
-            $this->_stats(__METHOD__."/CN",$start);
-            return;
-        }
 
         if(isset($_SESSION[$CONFIG['session']['prefix']."object_access"]))
         {
