@@ -358,6 +358,11 @@ class WdfIncomingRequest
         return $meth->getFileName() . ":" . $meth->getStartLine();
     }
 
+    function getEndpoint()
+    {
+        return $this->getController(true) . "/" . $this->getEvent();
+    }
+
     function getUrl(bool $absolute=true)
     {
         $url = $this->samePage();
