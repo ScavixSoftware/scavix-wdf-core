@@ -28,6 +28,8 @@
 namespace ScavixWDF\Reflection;
 
 use Attribute;
+use ScavixWDF\Base\Renderable;
+use ScavixWDF\Model\Model;
 
 /**
  * Specifies that a resource file is needed.
@@ -69,12 +71,21 @@ class ResourceAttribute extends WdfAttribute
 	 */
 	public static function Collect($classname)
 	{
+        if (is_in($classname, Renderable::class, Model::class))
+            return [];
+        if( is_a($classname, Model::class, true) ) // todo: perf, check if this is too heavy
+            return [];
+
+        static $buffer = [];
+        if( isset($buffer[$classname]) )
+            return $buffer[$classname];
+
 		$ref = WdfReflector::GetInstance($classname);
         $attrs = $ref->GetClassAttributes(['Resource', 'ExternalResource']);
 		$ref = $ref->getParentClass();
 		$parents = $ref?self::Collect($ref->getName()):[];
-		$attrs = array_merge($parents,$attrs);
-		return $attrs;
+		$buffer[$classname] = array_merge($parents,$attrs);
+		return $buffer[$classname];
 	}
 
 	/**

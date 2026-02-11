@@ -196,7 +196,7 @@ class WdfReflector extends ReflectionClass
             {
                 case 'public':
                 case 'nominify':
-                    $f .= "Attribute";
+                    $f = fq_class_name("{$f}Attribute");
                     break;
                 case 'resource':
                     $f = Resource::class;
@@ -207,8 +207,11 @@ class WdfReflector extends ReflectionClass
                 case 'requestparam':
                     $f = RequestParam::class;
                     break;
+                default:
+                    $f = fq_class_name($f);
+                    break;
             }
-            $newFilter[$i] = fq_class_name($f);
+            $newFilter[$i] = $f;
         }
 
         $ref = $method ?: $this;
@@ -349,21 +352,22 @@ class WdfReflector extends ReflectionClass
 	public function GetClassAttributes($filter=[], $allowAttrInheritance=true)
 	{
 		if( !is_array($filter) )
-			$filter = array($filter);
+			$filter = [$filter];
+
+        // skip cache: no performance benefit
+        $res = $this->_getAttributes_PHP8($filter, $this->Instance, false, false, $allowAttrInheritance);
+        if (!empty($res))
+            return $res;
 
 		$res = $this->_getCached($this->Classname,$filter);
 		if( $res )
 			return $res;
 
-        $res = $this->_getAttributes_PHP8($filter, $this->Instance, false, false, $allowAttrInheritance);
-        if( !empty($res) )
-            return $res;
-
 		$comment = $this->_getComment();
 		$res = $this->_getAttributes($comment,$filter,$this->Instance,false,false,$allowAttrInheritance);
         if (!empty($res) && isDev())
             log_warn($this->getName()." has attributes in DocComment. Consider using real attribute syntax instead.");
-		$this->_setCached("",$filter,$res);
+		$this->_setCached($this->Classname,$filter,$res);
 
 		return $res;
 	}
@@ -379,18 +383,19 @@ class WdfReflector extends ReflectionClass
 	 */
 	public function GetMethodAttributes($method_name, $filter=[], $allowAttrInheritance=true)
 	{
+		if( !$this->hasMethod($method_name) )
+			return [];
+		$method = $this->getMethod($method_name);
+
+        // skip cache: no performance benefit
+        $res = $this->_getAttributes_PHP8($filter, $this->Instance, $method, false, $allowAttrInheritance);
+        if( !empty($res) )
+            return $res;
+
 		$cache_key = $this->Classname."::".$method_name;
 		$res = $this->_getCached($cache_key,$filter);
 		if( $res !== false )
 			return $res;
-
-		if( !$this->hasMethod($method_name) )
-			return [];
-
-		$method = $this->getMethod($method_name);
-        $res = $this->_getAttributes_PHP8($filter, $this->Instance, $method, false, $allowAttrInheritance);
-        if( !empty($res) )
-            return $res;
 
 		$comment = $this->_getComment($method_name);
         $res = $this->_getAttributes($comment, $filter, $this->Instance, $method, false, $allowAttrInheritance);
