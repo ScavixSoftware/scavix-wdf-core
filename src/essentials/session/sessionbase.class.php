@@ -254,9 +254,14 @@ abstract class SessionBase
 	{
 		if( !self::$session_request_id )
 		{
-			$p = current_controller();
-			$e = current_event();
-			self::$session_request_id = md5($p.$e.microtime());
+            if (avail($_SESSION, 'request_id') && system_is_ajax_call())
+                self::$session_request_id = $_SESSION['request_id'];
+            else
+            {
+                $p = current_controller();
+                $e = current_event();
+                self::$session_request_id = md5($p . $e . microtime());
+            }
 		}
 		return self::$session_request_id;
 	}
