@@ -256,7 +256,7 @@ class Template extends Renderable
 	 */
 	function WdfRender()
 	{
-		$tempvars = system_render_object_tree($this->get_vars());
+		$tempvars = Renderable::RenderTree($this->get_vars());
         $scriptcnt = count($this->_script);
 
         /* parameters are $file and $variables, keeping them anonymous to avoid conflicts with named variables */

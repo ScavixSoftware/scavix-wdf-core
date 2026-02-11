@@ -118,6 +118,47 @@ abstract class Renderable implements \JsonSerializable
     }
 
     /**
+     * Renders a complete object tree.
+     *
+     * This means that the tree is checked for Renderable objects, arrays and so on
+     * and all the needed actions are triggered recursively.
+     * @param array $array_of_objects Array of objects
+     * @return mixed An array containing the rendered strings
+     */
+    public static function RenderTree($array_of_objects)
+    {
+        $stack = new \SplObjectStorage();
+        $worker = function ($array_of_objects) use (&$worker, &$stack)
+        {
+            $res = [];
+            foreach ($array_of_objects as $key => &$val)
+            {
+                if ($val instanceof Renderable)
+                {
+                    if (isset($stack[$val]))
+                    {
+                        $info = [];
+                        foreach ($stack as $obj)
+                            $info[] = "" . $obj;
+                        log_debug("XREF in object tree! Object already rendered elsewhere:", "$val", $info);
+                        continue;
+                    }
+                    $stack[$val] = true;
+                    $res[$key] = $val->WdfRender();
+                }
+                elseif (is_array($val))
+                    $res[$key] = $worker($val);
+                elseif ($val instanceof DateTime)
+                    $res[$key] = $val->format("Y-m-d H:i:s");
+                else
+                    $res[$key] = system_encode_for_output($val, true);
+            }
+            return $res;
+        };
+        return $worker($array_of_objects);
+    }
+
+    /**
      * Returns all data needed for serializing this object into JSON.
      *
      * Note: This does _not_ return a string, but an object to be serialized.
@@ -189,9 +230,9 @@ abstract class Renderable implements \JsonSerializable
     function WdfRenderInline()
     {
         $this->_parent = Renderable::GetCurrentRenderer();
-        $this->PreRender(array(current_controller(false)));
+        $this->PreRender([current_controller(false)]);
 
-        Renderable::addLazyResources($this->__collectResourcesInternal($this));
+        Renderable::addLazyResources($this->__collectResourcesCached());
 
         if( Renderable::HasCurrentRenderer() )
             Renderable::GetCurrentRenderer()->script($this->_script);
@@ -210,9 +251,10 @@ abstract class Renderable implements \JsonSerializable
 
 		if( $min_js_file && $min_css_file )
 			return [$min_css_file, $min_js_file];
-		$res = $this->__collectResourcesInternal($this);
-		if( !$min_js_file && !$min_css_file )
-			return $res;
+
+		$res = $this->__collectResourcesCached();
+        if (!$min_js_file && !$min_css_file)
+            return $res;
 
 
 		$js = []; $css = [];
@@ -240,10 +282,21 @@ abstract class Renderable implements \JsonSerializable
 		return $js;
 	}
 
- /**
-  * @return array
-  */
-	protected function __collectResourcesInternal($template,&$static_stack = [])
+    protected function __collectResourcesCached()
+    {
+        $key = __METHOD__."/{$GLOBALS['CONFIG']['system']['application_name']}/".getAppVersion('nc')."/".\ScavixWDF\Wdf::Request()->getEndpoint();
+        if ($res = cache_get($key) )
+            return $res;
+        $stack = [];
+		$res = $this->__collectResourcesInternal($this, $stack);
+        cache_set($key, $res, isDev() ? 3600 : -1);
+        return $res;
+    }
+
+    /**
+     * @return array
+     */
+	protected function __collectResourcesInternal($template,&$static_stack)
 	{
         // kind of dirty hack to allow overrides in subclasses
         if( $template instanceof Renderable && $template != $this )
@@ -261,6 +314,7 @@ abstract class Renderable implements \JsonSerializable
                 $static = ResourceAttribute::ResolveAll( ResourceAttribute::Collect($classname) );
                 $res = array_merge($res,$static);
                 $static_stack[$classname] = true;
+
             }
 
 			if( $template instanceof Renderable )
