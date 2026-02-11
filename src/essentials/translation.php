@@ -253,6 +253,11 @@ function translation_add_unknown_strings($unknown_constants=false)
 {
 	global $CONFIG;
 
+    if (!isset($CONFIG['translation']['sync']['track_unknown']))
+        $CONFIG['translation']['sync']['track_unknown'] = isDev();
+    if (!($CONFIG['translation']['sync']['track_unknown'] ?? isDev()))
+        return;
+
     if( !$unknown_constants ) $unknown_constants = Wdf::$Translation->unknown_constants;
     if( count($unknown_constants)<1 )
         return;
@@ -639,7 +644,7 @@ function translation_skip_buffering()
  */
 function translation_string_exists($constant)
 {
-	$known = translation_known_constants();
+    $known = $GLOBALS['translation']['known_constants'] ?? translation_known_constants();
 	return in_array($constant, $known);
 }
 
