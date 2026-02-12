@@ -28,6 +28,7 @@
 namespace ScavixWDF\Base;
 
 use ScavixWDF\Reflection\ResourceAttribute;
+use ScavixWDF\Wdf;
 use ScavixWDF\WdfException;
 
 /**
@@ -106,7 +107,7 @@ abstract class Renderable implements \JsonSerializable
      */
     public static function HasCurrentRenderer()
     {
-        return count(self::$_renderingStack)>0;
+        return \count(self::$_renderingStack)>0;
     }
 
     /**
@@ -127,35 +128,43 @@ abstract class Renderable implements \JsonSerializable
      */
     public static function RenderTree($array_of_objects)
     {
-        $stack = new \SplObjectStorage();
-        $worker = function ($array_of_objects) use (&$worker, &$stack)
+        $start = microtime(true);
+        try
         {
-            $res = [];
-            foreach ($array_of_objects as $key => &$val)
+            $stack = new \SplObjectStorage();
+            $worker = function ($array_of_objects) use (&$worker, &$stack)
             {
-                if ($val instanceof Renderable)
+                $res = [];
+                foreach ($array_of_objects as $key => &$val)
                 {
-                    if (isset($stack[$val]))
+                    if (\is_array($val))
+                        $res[$key] = $worker($val);
+                    elseif ($val instanceof DateTime)
+                        $res[$key] = $val->format("Y-m-d H:i:s");
+                    elseif ($val instanceof Renderable)
                     {
-                        $info = [];
-                        foreach ($stack as $obj)
-                            $info[] = "" . $obj;
-                        log_debug("XREF in object tree! Object already rendered elsewhere:", "$val", $info);
-                        continue;
+                        if (isset($stack[$val]))
+                        {
+                            $info = [];
+                            foreach ($stack as $obj)
+                                $info[] = "" . $obj;
+                            log_debug("XREF in object tree! Object already rendered elsewhere:", "$val", $info);
+                            continue;
+                        }
+                        $stack[$val] = true;
+                        $res[$key] = $val->WdfRender();
                     }
-                    $stack[$val] = true;
-                    $res[$key] = $val->WdfRender();
+                    else
+                        $res[$key] = system_encode_for_output($val, true);
                 }
-                elseif (is_array($val))
-                    $res[$key] = $worker($val);
-                elseif ($val instanceof DateTime)
-                    $res[$key] = $val->format("Y-m-d H:i:s");
-                else
-                    $res[$key] = system_encode_for_output($val, true);
-            }
-            return $res;
-        };
-        return $worker($array_of_objects);
+                return $res;
+            };
+            return $worker($array_of_objects);
+        }
+        finally
+        {
+            Wdf::Measure(__METHOD__, $start);
+        }
     }
 
     /**
@@ -174,7 +183,7 @@ abstract class Renderable implements \JsonSerializable
         if( $this->serialized === self::$SLIM_SERIALIZER_RUN )
             return ['ref_id'=>$this->_storage_id];
         $this->serialized = self::$SLIM_SERIALIZER_RUN;
-        return ['class'=> get_class($this),'id'=>$this->_storage_id,'parent'=>$this->_parent,'content'=>isset($this->content)?$this->content:null];
+        return ['class'=> \get_class($this),'id'=>$this->_storage_id,'parent'=>$this->_parent,'content'=>isset($this->content)?$this->content:null];
     }
 
 	/**
@@ -182,12 +191,12 @@ abstract class Renderable implements \JsonSerializable
 	 */
     function __toString()
     {
-        $p = is_object($this->_parent)?$this->_parent->_storage_id:'';
+        $p = \is_object($this->_parent)?$this->_parent->_storage_id:'';
         $c = implode(",",array_map(function($o){ return ($o instanceof Renderable)?$o->_storage_id:"$o"; }, $this->_content));
-        if( strlen($c)>20 )
+        if( \strlen($c)>20 )
             $c = substr($c,0,20)."[...]";
         $c = str_replace(["\r","\n","\t"],["\\r","\\n","\\t"], $c);
-        return "{$this->_storage_id} [".get_class($this)."](parent=$p, content=$c)";
+        return "{$this->_storage_id} [".\get_class($this)."](parent=$p, content=$c)";
     }
 
     public function __clone()
@@ -229,15 +238,23 @@ abstract class Renderable implements \JsonSerializable
      */
     function WdfRenderInline()
     {
-        $this->_parent = Renderable::GetCurrentRenderer();
-        $this->PreRender([current_controller(false)]);
+        $start = microtime(true);
+        try
+        {
+            $this->_parent = Renderable::GetCurrentRenderer();
+            $this->PreRender([current_controller(false)]);
 
-        Renderable::addLazyResources($this->__collectResourcesCached());
+            Renderable::addLazyResources($this->__collectResourcesCached());
 
-        if( Renderable::HasCurrentRenderer() )
-            Renderable::GetCurrentRenderer()->script($this->_script);
+            if (Renderable::HasCurrentRenderer())
+                Renderable::GetCurrentRenderer()->script($this->_script);
 
-        return $this->WdfRender();
+            return $this->WdfRender();
+        }
+        finally
+        {
+            Wdf::Measure(__METHOD__, $start);
+        }
     }
 
     function __getContentVars(){ return ['_content']; }
@@ -284,12 +301,14 @@ abstract class Renderable implements \JsonSerializable
 
     protected function __collectResourcesCached()
     {
-        $key = __METHOD__."/{$GLOBALS['CONFIG']['system']['application_name']}/".getAppVersion('nc')."/".\ScavixWDF\Wdf::Request()->getEndpoint();
+        $key = __METHOD__."/{$GLOBALS['CONFIG']['system']['application_name']}/".getAppVersion('nc')."/".Wdf::Request()->getEndpoint();
         if ($res = cache_get($key) )
             return $res;
+        $start = microtime(true);
         $stack = [];
 		$res = $this->__collectResourcesInternal($this, $stack);
         cache_set($key, $res, isDev() ? 3600 : -1);
+        Wdf::Measure(__METHOD__ . " cache missed", $start);
         return $res;
     }
 
@@ -304,9 +323,9 @@ abstract class Renderable implements \JsonSerializable
 
         $res = [];
 
-		if( is_object($template) )
+		if( \is_object($template) )
 		{
-			$classname = get_class($template);
+			$classname = \get_class($template);
 
 			// first collect statics from the class definitions
             if( !isset($static_stack[$classname]) )
@@ -325,7 +344,7 @@ abstract class Renderable implements \JsonSerializable
 					$sub = [];
 					foreach( $template->$varname as $var )
 					{
-						if( is_object($var) || is_array($var) )
+						if( \is_object($var) || \is_array($var) )
 							$sub = array_merge($sub,$this->__collectResourcesInternal($var,$static_stack));
 					}
 					$res = array_merge($res,$sub);
@@ -373,11 +392,11 @@ abstract class Renderable implements \JsonSerializable
 				$res = array_merge($res,array_reverse($parents));
 			}
 		}
-		elseif( is_array($template) )
+		elseif( \is_array($template) )
 		{
 			foreach( $template as $var )
 			{
-				if( is_object($var)|| is_array($var) )
+				if( \is_object($var)|| \is_array($var) )
 					$res = array_merge($res,$this->__collectResourcesInternal($var,$static_stack));
 			}
 		}
@@ -426,7 +445,7 @@ abstract class Renderable implements \JsonSerializable
 	 */
 	function script($scriptCode)
 	{
-		if( is_array($scriptCode) )
+		if( \is_array($scriptCode) )
 			$scriptCode = implode(";",$scriptCode);
 
 		$id = ($this instanceof Control)?$this->id:$this->_storage_id;
@@ -474,7 +493,7 @@ abstract class Renderable implements \JsonSerializable
                 $content->_parent->rmContent($content);
 			$content->_parent = $this;
         }
-		if( !$replace && is_array($content) )
+		if( !$replace && \is_array($content) )
 			foreach( $content as &$c )
 				$this->content($c);
 		elseif( $replace )
@@ -482,11 +501,11 @@ abstract class Renderable implements \JsonSerializable
 			foreach( $this->_content as &$c )
 				if( $c instanceof Renderable )
 					$c->_parent = false;
-			$this->_content = is_array($content)?$content:array($content);
+			$this->_content = \is_array($content)?$content:array($content);
 		}
 		else
 			$this->_content[] = $content;
-		return $this->_content[count($this->_content)-1];
+		return $this->_content[\count($this->_content)-1];
 	}
 
     /**
@@ -533,7 +552,7 @@ abstract class Renderable implements \JsonSerializable
 	 */
 	function length()
 	{
-		return count($this->_content);
+		return \count($this->_content);
 	}
 
 	/**
@@ -572,8 +591,8 @@ abstract class Renderable implements \JsonSerializable
 	 */
 	function last()
 	{
-		if( count($this->_content)>0 )
-			return $this->_content[count($this->_content)-1];
+		if( \count($this->_content)>0 )
+			return $this->_content[\count($this->_content)-1];
 		return log_return("Renderable::last() is empty",new Control());
 	}
 
@@ -687,7 +706,7 @@ abstract class Renderable implements \JsonSerializable
 			if( $index < 0 )
 				WdfException::Raise("Cannot insert because index not found");
 		}
-        if( count($this->_content) == 0 )
+        if( \count($this->_content) == 0 )
             return $this->content($content);
 
 		$buf = $this->_content;
@@ -712,7 +731,7 @@ abstract class Renderable implements \JsonSerializable
 	 */
 	function indexOf($content)
 	{
-		$cnt = count($this->_content);
+		$cnt = \count($this->_content);
 		for($i=0; $i<$cnt; $i++)
 			if( $this->_content[$i] == $content )
 				return $i;
@@ -729,16 +748,16 @@ abstract class Renderable implements \JsonSerializable
 	{
         foreach( get_object_vars($this) as $name => $c )
         {
-            if( is_object($c) )
+            if( \is_object($c) )
             {
                 if( ($c instanceof $type) || is_subclass_of($c, $type) )
                    return true;
             }
-            elseif(is_array($c))
+            elseif(\is_array($c))
             {
                 foreach($c as $k => $obj)
                 {
-                    if(is_object($obj) && ($obj instanceof Renderable))
+                    if(\is_object($obj) && ($obj instanceof Renderable))
                     {
                         if( ($obj instanceof $type) || is_subclass_of($obj, $type) )
                             return true;

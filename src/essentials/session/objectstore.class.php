@@ -40,38 +40,6 @@ abstract class ObjectStore
     public static $buffer = [];
     public static $ids = [];
 
-    public $Statistics = [];
-
-    protected function _stats($name,$started)
-    {
-        if(!isDev())
-            return;
-        $now = microtime(true);
-        if( isset($this->Statistics[$name]) )
-        {
-            $this->Statistics[$name][0]++;
-            $this->Statistics[$name][1] += ($now-$started)*1000;
-        }
-        else
-            $this->Statistics[$name] = [1,($now-$started)*1000];
-    }
-
-    /**
-     * @internal Used for performance testing
-     */
-    public function GetStats()
-    {
-        if(!isDev())
-            return;
-        if( isset($this->Statistics['total_time']) )
-            unset($this->Statistics['total_time']);
-        $t = 0;
-        foreach( $this->Statistics as $k=>$v )
-            $t += $v[1];
-        $this->Statistics['total_time'] = $t;
-        return $this->Statistics;
-    }
-
     /**
      * Stores an object.
      *

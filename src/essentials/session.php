@@ -240,50 +240,58 @@ function session_keep_alive($request_key='PING')
 /**
  * @internal Keeps used stored objects alive
  */
-function session_update($keep_alive=false)
+function session_update($keep_alive = false)
 {
     static $session_update_done = false;
-    if( $session_update_done ) return;
-    $session_update_done = true;
-
-    $partitionCookies = function ()
-    {
-        if ( headers_sent() || ('iframe' != strtolower(ifavail($_SERVER, 'HTTP_SEC_FETCH_DEST', 'REDIRECT_HTTP_SEC_FETCH_DEST')?:'')) )
-            return;
-        $replace_headers = true;
-        foreach (headers_list() as $header)
-        {
-            if (!starts_iwith($header, 'set-cookie:'))
-                continue;
-            if( stripos($header, "partitioned") === false )
-                $header .= ends_with($header, ";") ? " Partitioned" : "; Partitioned";
-            header("$header", $replace_headers);
-            $replace_headers = false;
-            // log_debug("Cookie partitioned", $header,system_current_request(true));
-        }
-    };
-
-    if (current_controller(false) instanceof WdfResource)
-    {
-        $partitionCookies();
+    if ($session_update_done)
         return;
-    }
-
-    if(Wdf::$ObjectStore)
+    $session_update_done = true;
+    $start = microtime(true);
+    try
     {
-        if( !system_is_ajax_call() )
-            Wdf::$ObjectStore->Cleanup();
+        $partitionCookies = function ()
+        {
+            if (headers_sent() || ('iframe' != strtolower(ifavail($_SERVER, 'HTTP_SEC_FETCH_DEST', 'REDIRECT_HTTP_SEC_FETCH_DEST') ?: '')))
+                return;
+            $replace_headers = true;
+            foreach (headers_list() as $header)
+            {
+                if (!starts_iwith($header, 'set-cookie:'))
+                    continue;
+                if (stripos($header, "partitioned") === false)
+                    $header .= ends_with($header, ";") ? " Partitioned" : "; Partitioned";
+                header("$header", $replace_headers);
+                $replace_headers = false;
+                // log_debug("Cookie partitioned", $header,system_current_request(true));
+            }
+        };
 
-        Wdf::$ObjectStore->Update($keep_alive);
-    }
-    if (isset(Wdf::$SessionHandler) && is_object(Wdf::$SessionHandler))
-    {
-        $res = Wdf::$SessionHandler->Update();
+        if (current_controller(false) instanceof WdfResource)
+        {
+            $partitionCookies();
+            return;
+        }
+
+        if (Wdf::$ObjectStore)
+        {
+            if (!system_is_ajax_call())
+                Wdf::$ObjectStore->Cleanup();
+
+            Wdf::$ObjectStore->Update($keep_alive);
+        }
+        if (isset(Wdf::$SessionHandler) && is_object(Wdf::$SessionHandler))
+        {
+            $res = Wdf::$SessionHandler->Update();
+            $partitionCookies();
+            return $res;
+        }
         $partitionCookies();
-        return $res;
+        return false;
     }
-    $partitionCookies();
-    return false;
+    finally
+    {
+        Wdf::Measure(__FUNCTION__, $start);
+    }
 }
 
 /**

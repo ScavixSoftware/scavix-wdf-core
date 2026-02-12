@@ -25,6 +25,7 @@
  */
 namespace ScavixWDF\Session;
 
+use ScavixWDF\Wdf;
 use ScavixWDF\WdfException;
 
 /**
@@ -53,7 +54,7 @@ class CliObjectStore extends FilesStore
 
         if( isset(ObjectStore::$buffer[$id]) )
             unset(ObjectStore::$buffer[$id]);
-        $this->_stats(__METHOD__,$start);
+        Wdf::Measure(__METHOD__,$start);
     }
 
     /**
@@ -69,7 +70,7 @@ class CliObjectStore extends FilesStore
             $res = true;
         else
             $res = false;
-        $this->_stats(__METHOD__,$start);
+        Wdf::Measure(__METHOD__,$start);
 		return $res;
     }
 
@@ -84,7 +85,7 @@ class CliObjectStore extends FilesStore
 		if( isset(ObjectStore::$buffer[$id]) )
         {
 			$res = ObjectStore::$buffer[$id];
-            $this->_stats(__METHOD__,$start);
+            Wdf::Measure(__METHOD__,$start);
         }
         else
         {

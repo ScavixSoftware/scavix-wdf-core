@@ -27,6 +27,7 @@
  */
 namespace ScavixWDF\Session;
 
+use ScavixWDF\Wdf;
 use ScavixWDF\WdfException;
 
 /**
@@ -109,7 +110,7 @@ class FilesStore extends ObjectStore
 			$obj->_storage_id = $id;
 
         ObjectStore::$buffer[$id] = $obj;
-        $this->_stats(__METHOD__,$start);
+        Wdf::Measure(__METHOD__,$start);
     }
 
     /**
@@ -124,7 +125,7 @@ class FilesStore extends ObjectStore
         if( isset(ObjectStore::$buffer[$id]) )
             unset(ObjectStore::$buffer[$id]);
 		@unlink($this->getFile($id));
-        $this->_stats(__METHOD__,$start);
+        Wdf::Measure(__METHOD__,$start);
     }
 
     /**
@@ -140,7 +141,7 @@ class FilesStore extends ObjectStore
             $res = true;
         else
             $res = file_exists($this->getFile($id));
-        $this->_stats(__METHOD__,$start);
+        Wdf::Measure(__METHOD__,$start);
 		return $res;
     }
 
@@ -153,24 +154,19 @@ class FilesStore extends ObjectStore
 		$id = strtolower($id);
 
 		if( isset(ObjectStore::$buffer[$id]) )
-        {
 			$res = ObjectStore::$buffer[$id];
-            $this->_stats(__METHOD__,$start);
-        }
         else
         {
             $data = @file_get_contents($this->getFile($id));
             if( $data )
             {
-                $this->_stats(__METHOD__,$start);
-                $start = microtime(true);
                 $res = $this->serializer->Unserialize($data);
                 ObjectStore::$buffer[$id] = $res;
-                $this->_stats(__METHOD__.'/UNSER',$start);
             }
             else
                 $res = null;
         }
+        Wdf::Measure(__METHOD__,$start);
 		return $res;
     }
 
@@ -194,7 +190,7 @@ class FilesStore extends ObjectStore
 			$_SESSION['object_ids'][$cn]++;
 
         $obj->_storage_id = $cn.$_SESSION['object_ids'][$cn];
-        $this->_stats(__METHOD__,$start);
+        Wdf::Measure(__METHOD__,$start);
         return $obj->_storage_id;
     }
 
@@ -229,7 +225,7 @@ class FilesStore extends ObjectStore
                 //log_debug(__METHOD__,"Object removed:",$f);
             }
         }
-        $this->_stats(__METHOD__,$start);
+        Wdf::Measure(__METHOD__,$start);
     }
 
     /**
@@ -269,7 +265,7 @@ class FilesStore extends ObjectStore
                 file_put_contents($indexfile, json_encode($keys));
         }
         touch($this->getPath());
-        $this->_stats(__METHOD__.($keep_alive?"/KA":''),$start);
+        Wdf::Measure(__METHOD__.($keep_alive?"/KA":''),$start);
     }
 
     /**
@@ -280,6 +276,6 @@ class FilesStore extends ObjectStore
         $start = microtime(true);
         @rename($this->getPath($old_session_id),$this->getPath($new_session_id));
         $this->path = false;
-        $this->_stats(__METHOD__,$start);
+        Wdf::Measure(__METHOD__,$start);
     }
 }

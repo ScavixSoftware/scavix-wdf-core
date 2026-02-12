@@ -27,6 +27,8 @@
  */
 namespace ScavixWDF\Session;
 
+use ScavixWDF\Wdf;
+
 /**
  * Stores Objects in a MySQL Database.
  *
@@ -107,7 +109,7 @@ class DbStore extends ObjectStore
 //        $this->exec($sql);
 
         ObjectStore::$buffer[$id] = $obj;
-        $this->_stats(__METHOD__,$start);
+        Wdf::Measure(__METHOD__,$start);
     }
 
     /**
@@ -122,7 +124,7 @@ class DbStore extends ObjectStore
         if( isset(ObjectStore::$buffer[$id]) )
             unset(ObjectStore::$buffer[$id]);
 		$this->exec("DELETE FROM wdf_objects WHERE session_id=? AND id=?", [session_id(),$id]);
-        $this->_stats(__METHOD__,$start);
+        Wdf::Measure(__METHOD__,$start);
     }
 
     /**
@@ -138,7 +140,7 @@ class DbStore extends ObjectStore
             $res = true;
         else
             $res = $this->exec("SELECT id FROM wdf_objects WHERE session_id=? AND id=?", [session_id(),$id])->Count()>0;
-        $this->_stats(__METHOD__,$start);
+        Wdf::Measure(__METHOD__,$start);
 		return $res;
     }
 
@@ -161,7 +163,7 @@ class DbStore extends ObjectStore
             ObjectStore::$buffer[$id] = $res;
 
         }
-        $this->_stats(__METHOD__,$start);
+        Wdf::Measure(__METHOD__,$start);
 		return $res;
     }
 
@@ -185,7 +187,7 @@ class DbStore extends ObjectStore
 			$_SESSION['object_ids'][$cn]++;
 
         $obj->_storage_id = $cn.$_SESSION['object_ids'][$cn];
-        $this->_stats(__METHOD__,$start);
+        Wdf::Measure(__METHOD__,$start);
         return $obj->_storage_id;
     }
 
@@ -201,7 +203,7 @@ class DbStore extends ObjectStore
                 OR (last_access<now()-interval 300 second)",
             [session_id()]
         );
-        $this->_stats(__METHOD__,$start);
+        Wdf::Measure(__METHOD__,$start);
     }
 
     /**
@@ -214,7 +216,7 @@ class DbStore extends ObjectStore
         if( $keep_alive )
         {
             $this->exec("UPDATE wdf_objects SET last_access=now() WHERE session_id=?",[session_id()]);
-            $this->_stats(__METHOD__."/KA",$start);
+            Wdf::Measure(__METHOD__."/KA",$start);
             return;
         }
 
@@ -238,7 +240,7 @@ class DbStore extends ObjectStore
 				\ScavixWDF\WdfException::Log("updating storage for object $id [".get_class($obj)."]",$ex);
 			}
 		}
-        $this->_stats(__METHOD__,$start);
+        Wdf::Measure(__METHOD__,$start);
     }
 
     /**
@@ -248,6 +250,6 @@ class DbStore extends ObjectStore
     {
         $start = microtime(true);
         $this->exec("UPDATE IGNORE wdf_objects SET session_id=? WHERE session_id=?",[$new_session_id,$old_session_id]);
-        $this->_stats(__METHOD__,$start);
+        Wdf::Measure(__METHOD__,$start);
     }
 }

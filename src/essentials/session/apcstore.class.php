@@ -27,6 +27,8 @@
  */
 namespace ScavixWDF\Session;
 
+use ScavixWDF\Wdf;
+
 /**
  * Implements <ObjectStore> for use with APC.
  *
@@ -73,7 +75,7 @@ class APCStore extends ObjectStore
         apc_store(APCStore::$apcstore_key_prefix.session_id().'_'.$id, $content, (ini_get('session.gc_maxlifetime')?:300));
 
         ObjectStore::$buffer[$id] = $obj;
-        $this->_stats(__METHOD__,$start);
+        Wdf::Measure(__METHOD__,$start);
     }
 
     /**
@@ -90,7 +92,7 @@ class APCStore extends ObjectStore
 
 		apc_delete(APCStore::$apcstore_key_prefix.session_id().'_'.$id);
 
-        $this->_stats(__METHOD__,$start);
+        Wdf::Measure(__METHOD__,$start);
     }
 
     /**
@@ -106,7 +108,7 @@ class APCStore extends ObjectStore
             $res = true;
         else
             $res = (apc_exists(APCStore::$apcstore_key_prefix.session_id().'_'.$id) === true);
-        $this->_stats(__METHOD__,$start);
+        Wdf::Measure(__METHOD__,$start);
 		return $res;
     }
 
@@ -127,7 +129,7 @@ class APCStore extends ObjectStore
             ObjectStore::$buffer[$id] = $res;
 
         }
-        $this->_stats(__METHOD__,$start);
+        Wdf::Measure(__METHOD__,$start);
 		return $res;
     }
 
@@ -151,7 +153,7 @@ class APCStore extends ObjectStore
 			$_SESSION['object_ids'][$cn]++;
 
         $obj->_storage_id = $cn.$_SESSION['object_ids'][$cn];
-        $this->_stats(__METHOD__,$start);
+        Wdf::Measure(__METHOD__,$start);
         return $obj->_storage_id;
     }
 
@@ -182,7 +184,7 @@ class APCStore extends ObjectStore
                 }
                 return;
             }
-            $this->_stats(__METHOD__."/KA",$start);
+            Wdf::Measure(__METHOD__."/KA",$start);
             return;
         }
 
@@ -198,7 +200,7 @@ class APCStore extends ObjectStore
 				\ScavixWDF\WdfException::Log("updating storage for object $id [".get_class($obj)."]",$ex);
 			}
 		}
-        $this->_stats(__METHOD__,$start);
+        Wdf::Measure(__METHOD__,$start);
     }
 
     /**
@@ -219,6 +221,6 @@ class APCStore extends ObjectStore
                 }
             }
         }
-        $this->_stats(__METHOD__,$start);
+        Wdf::Measure(__METHOD__,$start);
     }
 }

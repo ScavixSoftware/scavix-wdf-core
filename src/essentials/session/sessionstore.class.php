@@ -27,6 +27,7 @@
  */
 namespace ScavixWDF\Session;
 
+use ScavixWDF\Wdf;
 use ScavixWDF\WdfException;
 
 /**
@@ -72,7 +73,7 @@ class SessionStore extends ObjectStore
 		ObjectStore::$buffer[$id] = $obj;
 
         $_SESSION[$CONFIG['session']['prefix']."object_access"][$obj->_storage_id] = time();
-        $this->_stats(__METHOD__,$start);
+        Wdf::Measure(__METHOD__, $start);
     }
 
     /**
@@ -97,7 +98,7 @@ class SessionStore extends ObjectStore
 		if(isset($_SESSION[$CONFIG['session']['prefix']."session"][$id]))
 			unset($_SESSION[$CONFIG['session']['prefix']."session"][$id]);
 		unset(ObjectStore::$buffer[$id]);
-        $this->_stats(__METHOD__,$start);
+        Wdf::Measure(__METHOD__,$start);
     }
 
     /**
@@ -115,7 +116,7 @@ class SessionStore extends ObjectStore
 			$res = true;
         else
             $res = isset($_SESSION[$CONFIG['session']['prefix']."session"][$id]);
-        $this->_stats(__METHOD__,$start);
+        Wdf::Measure(__METHOD__,$start);
 		return $res;
     }
 
@@ -144,7 +145,7 @@ class SessionStore extends ObjectStore
 
         if( $res && is_object($res) && isset($res->_storage_id) )// update objects last access
             $_SESSION[$CONFIG['session']['prefix']."object_access"][$res->_storage_id] = time();
-        $this->_stats(__METHOD__,$start);
+        Wdf::Measure(__METHOD__,$start);
 		return $res;
     }
 
@@ -179,7 +180,7 @@ class SessionStore extends ObjectStore
 		if( session_id() )
 			$_SESSION['object_id_storage'] = ObjectStore::$ids;
 
-        $this->_stats(__METHOD__,$start);
+        Wdf::Measure(__METHOD__,$start);
 		return $obj->_storage_id;
     }
 
@@ -200,7 +201,7 @@ class SessionStore extends ObjectStore
                 delete_object($id);
             }
         }
-        $this->_stats(__METHOD__,$start);
+        Wdf::Measure(__METHOD__,$start);
     }
 
     /**
@@ -229,7 +230,7 @@ class SessionStore extends ObjectStore
 				WdfException::Log("updating storage for object $id [".get_class($obj)."]",$ex);
 			}
 		}
-        $this->_stats(__METHOD__.($keep_alive?"/KA":''),$start);
+        Wdf::Measure(__METHOD__.($keep_alive?"/KA":''),$start);
     }
 
     /**

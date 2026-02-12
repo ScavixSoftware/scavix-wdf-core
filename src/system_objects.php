@@ -295,6 +295,48 @@ class Wdf
             self::$Modules[$name] = true;
         }
     }
+
+    private static $measurements = [], $first_measurement = null, $last_measurement = null;
+
+    public static function Measure($name, $started = null)
+    {
+        if(!isDev())
+            return;
+        if ($started === null)
+            $started = self::$last_measurement ?? microtime(true);
+        self::$last_measurement = $now = microtime(true);
+        if( self::$first_measurement == null )
+            self::$first_measurement = $now;
+        if( isset(self::$measurements[$name]) )
+        {
+            self::$measurements[$name][0]++;
+            self::$measurements[$name][1] += ($now-$started)*1000;
+        }
+        else
+            self::$measurements[$name] = [1,($now-$started)*1000];
+        return $now;
+    }
+
+    public static function GetMeasurements()
+    {
+        return self::$measurements;
+    }
+
+    public static function DumpMeasurements($folder)
+    {
+        if (self::$first_measurement !== null)
+        {
+            self::Measure('Total', self::$first_measurement);
+            uasort(self::$measurements, function($a, $b) {
+                return $b[1] <=> $a[1];
+            });
+            $um = umask(0);
+            @mkdir($folder, 0777, true);
+            $fn = rtrim($folder, "/") . "/" . str_replace("/", "_", self::Request()->getEndpoint()) . ".json";
+            file_put_contents($fn, json_encode(self::$measurements, JSON_PRETTY_PRINT));
+            umask($um);
+        }
+    }
 }
 
 class WdfIncomingRequest
@@ -317,25 +359,33 @@ class WdfIncomingRequest
 
     public function Invoke($pre_execute_hook_type)
     {
-        $this->instanciateController();
-        if (!$this->eventExists())
-            return '';
-
-        execute_hooks($pre_execute_hook_type, [$this->_currentController, $this->_currentEvent, $this->_parsedArguments]);
-        $ref = \ScavixWDF\Reflection\WdfReflector::GetInstance($this->_currentController);
-        $meth = $ref->getMethod($this->_currentEvent);
-        $args = [];
-        foreach( $meth->getParameters() as $param )
+        $start = microtime(true);
+        try
         {
-            $n = $param->getName();
-            if( isset($this->_parsedArguments[$n]) )
-                $args[$n] = $this->_parsedArguments[$n];
-            elseif ($param->isVariadic())
-                $args += $this->_parsedArguments;
-            else
-                $args[$n] = null;
+            $this->instanciateController();
+            if (!$this->eventExists())
+                return '';
+
+            execute_hooks($pre_execute_hook_type, [$this->_currentController, $this->_currentEvent, $this->_parsedArguments]);
+            $ref = \ScavixWDF\Reflection\WdfReflector::GetInstance($this->_currentController);
+            $meth = $ref->getMethod($this->_currentEvent);
+            $args = [];
+            foreach ($meth->getParameters() as $param)
+            {
+                $n = $param->getName();
+                if (isset($this->_parsedArguments[$n]))
+                    $args[$n] = $this->_parsedArguments[$n];
+                elseif ($param->isVariadic())
+                    $args += $this->_parsedArguments;
+                else
+                    $args[$n] = null;
+            }
+            return $meth->invokeArgs($this->_currentController, $args);
         }
-        return $meth->invokeArgs($this->_currentController, $args);
+        finally
+        {
+            Wdf::Measure(__METHOD__, $start);
+        }
     }
 
     #region Getters
