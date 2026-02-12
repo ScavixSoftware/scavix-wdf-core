@@ -79,8 +79,12 @@ class FilesStore extends ObjectStore
     {
         global $CONFIG;
 
+        if (!isset($CONFIG['session']['filesstore']['ttl']))
+            $CONFIG['session']['filesstore']['ttl'] = 120;
+
         if( !isset($CONFIG['session']['filesstore']['path']) )
             $CONFIG['session']['filesstore']['path'] = system_app_temp_dir("filesstore", false);
+        system_ensure_path_ending($GLOBALS['CONFIG']['session']['filesstore']['path']);
 
         $this->serializer = new Serializer();
 
@@ -104,11 +108,6 @@ class FilesStore extends ObjectStore
 		else
 			$obj->_storage_id = $id;
 
-        /* serialization and storage will be done in Update method */
-//        $content = $this->serializer->Serialize($obj);
-//        $this->_stats(__METHOD__.'/SER',$start);
-//        $start = microtime(true);
-//        file_put_contents($this->getFile($id), $content);
         ObjectStore::$buffer[$id] = $obj;
         $this->_stats(__METHOD__,$start);
     }
@@ -204,6 +203,7 @@ class FilesStore extends ObjectStore
      */
     function Cleanup()
     {
+        global $CONFIG;
         $start = microtime(true);
         clearstatcache();
         $p = $GLOBALS['CONFIG']['session']['filesstore']['path'];
@@ -212,7 +212,7 @@ class FilesStore extends ObjectStore
             if( $d == "$p." || $d == "$p.." )
                 continue;
             $time = @filemtime($d);
-            if( !$time || (time() - $time <= 300) )
+            if( !$time || (time() - $time <= $CONFIG['session']['filesstore']['ttl']) )
                 continue;
             foreach( glob($d.'/*') as $f )
                 if( $f != "$d/." && $f != "$d/.." )
@@ -223,7 +223,7 @@ class FilesStore extends ObjectStore
         foreach( system_glob_rec($this->getPath(),'*') as $f )
         {
             $time = @filemtime($f);
-            if( $time && (time() - $time > 300) )
+            if( $time && (time() - $time > $CONFIG['session']['filesstore']['ttl']) )
             {
                 @unlink($f);
                 //log_debug(__METHOD__,"Object removed:",$f);
@@ -249,28 +249,25 @@ class FilesStore extends ObjectStore
                     touch($this->getFile($id));
                 touch($indexfile);
             }
-            touch($this->getPath());
-            return;
         }
-
-        /* Update is guaranteed to be called (see register_shutdown_function), so perform storage here once the script is ready */
-        foreach( ObjectStore::$buffer as $id=>$obj )
+        else
         {
-            $content = $this->serializer->Serialize($obj);
-            $filename = $this->getFile($id);
-            if(@file_put_contents($filename, $content) === false)
+            /* Update is guaranteed to be called (see register_shutdown_function), so perform storage here once the script is ready */
+            foreach (ObjectStore::$buffer as $id => $obj)
             {
-                usleep(100 * 1000);
-                $this->path = null;
+                $content = $this->serializer->Serialize($obj);
                 $filename = $this->getFile($id);
-                if(@file_put_contents($filename, $content) !== false)
+                if (@file_put_contents($filename, $content) === false)
                 {
-//                    log_debug(__METHOD__, 'it worked', $filename, $GLOBALS['CONFIG']['session']['filesstore']['path'], $this->path);
+                    usleep(100 * 1000);
+                    $this->path = null;
+                    $filename = $this->getFile($id);
+                    @file_put_contents($filename, $content);
                 }
             }
+            if (($keys = array_keys(ObjectStore::$buffer)) && \count($keys))
+                file_put_contents($indexfile, json_encode($keys));
         }
-        if (($keys = array_keys(ObjectStore::$buffer)) && \count($keys))
-            file_put_contents($indexfile, json_encode($keys));
         touch($this->getPath());
         $this->_stats(__METHOD__.($keep_alive?"/KA":''),$start);
     }

@@ -59,9 +59,10 @@ class Serializer
     }
 
 	public $Stack;
-	public $sleepmap;
+	public $sleepmap = [];
 	public $Lines;
     public $Index;
+    public $Format = "swdf-0";
 
     public static $unserializing_level = 0;
 
@@ -75,9 +76,9 @@ class Serializer
 	function Serialize(&$data)
 	{
 		$stack  = new \SplObjectStorage();
-		$this->sleepmap = [];
+		// $this->sleepmap = [];
 		$r = $this->Ser_Inner($data, $stack);
-        return $r;
+        return "format:swdf-1\n$r";
 	}
 
 	private function Ser_Inner(&$data,$stack)
@@ -95,11 +96,11 @@ class Serializer
 		elseif( \is_array($data) )
 		{
 			$res = "a:".\count($data)."\n";
-			$keys = array_keys($data);
-			foreach( $keys as $key )
+			foreach( $data as $key=>$val )
 			{
-				$res .= $this->Ser_Inner($key,$stack);
-				$res .= $this->Ser_Inner($data[$key],$stack);
+                $res .= "$key\n"; // format:swdf-1
+                // $res .= $this->Ser_Inner($key,$stack); // format:swdf-0
+				$res .= $this->Ser_Inner($val,$stack);
 			}
 			return $res;
 		}
@@ -162,7 +163,8 @@ class Serializer
                 : "o:$id:" . \count($vars) . ":$classname:\n";
             foreach( $vars as $n=>$v )
             {
-                $res .= $this->Ser_Inner($n,$stack);
+                $res .= "$n\n"; // format:swdf-1
+                // $res .= $this->Ser_Inner($n,$stack); // format:swdf-0
                 $res .= $this->Ser_Inner($v,$stack);
             }
 
@@ -181,13 +183,20 @@ class Serializer
     {
         try
         {
-            $mem = [$this->Index, $this->Lines, $this->Stack];
+            $mem = [$this->Index, $this->Lines, $this->Stack, $this->Format];
             self::$unserializing_level++;
             $this->Index = 0;
             $this->Lines = explode("\n", trim($data));
             $this->Stack = [];
+
+            if (\count($this->Lines) && substr($this->Lines[0], 0, 7) == "format:")
+            {
+                $this->Format = substr($this->Lines[0], 7);
+                $this->Index = 1;
+            }
+
             $res = $this->Unser_Inner();
-            [$this->Index, $this->Lines, $this->Stack] = $mem;
+            [$this->Index, $this->Lines, $this->Stack, $this->Format] = $mem;
             return $res;
 
         }
@@ -235,7 +244,14 @@ class Serializer
 					$res = [];
 					for($i=0; $i<$line; $i++)
 					{
-						$key = $this->Unser_Inner();
+                        if ($this->Format == "swdf-1")
+                        {
+                            $key = $this->Lines[$this->Index++];
+                            if (is_numeric($key))
+                                $key = \intval($key);
+                        }
+                        else
+						    $key = $this->Unser_Inner();
 						$res[$key] = $this->Unser_Inner();
 					}
                     return $res;
@@ -267,7 +283,11 @@ class Serializer
                     }
 					for($i=0; $i<$len; $i++)
 					{
-						$field = $this->Unser_Inner();
+                        if ($this->Format == "swdf-1")
+                            $field = $this->Lines[$this->Index++];
+                        else
+						    $field = $this->Unser_Inner();
+
 						if( !\is_string($field) || $field == "" )
 							continue;
 						$this->Stack[$id]->$field = $this->Unser_Inner();
