@@ -163,7 +163,7 @@ abstract class Renderable implements \JsonSerializable
         }
         finally
         {
-            Wdf::Measure(__METHOD__, $start);
+            Wdf::Measure(__METHOD__."/".system_get_caller(), $start);
         }
     }
 

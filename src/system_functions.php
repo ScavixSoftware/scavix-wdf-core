@@ -25,6 +25,7 @@
  * @copyright since 2019 Scavix Software GmbH & Co. KG
  * @license http://www.opensource.org/licenses/lgpl-license.php LGPL
  */
+use ScavixWDF\Wdf;
 use ScavixWDF\WdfException;
 
 if( !defined('FRAMEWORK_LOADED') || FRAMEWORK_LOADED != 'uSI7hcKMQgPaPKAQDXg5' ) die('');
@@ -663,26 +664,12 @@ function array_val_is($array,$key,$needle)
  *
  * This is done by checking the `$_SERVER` variable and the request_id.
  * We set the request_id in plain requests in the SESSION and add it to AJAX requests so we can compare those two here.
+ * @deprecated Use Wdf::Request()->isAjax() instead
  * @return bool true or false
  */
 function system_is_ajax_call()
 {
-    if( PHP_SAPI == "cli" )
-        $GLOBALS['result_of_system_is_ajax_call'] = false;
-	if( !isset($GLOBALS['result_of_system_is_ajax_call']) )
-	{
-		$GLOBALS['result_of_system_is_ajax_call'] = strtolower(array_val($_SERVER, 'HTTP_X_REQUESTED_WITH', '')) == 'xmlhttprequest';
-		if( !$GLOBALS['result_of_system_is_ajax_call'] )
-		{
-			if( !isset($_REQUEST['request_id']) || !isset($_SESSION['request_id']) )
-			{
-				unset($GLOBALS['result_of_system_is_ajax_call']);
-				return false;
-			}
-			$GLOBALS['result_of_system_is_ajax_call'] = $_REQUEST['request_id'] == $_SESSION['request_id'];
-		}
-	}
-	return $GLOBALS['result_of_system_is_ajax_call'];
+    return Wdf::Request()->isAjax();
 }
 
 /**

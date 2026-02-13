@@ -103,7 +103,7 @@ class CheckTask extends Task
                 $pre = array_first(explode("_",$i));
                 if( is_in($pre,'TITLE','TXT') )
                 {
-                    if( $multifind($i,$c,"{$pre}_","::Confirm(") )
+                    if( $multifind($i,$c,"{$pre}_","::Confirm(",['"',"'"]) )
                     {
                         $used[] = $i;
                         log_debug("Found DLG $i");

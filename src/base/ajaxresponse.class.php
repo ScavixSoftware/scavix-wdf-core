@@ -110,6 +110,7 @@ class AjaxResponse
 	 */
 	public static function Renderable(Renderable $content, $force_dependency_loading = null)
 	{
+        $start = microtime(true);
 		$wrapped = new stdClass();
 
 		$wrapped->html = $content->WdfRenderAsRoot();
@@ -128,6 +129,7 @@ class AjaxResponse
         }
 		$res = AjaxResponse::Json($wrapped);
 		$res->_translated = true;
+        Wdf::Measure(__METHOD__, $start);
 		return $res;
 	}
 

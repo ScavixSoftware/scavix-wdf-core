@@ -44,6 +44,9 @@ use ScavixWDF\Reflection\WdfReflector;
 use ScavixWDF\Wdf;
 use ScavixWDF\WdfException;
 
+if (getenv('WDF_FEATURES_MEASURE'))
+    Wdf::StartMeasuring();
+
 // Homebrew CLI args if missing
 // see https://www.php.net/manual/en/ini.core.php#ini.register-argc-argv
 if( !isset($argv) && isset($_SERVER['argv']) )
@@ -250,7 +253,7 @@ function system_is_module_loaded($mod)
 function system_init($application_name, $skip_header = false, $logging_category=false)
 {
 	global $CONFIG;
-	Wdf::Measure('wdf-pre-init');
+    $start = microtime(true);
 
 	$CONFIG['system']['application_name'] = $application_name;
 	if(!isset($CONFIG['model']['internal']['connection_string']))
@@ -294,7 +297,7 @@ function system_init($application_name, $skip_header = false, $logging_category=
 		$_SERVER['SCRIPT_URI'] = $_SERVER['SERVER_NAME'].$_SERVER['SCRIPT_NAME'];
 	}
 
-    Wdf::Measure(__FUNCTION__);
+    $GLOBALS['system_init_done'] = Wdf::Measure(__FUNCTION__, $start);
 	execute_hooks(HOOK_POST_INIT);
 }
 
@@ -308,19 +311,18 @@ function system_init($application_name, $skip_header = false, $logging_category=
  */
 function system_execute()
 {
-    Wdf::Measure('wdf-index-overhead');
+    $start = Wdf::Measure('wdf-index-overhead', $GLOBALS['system_init_done']);
     session_sanitize();
-    Wdf::Measure('session_sanitize');
+    Wdf::Measure('session_sanitize', $start);
     execute_hooks(HOOK_POST_INITSESSION);
-    Wdf::Measure('HOOK_POST_INITSESSION');
 
     if (PHP_SAPI == 'cli' && function_exists('cli_execute'))
         cli_execute();
 
     // respond to PING requests that are sended to keep the session alive
-    if ($rid = Args::request('ping', false))
+    if (Args::request('ping', false))
     {
-        session_update($rid);
+        session_update(true);
         execute_hooks(HOOK_PING_RECIEVED);
         die("PONG");
     }
@@ -631,7 +633,7 @@ function execute_hooks($type,$arguments = [])
 	Wdf::$Hooks['fired'][$type] = $type;
 	if( !isset(Wdf::$Hooks[$type]) )
     	return;
-
+    $start = microtime(true);
 	is_valid_hook_type($type);
 
 	$loghooks = $CONFIG['system']['hook_logging'];
@@ -670,6 +672,7 @@ function execute_hooks($type,$arguments = [])
 	}
 	if( $loghooks )
 		log_debug("END ".hook_type_to_string($type));
+    Wdf::Measure("execute_hook $type", $start);
 }
 
 /**

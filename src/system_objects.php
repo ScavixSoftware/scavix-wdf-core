@@ -296,11 +296,17 @@ class Wdf
         }
     }
 
-    private static $measurements = [], $first_measurement = null, $last_measurement = null;
+    private static $measurements = null, $first_measurement = null, $last_measurement = null;
+
+    public static function StartMeasuring()
+    {
+        self::$measurements = [];
+        self::$first_measurement = microtime(true);
+    }
 
     public static function Measure($name, $started = null)
     {
-        if(!isDev())
+        if (self::$measurements === null)
             return;
         if ($started === null)
             $started = self::$last_measurement ?? microtime(true);
@@ -319,21 +325,28 @@ class Wdf
 
     public static function GetMeasurements()
     {
-        return self::$measurements;
+        if (self::$measurements === null)
+            return [];
+        uasort(self::$measurements, function($a, $b) {
+                return $b[1] <=> $a[1];
+            });
+        return array_map(function ($item)
+        {
+            $r = array_combine(['cnt', 'sum'], $item);
+            $r['avg'] = $r['cnt'] == 0 ? 0 : ($r['sum'] / $r['cnt']);
+            return $r;
+        }, self::$measurements);
     }
 
     public static function DumpMeasurements($folder)
     {
-        if (self::$first_measurement !== null)
+        if (self::$first_measurement !== null && !empty(self::$measurements))
         {
-            self::Measure('Total', self::$first_measurement);
-            uasort(self::$measurements, function($a, $b) {
-                return $b[1] <=> $a[1];
-            });
+            self::Measure(Wdf::Request()->getUrl(), self::$first_measurement);
             $um = umask(0);
             @mkdir($folder, 0777, true);
             $fn = rtrim($folder, "/") . "/" . str_replace("/", "_", self::Request()->getEndpoint()) . ".json";
-            file_put_contents($fn, json_encode(self::$measurements, JSON_PRETTY_PRINT));
+            file_put_contents($fn, json_encode(self::GetMeasurements(), JSON_PRETTY_PRINT));
             umask($um);
         }
     }
@@ -451,6 +464,27 @@ class WdfIncomingRequest
         return $this->_raw_data;
     }
 
+    function getHeader($name)
+    {
+        return Wdf::GetBuffer(__METHOD__)->get($name,function($name)
+        {
+            $name = str_replace('-', '_', strtolower($name));
+            $data = $_SERVER;
+            if( function_exists('apache_request_headers') )
+                $data += apache_request_headers();
+            $data = array_change_key_case($data, CASE_LOWER);
+            foreach (["$name", "http_{$name}", "http_x_{$name}"] as $this_header)
+            {
+                foreach ($data as $header => $value)
+                {
+                    if (str_replace('-', '_', $header) == $this_header)
+                        return $value;
+                }
+            }
+            return null;
+        });
+    }
+
     function isDefaultController()
     {
         return $this->_usingDefaultPage;
@@ -474,6 +508,59 @@ class WdfIncomingRequest
     function isMethod(string $name)
     {
         return strcasecmp($name, $this->getMethod()) === 0;
+    }
+
+    function getRequestClass()
+    {
+        static $class = null;
+        if ($class == null)
+        {
+            if (PHP_SAPI == "cli")
+                $class = 'cli';
+            elseif ($this->getHeader('Sec-Fetch-Mode') == 'navigate')
+                $class = 'page';
+            else
+            {
+                $dest = $this->getHeader('Sec-Fetch-Dest');
+                switch( $dest )
+                {
+                    case 'image':
+                    case 'style':
+                    case 'script':
+                    case 'audio':
+                    case 'video':
+                        $class = $dest;
+                        break;
+                    case 'empty':
+                        $class ='ajax';
+                        break;
+                    default:
+                        if (str_contains($this->getHeader('Accept'), 'image/'))
+                            $class = 'image';
+                        elseif ($this->getHeader('requested_with') == 'xmlhttprequest')
+                            $class = 'ajax';
+                        else
+                            $class = 'other';
+                        break;
+                }
+            }
+        }
+        return $class;
+    }
+
+    function isPageLoad()
+    {
+        return $this->getRequestClass() == 'page';
+    }
+
+    function isAjax()
+    {
+        return $this->getRequestClass() == 'ajax';
+    }
+
+    function isStaticAsset()
+    {
+        return is_in($this->getRequestClass(), 'image', 'audio', 'video');
     }
 
     #endregion

@@ -240,7 +240,7 @@ function session_keep_alive($request_key='PING')
 /**
  * @internal Keeps used stored objects alive
  */
-function session_update($keep_alive = false)
+function session_update($keep_alive_only = false)
 {
     static $session_update_done = false;
     if ($session_update_done)
@@ -274,10 +274,18 @@ function session_update($keep_alive = false)
 
         if (Wdf::$ObjectStore)
         {
-            if (!system_is_ajax_call())
-                Wdf::$ObjectStore->Cleanup();
-
-            Wdf::$ObjectStore->Update($keep_alive);
+            if( $keep_alive_only )
+                Wdf::$ObjectStore->Update(true);
+            else
+            {
+                if (Wdf::Request()->isPageLoad())
+                {
+                    Wdf::$ObjectStore->Cleanup();
+                    Wdf::$ObjectStore->Update();
+                }
+                elseif( !Wdf::Request()->isStaticAsset() )
+                    Wdf::$ObjectStore->Update();
+            }
         }
         if (isset(Wdf::$SessionHandler) && is_object(Wdf::$SessionHandler))
         {
