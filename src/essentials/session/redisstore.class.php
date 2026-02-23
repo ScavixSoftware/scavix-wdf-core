@@ -28,6 +28,7 @@
 namespace ScavixWDF\Session;
 
 use Exception;
+use ScavixWDF\Wdf;
 use ScavixWDF\WdfException;
 
 /**
@@ -61,7 +62,7 @@ class RedisStore extends ObjectStore
         if( !isset($CONFIG['session']['redisstore']['server']) )
             $CONFIG['session']['redisstore']['server'] = 'localhost:6379';
 
-        $this->serializer = new Serializer();
+        $this->serializer = Serializer::Get();
 
         if( !isset($_SESSION['object_ids']) )
             $_SESSION['object_ids'] = [];
@@ -176,7 +177,7 @@ class RedisStore extends ObjectStore
 
         $this->set($id,$content);
         ObjectStore::$buffer[$id] = $obj;
-        $this->_stats(__METHOD__,$start);
+        Wdf::Measure(__METHOD__,$start);
     }
 
     /**
@@ -191,7 +192,7 @@ class RedisStore extends ObjectStore
         if( isset(ObjectStore::$buffer[$id]) )
             unset(ObjectStore::$buffer[$id]);
 		$this->del($id);
-        $this->_stats(__METHOD__,$start);
+        Wdf::Measure(__METHOD__,$start);
     }
 
     /**
@@ -207,7 +208,7 @@ class RedisStore extends ObjectStore
             $res = true;
         else
             $res = $this->exec('exists',[$this->_key($id)]);
-        $this->_stats(__METHOD__,$start);
+        Wdf::Measure(__METHOD__,$start);
 		return $res;
     }
 
@@ -227,7 +228,7 @@ class RedisStore extends ObjectStore
             $res = $this->serializer->Unserialize($data);
             ObjectStore::$buffer[$id] = $res;
         }
-        $this->_stats(__METHOD__,$start);
+        Wdf::Measure(__METHOD__,$start);
 		return $res;
     }
 
@@ -251,29 +252,17 @@ class RedisStore extends ObjectStore
 			$_SESSION['object_ids'][$cn]++;
 
         $obj->_storage_id = $cn.$_SESSION['object_ids'][$cn];
-        $this->_stats(__METHOD__,$start);
+        Wdf::Measure(__METHOD__,$start);
         return $obj->_storage_id;
     }
 
     /**
      * @override <ObjectStore::Cleanup>
      */
-    function Cleanup($classname=false)
+    function Cleanup()
     {
         $start = microtime(true);
-        if( $classname )
-        {
-            $classname = strtolower($classname);
-            foreach( ObjectStore::$buffer as $id=>&$obj )
-            {
-                if( get_class_simple($obj,true) == $classname )
-                    $this->Delete($id);
-            }
-            $this->_stats(__METHOD__."/CN",$start);
-            return;
-        }
-
-        $this->_stats(__METHOD__,$start);
+        Wdf::Measure(__METHOD__,$start);
     }
 
     /**
@@ -290,7 +279,7 @@ class RedisStore extends ObjectStore
 
         foreach( $ids as $id )
             $this->expire($id);
-        $this->_stats(__METHOD__.($keep_alive?"/KA":''),$start);
+        Wdf::Measure(__METHOD__.($keep_alive?"/KA":''),$start);
     }
 
     /**
@@ -305,6 +294,6 @@ class RedisStore extends ObjectStore
             $nid = str_replace("{$old_session_id}_","{$new_session_id}_", $id);
             $this->exec('rename',[$id,$nid]);
         }
-        $this->_stats(__METHOD__,$start);
+        Wdf::Measure(__METHOD__,$start);
     }
 }

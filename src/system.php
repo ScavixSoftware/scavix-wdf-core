@@ -44,6 +44,9 @@ use ScavixWDF\Reflection\WdfReflector;
 use ScavixWDF\Wdf;
 use ScavixWDF\WdfException;
 
+if (getenv('WDF_FEATURES_MEASURE'))
+    Wdf::StartMeasuring();
+
 // Homebrew CLI args if missing
 // see https://www.php.net/manual/en/ini.core.php#ini.register-argc-argv
 if( !isset($argv) && isset($_SERVER['argv']) )
@@ -250,7 +253,7 @@ function system_is_module_loaded($mod)
 function system_init($application_name, $skip_header = false, $logging_category=false)
 {
 	global $CONFIG;
-	$thispath = __DIR__;
+    $start = microtime(true);
 
 	$CONFIG['system']['application_name'] = $application_name;
 	if(!isset($CONFIG['model']['internal']['connection_string']))
@@ -294,6 +297,7 @@ function system_init($application_name, $skip_header = false, $logging_category=
 		$_SERVER['SCRIPT_URI'] = $_SERVER['SERVER_NAME'].$_SERVER['SCRIPT_NAME'];
 	}
 
+    $GLOBALS['system_init_done'] = Wdf::Measure(__FUNCTION__, $start);
 	execute_hooks(HOOK_POST_INIT);
 }
 
@@ -307,7 +311,9 @@ function system_init($application_name, $skip_header = false, $logging_category=
  */
 function system_execute()
 {
+    $start = Wdf::Measure('wdf-index-overhead', $GLOBALS['system_init_done']);
     session_sanitize();
+    Wdf::Measure('session_sanitize', $start);
     execute_hooks(HOOK_POST_INITSESSION);
 
     if (PHP_SAPI == 'cli' && function_exists('cli_execute'))
@@ -339,7 +345,9 @@ function system_execute()
  */
 function system_exit($result=null,$die=true)
 {
+    $start = microtime(true);
     execute_hooks(HOOK_POST_EXECUTE);
+    Wdf::Measure('HOOK_POST_EXECUTE',$start);
 
 	if( !isset($result) || !$result )
 		$result = current_controller(false);
@@ -377,27 +385,30 @@ function system_exit($result=null,$die=true)
 		if($result instanceof Renderable)
 		{
 			$response = $result->WdfRenderAsRoot();
-			if( $result->_translate && system_is_module_loaded("translation") )
-				$response = __translate($response);
+            if ($result->_translate && system_is_module_loaded("translation"))
+                $response = __translate($response);
 		}
 		elseif( system_is_module_loaded("translation") )
 			$response = __translate($result);
 	}
 
-    if( function_exists('translation_add_unknown_strings') )
+    if (function_exists('translation_add_unknown_strings'))
         translation_add_unknown_strings();
     if( function_exists('model_store') )
         model_store();
-    if( function_exists('session_update') )
+    if (function_exists('session_update'))
         session_update();
 
-	execute_hooks(HOOK_PRE_FINISH, [$response]);
+    $start = microtime(true);
+    execute_hooks(HOOK_PRE_FINISH, [$response]);
+    $start = Wdf::Measure('HOOK_PRE_FINISH',$start);
 
     if($response instanceof stdClass)
         $response = (array) $response;
     if(is_array($response))
         $response = json_encode($response);
 
+    Wdf::Measure(__FUNCTION__, $start);
 	if( $die )
 		die($response);
 	echo $response;
@@ -622,7 +633,7 @@ function execute_hooks($type,$arguments = [])
 	Wdf::$Hooks['fired'][$type] = $type;
 	if( !isset(Wdf::$Hooks[$type]) )
     	return;
-
+    $start = microtime(true);
 	is_valid_hook_type($type);
 
 	$loghooks = $CONFIG['system']['hook_logging'];
@@ -661,6 +672,7 @@ function execute_hooks($type,$arguments = [])
 	}
 	if( $loghooks )
 		log_debug("END ".hook_type_to_string($type));
+    Wdf::Measure("execute_hook $type", $start);
 }
 
 /**
@@ -1603,42 +1615,11 @@ function shuffle_assoc(&$array)
 }
 
 /**
- * Renders a complete object tree.
- *
- * This means that the tree is checked for Renderable objects, arrays and so on
- * and all the needed actions are triggered recursively.
- * @param array $array_of_objects Array of objects
- * @return mixed An array containing the rendered strings
+ * @deprecated Use <Renderable::RenderTree> instead
  */
 function system_render_object_tree($array_of_objects)
 {
-	if( !isset($GLOBALS['system_render_object_tree_stack']) )
-		$GLOBALS['system_render_object_tree_stack'] = [];
-
-	$res = [];
-	foreach( $array_of_objects as $key=>&$val )
-	{
-		if( $val instanceof Renderable )
-		{
-			if( in_array($val, $GLOBALS['system_render_object_tree_stack'], true) )
-			{
-                $info = [];
-                foreach( $GLOBALS['system_render_object_tree_stack'] as $obj )
-                    $info[] = "".$obj;
-				log_debug("XREF in object tree! Object already rendered elsewhere:","$val",$info);
-				continue;
-			}
-			$GLOBALS['system_render_object_tree_stack'][] = $val;
-			$res[$key] = $val->WdfRender();
-		}
-		elseif( is_array($val) )
-			$res[$key] = system_render_object_tree($val);
-		elseif( $val instanceof DateTime )
-			$res[$key] = $val->format("Y-m-d H:i:s");
-		else
-			$res[$key] = system_encode_for_output($val,true);
-	}
-	return $res;
+    return Renderable::RenderTree($array_of_objects);
 }
 
 /**

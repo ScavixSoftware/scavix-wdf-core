@@ -218,32 +218,42 @@ function __translate_sort_constants($a,$b)
 function __translate($text)
 {
 	global $CONFIG;
-
-	// TODO: reactivate loop regarding unknown constants and thos that shall not be translated
-	//while( preg_match(Wdf::$Translation->translate_regpattern, $text) )
-	{
-		if(!is_string($text))
-			return $text;
-
-        if(count(Wdf::$Translation->data) > 0)
+    $start = microtime(true);
+    try
+    {
+        // TODO: reactivate loop regarding unknown constants and thos that shall not be translated
+        //while( preg_match(Wdf::$Translation->translate_regpattern, $text) )
         {
-            $repl = [];
-            foreach( Wdf::$Translation->data as $k=>$v )
-                if( $k[0] == '{' ) $repl[$k] = $v; else $repl['{'.$k.'}'] = $v;
-            $text = ReplaceVariables($text, $repl);
+            if (!is_string($text))
+                return $text;
+
+            if (count(Wdf::$Translation->data) > 0)
+            {
+                $repl = [];
+                foreach (Wdf::$Translation->data as $k => $v)
+                    if ($k[0] == '{')
+                        $repl[$k] = $v;
+                    else
+                        $repl['{' . $k . '}'] = $v;
+                $text = ReplaceVariables($text, $repl);
+            }
+
+            $text = preg_replace_callback(
+                Wdf::$Translation->translate_regpattern,
+                '__translate_callback',
+                $text
+            );
         }
 
-		$text = preg_replace_callback(
-			Wdf::$Translation->translate_regpattern,
-			'__translate_callback',
-			$text
-		);
-	}
+        if (ends_with($text, '[NT]'))
+            $text = substr($text, 0, -4);
 
-	if( ends_with($text, '[NT]') )
-		$text = substr($text, 0, -4);
-
-	return $text;
+        return $text;
+    }
+    finally
+    {
+        Wdf::Measure(__FUNCTION__, $start);
+    }
 }
 
 /**
@@ -252,52 +262,66 @@ function __translate($text)
 function translation_add_unknown_strings($unknown_constants=false)
 {
 	global $CONFIG;
+    $start = microtime(true);
+    try
+    {
 
-    if( !$unknown_constants ) $unknown_constants = Wdf::$Translation->unknown_constants;
-    if( count($unknown_constants)<1 )
-        return;
+        if (!isset($CONFIG['translation']['sync']['track_unknown']))
+            $CONFIG['translation']['sync']['track_unknown'] = isDev();
+        if (!($CONFIG['translation']['sync']['track_unknown'] ?? isDev()))
+            return;
 
-	if( $CONFIG['translation']['sync']['datasource'] )
-	{
-		$ds = model_datasource($CONFIG['translation']['sync']['datasource']);
-		$ds->ExecuteSql("CREATE TABLE IF NOT EXISTS wdf_unknown_strings (
+        if (!$unknown_constants)
+            $unknown_constants = Wdf::$Translation->unknown_constants;
+        if (count($unknown_constants) < 1)
+            return;
+
+        if ($CONFIG['translation']['sync']['datasource'])
+        {
+            $ds = model_datasource($CONFIG['translation']['sync']['datasource']);
+            $ds->ExecuteSql("CREATE TABLE IF NOT EXISTS wdf_unknown_strings (
 			term VARCHAR(150) NOT NULL,
 			last_hit DATETIME NOT NULL,
 			hits INT DEFAULT 0,
 			default_val TEXT,
 			PRIMARY KEY (term))");
-        $ds->ExecuteSql("CREATE TABLE IF NOT EXISTS wdf_unknown_strings_data (
+            $ds->ExecuteSql("CREATE TABLE IF NOT EXISTS wdf_unknown_strings_data (
             `term` VARCHAR(120) NOT NULL,
             `name` VARCHAR(190) NOT NULL,
             `value` VARCHAR(255) NOT NULL,
             PRIMARY KEY (`term`, `name`))");
 
-		$now = $ds->Driver->Now();
-		$sql1 = "INSERT OR IGNORE INTO wdf_unknown_strings(term,last_hit,hits,default_val)VALUES(?,$now,0,?);";
-		$sql2 = "UPDATE wdf_unknown_strings SET last_hit=$now, hits=hits+1 WHERE term=?;";
-		$sql2a = "UPDATE wdf_unknown_strings SET last_hit=$now, hits=hits+1, default_val=? WHERE term=?;";
-		$sql3 = "INSERT OR IGNORE INTO wdf_unknown_strings_data(term,name,value)VALUES(?,?,?)";
-		foreach( $unknown_constants as $uc )
-		{
-            if( is_array($uc) )
-                list($uc,$data) = $uc;
-            else
-                $data = false;
+            $now = $ds->Driver->Now();
+            $sql1 = "INSERT OR IGNORE INTO wdf_unknown_strings(term,last_hit,hits,default_val)VALUES(?,$now,0,?);";
+            $sql2 = "UPDATE wdf_unknown_strings SET last_hit=$now, hits=hits+1 WHERE term=?;";
+            $sql2a = "UPDATE wdf_unknown_strings SET last_hit=$now, hits=hits+1, default_val=? WHERE term=?;";
+            $sql3 = "INSERT OR IGNORE INTO wdf_unknown_strings_data(term,name,value)VALUES(?,?,?)";
+            foreach ($unknown_constants as $uc)
+            {
+                if (is_array($uc))
+                    list($uc, $data) = $uc;
+                else
+                    $data = false;
 
-			$def = cfg_getd('translation','default_strings',$uc,'');
-			$ds->ExecuteSql($sql1,[$uc,$def]);
-            if( $def )
-                $ds->ExecuteSql($sql2a,[$def,$uc]);
-            else
-                $ds->ExecuteSql($sql2,[$uc]);
+                $def = cfg_getd('translation', 'default_strings', $uc, '');
+                $ds->ExecuteSql($sql1, [$uc, $def]);
+                if ($def)
+                    $ds->ExecuteSql($sql2a, [$def, $uc]);
+                else
+                    $ds->ExecuteSql($sql2, [$uc]);
 
-            if( is_array($data) )
-                foreach( $data as $k=>$v )
-                    $ds->ExecuteSql($sql3,[$uc,$k,$v]);
-		}
-	}
-	else
-		log_debug("Unknown text constants: ".render_var(array_values($unknown_constants)));
+                if (is_array($data))
+                    foreach ($data as $k => $v)
+                        $ds->ExecuteSql($sql3, [$uc, $k, $v]);
+            }
+        }
+        else
+            log_debug("Unknown text constants: " . render_var(array_values($unknown_constants)));
+    }
+    finally
+    {
+        Wdf::Measure(__FUNCTION__, $start);
+    }
 }
 
 function __noTranslate_callback($matches)
@@ -639,7 +663,7 @@ function translation_skip_buffering()
  */
 function translation_string_exists($constant)
 {
-	$known = translation_known_constants();
+    $known = $GLOBALS['translation']['known_constants'] ?? translation_known_constants();
 	return in_array($constant, $known);
 }
 

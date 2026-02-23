@@ -34,6 +34,7 @@ use ScavixWDF\ICallable;
 use ScavixWDF\Localization\Localization;
 use ScavixWDF\Reflection\Attributes\RequestParam;
 use ScavixWDF\Reflection\Attributes\Resource;
+use ScavixWDF\Wdf;
 
 default_string('ERR_JAVASCRIPT_AND_COOKIES_REQUIRED','This page requires JavaScript and Cookies.');
 define("WDF_HTMLPAGE_TEMPLATE", __DIR__."/htmlpage.tpl.php");
@@ -122,7 +123,7 @@ class HtmlPage extends Template implements ICallable
         $this->addMeta("viewport", "width=device-width, height=device-height, initial-scale=1.0");
         $this->addMeta("referrer", "strict-origin-when-cross-origin");
 
-        $buffer = \ScavixWDF\Wdf::GetBuffer('wdf_js_strings')->mapToSession('wdf_js_strings');
+        $buffer = Wdf::GetBuffer('wdf_js_strings')->mapToSession('wdf_js_strings');
         $jsstrings = $this->getJsRegisteredStrings();
         $jsstringsversion = md5(join('-', array_keys($jsstrings)) . '-' . join('-', $jsstrings));
         if (($_SESSION['js_strings_version'] ?? '') != $jsstringsversion)
@@ -166,41 +167,49 @@ class HtmlPage extends Template implements ICallable
 	 */
 	function WdfRenderAsRoot()
 	{
-        if( isset($GLOBALS['CONFIG']['system']['htmlpage']['doctype']) )
-            log_warn('"doctype" config is deprecated, use HtmlPage::$DOCTYPE instead');
-        if( isset($GLOBALS['CONFIG']['system']['htmlpage']['render_noscript']) )
-            log_warn('"render_noscript" config is deprecated, use HtmlPage::$RENDER_NOSCRIPT instead');
+        $start = microtime(true);
+        try
+        {
+            if (isset($GLOBALS['CONFIG']['system']['htmlpage']['doctype']))
+                log_warn('"doctype" config is deprecated, use HtmlPage::$DOCTYPE instead');
+            if (isset($GLOBALS['CONFIG']['system']['htmlpage']['render_noscript']))
+                log_warn('"render_noscript" config is deprecated, use HtmlPage::$RENDER_NOSCRIPT instead');
 
-        self::$_renderingRoot = $this;
-		execute_hooks(HOOK_PRE_RENDER,array($this));
+            self::$_renderingRoot = $this;
+            execute_hooks(HOOK_PRE_RENDER, array($this));
 
-		$init_data = $this->wdf_settings;
-		$init_data['request_id'] = request_id();
-		$init_data['site_root']  = cfg_get('system','url_root');
-        $init_data['rewrite'] = can_rewrite();
+            $init_data = $this->wdf_settings;
+            $init_data['request_id'] = request_id();
+            $init_data['site_root'] = cfg_get('system', 'url_root');
+            $init_data['rewrite'] = can_rewrite();
 
-		if (function_exists('session_needs_url_arguments') && session_needs_url_arguments())
-		{
-			$init_data['session_id'] = session_id();
-			$init_data['session_name'] = session_name();
-		}
-		if(isDevOrBeta() && !isset($init_data['log_to_console']) )
-			$init_data['log_to_console'] = true;
+            if (function_exists('session_needs_url_arguments') && session_needs_url_arguments())
+            {
+                $init_data['session_id'] = session_id();
+                $init_data['session_name'] = session_name();
+            }
+            if (isDevOrBeta() && !isset($init_data['log_to_console']))
+                $init_data['log_to_console'] = true;
 
-		if( isset($init_data['texts']) )
-		{
-			$buffer = \ScavixWDF\Wdf::GetBuffer('wdf_js_strings')->mapToSession('wdf_js_strings');
-			foreach( $init_data['texts'] as $id=>$txt )
-				$buffer->set(str_replace("[NT]","",$id),$txt);
-		}
+            if (isset($init_data['texts']))
+            {
+                $buffer = Wdf::GetBuffer('wdf_js_strings')->mapToSession('wdf_js_strings');
+                foreach ($init_data['texts'] as $id => $txt)
+                    $buffer->set(str_replace("[NT]", "", $id), $txt);
+            }
 
-		$this->set("wdf_init","wdf.init(".json_encode($init_data).");");
-		$this->set("docready",$this->docready);
-		$this->set("plaindocready",$this->plaindocready);
+            $this->set("wdf_init", "wdf.init(" . json_encode($init_data) . ");");
+            $this->set("docready", $this->docready);
+            $this->set("plaindocready", $this->plaindocready);
 
-        $this->set('polyfills',array_filter(array_unique(self::$POLYFILLS)));
+            $this->set('polyfills', array_filter(array_unique(self::$POLYFILLS)));
 
-		return parent::WdfRenderAsRoot();
+            return parent::WdfRenderAsRoot();
+        }
+        finally
+        {
+            Wdf::Measure(__METHOD__, $start);
+        }
 	}
 
 	/**
@@ -410,7 +419,7 @@ class HtmlPage extends Template implements ICallable
     #[RequestParam('id','string','')]
 	function WdfGetText($id)
 	{
-		$buffer = \ScavixWDF\Wdf::GetBuffer('wdf_js_strings')->mapToSession('wdf_js_strings');
+		$buffer = Wdf::GetBuffer('wdf_js_strings')->mapToSession('wdf_js_strings');
 		$buffer->set($id,$id);
 		$_SESSION['js_strings_version'] = time();
 		return AjaxResponse::Json([$id=>_text($id)]);

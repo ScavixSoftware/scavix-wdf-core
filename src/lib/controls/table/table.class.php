@@ -153,7 +153,7 @@ class Table extends Control
         }
     }
 
-    function __collectResourcesInternal($template,&$static_stack = [])
+    function __collectResourcesInternal($template,&$static_stack)
 	{
         if(system_is_ajax_call() && !$this->force_ajax_dependenciesloading)
             return [];

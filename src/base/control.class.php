@@ -400,7 +400,6 @@ class Control extends Renderable
 		}
 		foreach( $this->_data_attributes as $name=>$value )
 			$attr[] = "data-$name=\"".str_replace("\"","&#34;","$value")."\"";
-//			$attr[] = "data-$name='".str_replace("'","\\'",$value)."'";
 
 		$css = [];
 		foreach( $this->_css as $key=>$val )
@@ -420,7 +419,7 @@ class Control extends Renderable
 	 */
 	function WdfRender()
 	{
-		$content = system_render_object_tree($this->_content);
+		$content = Renderable::RenderTree($this->_content);
         $res = $this->__renderStructure($content);
 
 		if( system_is_ajax_call() && count($this->_script)>0 )

@@ -27,6 +27,7 @@
  */
 namespace ScavixWDF\Session;
 
+use ScavixWDF\Wdf;
 use ScavixWDF\WdfException;
 
 /**
@@ -37,17 +38,18 @@ use ScavixWDF\WdfException;
  */
 class FilesStore extends ObjectStore
 {
+    protected $options = [];
     protected $serializer;
     protected $path = false;
 
     protected function getPath($sid=false)
     {
         if( $sid )
-            $directory = $this->path = $GLOBALS['CONFIG']['session']['filesstore']['path'].$sid;
+            $directory = $this->path = $this->options['path'].$sid;
         elseif($this->path)
             return $this->path;     // already checked/created
         else
-            $directory = $this->path = $GLOBALS['CONFIG']['session']['filesstore']['path'].session_id();
+            $directory = $this->path = $this->options['path'].session_id();
 
         if( is_file($directory) )
             unlink($directory);
@@ -70,18 +72,22 @@ class FilesStore extends ObjectStore
         return $this->getPath()."/$id";
     }
 
-    protected function _key($key)
+    public function __construct($path = null, $ttl = null)
     {
-        return $key;
-    }
+        $this->options = $GLOBALS['CONFIG']['session']['filesstore'] ?? [];
 
-    public function __construct()
-    {
-        global $CONFIG;
+        if ($path)
+            $this->options['path'] = $path;
+        elseif (empty($this->options['path']))
+            $this->options['path'] = system_app_temp_dir('filesstore', false);
 
-        if( !isset($CONFIG['session']['filesstore']['path']) )
-            $CONFIG['session']['filesstore']['path'] = system_app_temp_dir("filesstore", false);
+        if ($ttl)
+            $this->options['ttl'] = $ttl;
+        elseif (empty($this->options['ttl']))
+            $this->options['ttl'] = 120;
 
+
+        system_ensure_path_ending($this->options['path']);
         $this->serializer = new Serializer();
 
         if( !isset($_SESSION['object_ids']) )
@@ -104,13 +110,8 @@ class FilesStore extends ObjectStore
 		else
 			$obj->_storage_id = $id;
 
-        /* serialization and storage will be done in Update method */
-//        $content = $this->serializer->Serialize($obj);
-//        $this->_stats(__METHOD__.'/SER',$start);
-//        $start = microtime(true);
-//        file_put_contents($this->getFile($id), $content);
         ObjectStore::$buffer[$id] = $obj;
-        $this->_stats(__METHOD__,$start);
+        Wdf::Measure(__METHOD__,$start);
     }
 
     /**
@@ -125,7 +126,7 @@ class FilesStore extends ObjectStore
         if( isset(ObjectStore::$buffer[$id]) )
             unset(ObjectStore::$buffer[$id]);
 		@unlink($this->getFile($id));
-        $this->_stats(__METHOD__,$start);
+        Wdf::Measure(__METHOD__,$start);
     }
 
     /**
@@ -136,12 +137,15 @@ class FilesStore extends ObjectStore
         $start = microtime(true);
 		if( is_object($id) && isset($id->_storage_id) )
 			$id = $id->_storage_id;
-		$id = strtolower($id);
+
+        $lid = strtolower($id);
 		if( isset(ObjectStore::$buffer[$id]) )
             $res = true;
+		elseif( isset(ObjectStore::$buffer[$lid]) )
+			$res = true;
         else
-            $res = file_exists($this->getFile($id));
-        $this->_stats(__METHOD__,$start);
+            $res = file_exists($this->getFile($id)) || file_exists($this->getFile($lid));
+        Wdf::Measure(__METHOD__,$start);
 		return $res;
     }
 
@@ -151,27 +155,27 @@ class FilesStore extends ObjectStore
 	function Restore($id)
     {
         $start = microtime(true);
-		$id = strtolower($id);
+		$lid = strtolower($id);
 
 		if( isset(ObjectStore::$buffer[$id]) )
-        {
 			$res = ObjectStore::$buffer[$id];
-            $this->_stats(__METHOD__,$start);
-        }
+		elseif( isset(ObjectStore::$buffer[$lid]) )
+			$res = ObjectStore::$buffer[$lid];
         else
         {
-            $data = @file_get_contents($this->getFile($id));
-            if( $data )
+            $res = null;
+            foreach ([$id,$lid] as $i)
             {
-                $this->_stats(__METHOD__,$start);
-                $start = microtime(true);
-                $res = $this->serializer->Unserialize($data);
-                ObjectStore::$buffer[$id] = $res;
-                $this->_stats(__METHOD__.'/UNSER',$start);
+                $data = @file_get_contents($this->getFile($i));
+                if ($data)
+                {
+                    $res = $this->serializer->Unserialize($data);
+                    ObjectStore::$buffer[$i] = $res;
+                    break;
+                }
             }
-            else
-                $res = null;
         }
+        Wdf::Measure(__METHOD__,$start);
 		return $res;
     }
 
@@ -195,52 +199,76 @@ class FilesStore extends ObjectStore
 			$_SESSION['object_ids'][$cn]++;
 
         $obj->_storage_id = $cn.$_SESSION['object_ids'][$cn];
-        $this->_stats(__METHOD__,$start);
+        Wdf::Measure(__METHOD__,$start);
         return $obj->_storage_id;
     }
 
     /**
      * @override <ObjectStore::Cleanup>
      */
-    function Cleanup($classname=false)
+    function Cleanup()
     {
         $start = microtime(true);
-        if( $classname )
+        $this->withIndex(function (&$items, &$requests)
         {
-            $classname = strtolower($classname);
-            foreach( ObjectStore::$buffer as $id=>&$obj )
+            $items = array_filter($items, function ($item, $id)
             {
-                if( get_class_simple($obj,true) == $classname )
-                    $this->Delete($id);
-            }
-            $this->_stats(__METHOD__."/CN",$start);
-            return;
-        }
+                if ($item['eol'] > time())
+                    return true;
+                // log_debug("old entry $id");
+                @unlink($this->getFile($id));
+                return false;
+            },ARRAY_FILTER_USE_BOTH);
+            $requests = array_filter($requests, function ($req, $id)
+            {
+                // log_debug("old request_id $id");
+                return $req['eol'] > time();
+            },ARRAY_FILTER_USE_BOTH);
+
+            return true;
+        });
+        Wdf::Measure(__METHOD__,$start);
+
+        $start = microtime(true);
         clearstatcache();
-        $p = $GLOBALS['CONFIG']['session']['filesstore']['path'];
+        $p = $this->options['path'];
         foreach( glob($p.'*',GLOB_ONLYDIR) as $d )
         {
             if( $d == "$p." || $d == "$p.." )
                 continue;
             $time = @filemtime($d);
-            if( !$time || (time() - $time <= 300) )
+            if( !$time || (time() - $time <= $this->options['ttl']) )
                 continue;
             foreach( glob($d.'/*') as $f )
-                if( $d != "$d/." && $d != "$d/.." )
+                if( $f != "$d/." && $f != "$d/.." )
                     @unlink($f);
             @rmdir($d);
-            //log_debug(__METHOD__,"Session removed:",$d);
+            // log_debug(__METHOD__,"Session removed:",$d);
         }
-        foreach( system_glob_rec($this->getPath(),'*') as $f )
+        // foreach( system_glob_rec($this->getPath(),'*') as $f )
+        // {
+        //     $time = @filemtime($f);
+        //     if( $time && (time() - $time > $this->options['ttl']) )
+        //     {
+        //         @unlink($f);
+        //         //log_debug(__METHOD__,"Object removed:",$f);
+        //     }
+        // }
+        Wdf::Measure(__METHOD__,$start);
+    }
+
+    private function withIndex($callback)
+    {
+        $eolfile = $this->getPath() . "/index.json";
+        if ($lock = Wdf::GetLock($eolfile, 1, false))
         {
-            $time = @filemtime($f);
-            if( $time && (time() - $time > 300) )
-            {
-                @unlink($f);
-                //log_debug(__METHOD__,"Object removed:",$f);
-            }
+            $index = json_decode(@file_get_contents($eolfile) ?: '[]', true);
+            $items = $index['items'] ?? [];
+            $requests = $index['requests'] ?? [];
+            if ($callback($items, $requests))
+                file_put_contents($eolfile, json_encode(compact('items', 'requests'), JSON_PRETTY_PRINT));
+            Wdf::ReleaseLock($eolfile);
         }
-        $this->_stats(__METHOD__,$start);
     }
 
     /**
@@ -249,33 +277,61 @@ class FilesStore extends ObjectStore
     function Update($keep_alive=false)
     {
         $start = microtime(true);
-
         if( $keep_alive )
         {
-            foreach( system_glob_rec($this->getFile(''),'*') as $f )
-                touch($f);
-            touch( $this->getPath() );
-            return;
-        }
-
-        /* Update is guaranteed to be called (see register_shutdown_function), so perform storage here once the script is ready */
-        foreach( ObjectStore::$buffer as $id=>$obj )
-        {
-            $content = $this->serializer->Serialize($obj);
-            $filename = $this->getFile($id);
-            if(@file_put_contents($filename, $content) === false)
+            $this->withIndex(function(&$items,&$requests)
             {
-                usleep(100 * 1000);
-                $this->path = null;
-                $filename = $this->getFile($id);
-                if(@file_put_contents($filename, $content) !== false)
+                $ids = $requests[request_id()] ?? [];
+                if (empty($ids))
+                    return false;
+                foreach ($ids as $id)
                 {
-//                    log_debug(__METHOD__, 'it worked', $filename, $GLOBALS['CONFIG']['session']['filesstore']['path'], $this->path);
+                    if (is_array($id))
+                        continue;
+                    $ttl = $items[$id]['ttl'] ?? $this->options['ttl'];
+                    $items[$id] = [
+                        'ttl' => $ttl,
+                        'eol' => time() + $ttl,
+                    ];
                 }
-            }
+                return true;
+            });
+            Wdf::Measure(__METHOD__.'/KA',$start);
         }
-        touch( $this->getPath() );
-        $this->_stats(__METHOD__.($keep_alive?"/KA":''),$start);
+        else
+        {
+            $this->withIndex(function (&$items, &$requests)
+            {
+                if (count(ObjectStore::$buffer) < 1)
+                    return false;
+                foreach (ObjectStore::$buffer as $id => $obj)
+                {
+                    $content = $this->serializer->Serialize($obj);
+                    $filename = $this->getFile($id);
+                    if (@file_put_contents($filename, $content) === false)
+                    {
+                        // security fallback for....no idea
+                        usleep(100 * 1000);
+                        $this->path = null;
+                        $filename = $this->getFile($id);
+                        @file_put_contents($filename, $content);
+                    }
+                    $ttl = $items[$id]['ttl'] ?? $this->options['ttl'];
+                    $items[$id] = [
+                        'ttl' => $ttl,
+                        'eol' => time() + $ttl,
+                    ];
+                }
+                $requests[request_id()] = [
+                    'eol' => time() + $this->options['ttl'],
+                    'items' => array_keys(ObjectStore::$buffer),
+                    'debug'=>Wdf::Request()->getEndpoint()
+                ];
+                return true;
+            });
+            Wdf::Measure(__METHOD__,$start);
+        }
+        touch($this->getPath());
     }
 
     /**
@@ -286,6 +342,6 @@ class FilesStore extends ObjectStore
         $start = microtime(true);
         @rename($this->getPath($old_session_id),$this->getPath($new_session_id));
         $this->path = false;
-        $this->_stats(__METHOD__,$start);
+        Wdf::Measure(__METHOD__,$start);
     }
 }

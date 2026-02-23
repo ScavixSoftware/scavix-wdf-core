@@ -254,9 +254,15 @@ abstract class SessionBase
 	{
 		if( !self::$session_request_id )
 		{
-			$p = current_controller();
-			$e = current_event();
-			self::$session_request_id = md5($p.$e.microtime());
+            if (avail($_SESSION, 'request_id') && !\ScavixWDF\Wdf::Request()->isPageLoad())
+                self::$session_request_id = $_SESSION['request_id'];
+            else
+            {
+                $p = current_controller();
+                $e = current_event();
+                self::$session_request_id = md5($p . $e . microtime());
+                // log_debug("New request_id: ".self::$session_request_id,\ScavixWDF\Wdf::Request()->getEndpoint());
+            }
 		}
 		return self::$session_request_id;
 	}

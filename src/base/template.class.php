@@ -32,6 +32,7 @@ namespace ScavixWDF\Base;
 
 use ScavixWDF\Reflection\Attributes\Resource;
 use ScavixWDF\WdfException;
+use stdClass;
 
 /**
  * Building blocks of web pages.
@@ -45,13 +46,21 @@ class Template extends Renderable
 	public $_data = [];
 	public $file = "";
 
+    public $cache = false;
+
+    function allowCaching($key, $ttl = 3600)
+    {
+        $this->cache = compact('key', 'ttl');
+        return $this;
+    }
+
     function __toString()
     {
         $r = parent::__toString();
         return $r." ".$this->file;
     }
 
-	function __getContentVars(){ return array_merge(parent::__getContentVars(),array('_data')); }
+	function __getContentVars(){ return array_merge(parent::__getContentVars(), ['_data']); }
 
 	/**
 	 * Creates a template with layout only.
@@ -256,66 +265,100 @@ class Template extends Renderable
 	 */
 	function WdfRender()
 	{
-		$tempvars = system_render_object_tree($this->get_vars());
-        $scriptcnt = count($this->_script);
-
-        /* parameters are $file and $variables, keeping them anonymous to avoid conflicts with named variables */
-        $render_in_context = function($wdf__file__to__be__included, $wdf__arguments__to__be__extracted)
+        $start = microtime(true);
+        try
         {
-            Renderable::PushRenderer($this);
-
-            extract($GLOBALS);
-            extract($wdf__arguments__to__be__extracted);
-
-            ob_start();
-            require($wdf__file__to__be__included);
-            $result = ob_get_contents();
-            ob_end_clean();
-
-            Renderable::PopRenderer();
-            return $result;
-        };
-
-        if (($this instanceof HtmlPage) && $this->isHtmlPageTemplate($this->file))
-        {
-            $__template_file = __autoload__template($this, $this->SubTemplate ? $this->SubTemplate : "");
-            if ($__template_file === false)
-                WdfException::Raise("SubTemplate for class '" . get_class($this) . "' not found: " . $this->file, $this->SubTemplate);
-
-            if (!$this->isHtmlPageTemplate($__template_file))
-                $tempvars['sub_template_content'] = $render_in_context($__template_file, $tempvars);
-
-            foreach (Renderable::CategorizeResources(Renderable::__getLazyResources()) as $r)
+            if ($this->cache && ($key = ifavail($this->cache,'key')))
             {
-                if ($r['ext'] == 'css' || $r['ext'] == 'less')
-                    $this->addCss($r['url'], $r['key']);
-                else
-                    $this->addjs($r['url'], $r['key']);
+                $ck = get_class_simple($this, true) . "_{$key}";
+                if (($cached = restore_object($ck)) && $cached->eol > time())
+                {
+                    // this releases the object from quick-access but also from automatic serialization
+                    unset(\ScavixWDF\Session\ObjectStore::$buffer[$ck]);
+                    return $cached->content;
+                }
             }
-            $tempvars['meta'] = $this->meta;
-            $tempvars['css'] = $this->css;
-            $tempvars['js'] = $this->js;
-            $this->file = WDF_HTMLPAGE_TEMPLATE;
+
+            $tempvars = Renderable::RenderTree($this->get_vars());
+            $scriptcnt = \count($this->_script);
+
+            /* parameters are $file and $variables, keeping them anonymous to avoid conflicts with named variables */
+            $render_in_context = function ($wdf__file__to__be__included, $wdf__arguments__to__be__extracted)
+            {
+                Renderable::PushRenderer($this);
+
+                extract($GLOBALS);
+                extract($wdf__arguments__to__be__extracted);
+
+                ob_start();
+                require($wdf__file__to__be__included);
+                $result = ob_get_contents();
+                ob_end_clean();
+
+                Renderable::PopRenderer();
+                return $result;
+            };
+
+            if (($this instanceof HtmlPage) && $this->isHtmlPageTemplate($this->file))
+            {
+                $__template_file = __autoload__template($this, $this->SubTemplate ? $this->SubTemplate : "");
+                if ($__template_file === false)
+                    WdfException::Raise("SubTemplate for class '" . \get_class($this) . "' not found: " . $this->file, $this->SubTemplate);
+
+                if (!$this->isHtmlPageTemplate($__template_file))
+                    $tempvars['sub_template_content'] = $render_in_context($__template_file, $tempvars);
+
+                foreach (Renderable::CategorizeResources(Renderable::__getLazyResources()) as $r)
+                {
+                    if ($r['ext'] == 'css' || $r['ext'] == 'less')
+                        $this->addCss($r['url'], $r['key']);
+                    else
+                        $this->addjs($r['url'], $r['key']);
+                }
+                $tempvars['meta'] = $this->meta;
+                $tempvars['css'] = $this->css;
+                $tempvars['js'] = $this->js;
+                $this->file = WDF_HTMLPAGE_TEMPLATE;
+            }
+
+            $__template_file = __autoload__template($this, $this->SubTemplate ?: $this->file);
+            if ($__template_file === false)
+                WdfException::Raise("Template for class '" . \get_class($this) . "' not found: " . $this->file);
+
+            $contents = $render_in_context($__template_file, $tempvars);
+
+            $script = '';
+            if (system_is_ajax_call())
+            {
+                if (\count($this->_script) > 0)
+                    $script = implode("\n", $this->_script);
+            }
+            elseif ($scriptcnt < \count($this->_script))
+                $script = implode("\n", \array_slice($this->_script, $scriptcnt));
+
+            if (trim($script) != '')
+                $contents .= "<script>" . $script . "</script>";
+
+            if (!empty($ck))
+            {
+                $ce = new stdClass();
+                $ce->_storage_id = $ck;
+                $ce->eol = time() + intval(ifavail($this->cache, 'ttl') ?: 0);
+                $ce->content = $contents;
+                store_object($ce);
+                // log_debug("storing precompiled for later use {$ce->_storage_id}");
+            }
+
+            return $contents;
         }
-
-		$__template_file = __autoload__template($this, $this->SubTemplate ?: $this->file);
-		if( $__template_file === false )
-			WdfException::Raise("Template for class '".get_class($this)."' not found: ".$this->file);
-
-        $contents = $render_in_context($__template_file,$tempvars);
-
-        $script = '';
-		if( system_is_ajax_call() )
+        finally
         {
-            if( count($this->_script)>0 )
-    			$script = implode("\n",$this->_script);
+            if( empty($ck) )
+                \ScavixWDF\Wdf::Measure(__METHOD__, $start);
+            elseif( empty($cached) )
+                \ScavixWDF\Wdf::Measure(__METHOD__ . ' Cache miss', $start);
+            else
+                \ScavixWDF\Wdf::Measure(__METHOD__ . ' Cache hit', $start);
         }
-        elseif( $scriptcnt < count($this->_script) )
-            $script = implode("\n",array_slice($this->_script,$scriptcnt));
-
-        if(trim($script) != '')
-            $contents .= "<script>".$script."</script>";
-
-		return $contents;
 	}
 }

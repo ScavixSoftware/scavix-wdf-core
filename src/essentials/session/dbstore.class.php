@@ -27,30 +27,32 @@
  */
 namespace ScavixWDF\Session;
 
+use ScavixWDF\Wdf;
+
 /**
  * Stores Objects in a MySQL Database.
- * 
+ *
  * Uses table `wdf_objects`.
  */
 class DbStore extends ObjectStore
 {
     protected $serializer;
     protected $ds;
-    
+
     public function __construct()
     {
         global $CONFIG;
-        
+
         if( !isset($CONFIG['session']['dbstore']['datasource']) )
             $CONFIG['session']['dbstore']['datasource'] = 'internal';
-        
+
         $this->ds = model_datasource($CONFIG['session']['dbstore']['datasource']);
-        $this->serializer = new Serializer();
-        
+        $this->serializer = Serializer::Get();
+
         if( !isset($_SESSION['object_ids']) )
             $_SESSION['object_ids'] = [];
     }
-    
+
     private function exec($sql,$args=[])
     {
         try
@@ -74,13 +76,13 @@ class DbStore extends ObjectStore
                     )
                     COLLATE='utf8_general_ci'
                     ENGINE=InnoDB");
-                
+
                 return $this->ds->ExecuteSql($sql,$args);
             }
         }
         return new \ScavixWDF\Model\ResultSet($this->ds);
     }
-    
+
     /**
      * @override <ObjectStore::Store>
      */
@@ -96,9 +98,9 @@ class DbStore extends ObjectStore
 		}
 		else
 			$obj->_storage_id = $id;
-        
+
 //        $content = $this->serializer->Serialize($obj);
-//        
+//
 //        $cn = strtolower(get_class_simple($obj));
 //        $no = str_replace($cn,'',$id);
 //
@@ -107,9 +109,9 @@ class DbStore extends ObjectStore
 //        $this->exec($sql);
 
         ObjectStore::$buffer[$id] = $obj;
-        $this->_stats(__METHOD__,$start);
+        Wdf::Measure(__METHOD__,$start);
     }
-    
+
     /**
      * @override <ObjectStore::Delete>
      */
@@ -118,13 +120,13 @@ class DbStore extends ObjectStore
         $start = microtime(true);
 		if( is_object($id) && isset($id->_storage_id) )
 			$id = $id->_storage_id;
-        
+
         if( isset(ObjectStore::$buffer[$id]) )
             unset(ObjectStore::$buffer[$id]);
 		$this->exec("DELETE FROM wdf_objects WHERE session_id=? AND id=?", [session_id(),$id]);
-        $this->_stats(__METHOD__,$start);
+        Wdf::Measure(__METHOD__,$start);
     }
-    
+
     /**
      * @override <ObjectStore::Exists>
      */
@@ -138,10 +140,10 @@ class DbStore extends ObjectStore
             $res = true;
         else
             $res = $this->exec("SELECT id FROM wdf_objects WHERE session_id=? AND id=?", [session_id(),$id])->Count()>0;
-        $this->_stats(__METHOD__,$start);
+        Wdf::Measure(__METHOD__,$start);
 		return $res;
     }
-    
+
     /**
      * @override <ObjectStore::Restore>
      */
@@ -161,10 +163,10 @@ class DbStore extends ObjectStore
             ObjectStore::$buffer[$id] = $res;
 
         }
-        $this->_stats(__METHOD__,$start);
+        Wdf::Measure(__METHOD__,$start);
 		return $res;
     }
-    
+
     /**
      * @override <ObjectStore::CreateId>
      */
@@ -185,58 +187,46 @@ class DbStore extends ObjectStore
 			$_SESSION['object_ids'][$cn]++;
 
         $obj->_storage_id = $cn.$_SESSION['object_ids'][$cn];
-        $this->_stats(__METHOD__,$start);
+        Wdf::Measure(__METHOD__,$start);
         return $obj->_storage_id;
     }
-    
+
     /**
      * @override <ObjectStore::Cleanup>
      */
-    function Cleanup($classname=false)
+    function Cleanup()
     {
         $start = microtime(true);
-        if( $classname )
-        {
-            $classname = strtolower($classname);
-            foreach( ObjectStore::$buffer as $id=>&$obj )
-            {
-                if( get_class_simple($obj,true) == $classname )
-                    $this->Delete($id);
-            }
-            $this->_stats(__METHOD__."/CN",$start);
-            return;
-        }
-
         $this->exec(
-            "DELETE FROM wdf_objects WHERE 
+            "DELETE FROM wdf_objects WHERE
                 (session_id=? AND (last_access<now()-interval 60 second OR ISNULL(data)) )
                 OR (last_access<now()-interval 300 second)",
             [session_id()]
         );
-        $this->_stats(__METHOD__,$start);
+        Wdf::Measure(__METHOD__,$start);
     }
-    
+
     /**
      * @override <ObjectStore::Update>
      */
     function Update($keep_alive=false)
     {
         $start = microtime(true);
-        
+
         if( $keep_alive )
         {
             $this->exec("UPDATE wdf_objects SET last_access=now() WHERE session_id=?",[session_id()]);
-            $this->_stats(__METHOD__."/KA",$start);
+            Wdf::Measure(__METHOD__."/KA",$start);
             return;
         }
-        
+
         $sql = [];
         foreach( ObjectStore::$buffer as $id=>$obj )
 		{
 			try
 			{
                 $content = $this->serializer->Serialize($obj);
-        
+
                 $cn = strtolower(get_class_simple($obj));
                 $no = str_replace($cn,'',$id);
 
@@ -250,9 +240,9 @@ class DbStore extends ObjectStore
 				\ScavixWDF\WdfException::Log("updating storage for object $id [".get_class($obj)."]",$ex);
 			}
 		}
-        $this->_stats(__METHOD__,$start);
+        Wdf::Measure(__METHOD__,$start);
     }
-    
+
     /**
      * @override <ObjectStore::Migrate>
      */
@@ -260,6 +250,6 @@ class DbStore extends ObjectStore
     {
         $start = microtime(true);
         $this->exec("UPDATE IGNORE wdf_objects SET session_id=? WHERE session_id=?",[$new_session_id,$old_session_id]);
-        $this->_stats(__METHOD__,$start);
+        Wdf::Measure(__METHOD__,$start);
     }
 }

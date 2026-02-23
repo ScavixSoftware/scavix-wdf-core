@@ -90,9 +90,11 @@ function model_init_db($name,$constr,$dstype='DataSource')
  */
 function model_store()
 {
+    $start = microtime(true);
 	foreach( Wdf::$DataSources as $dbname=>$db )
 		if( !is_array($db) )
 			store_object($db,$dbname);
+    Wdf::Measure(__FUNCTION__, $start);
 }
 
 /**

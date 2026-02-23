@@ -27,6 +27,7 @@
  */
 namespace ScavixWDF\Base;
 
+use ScavixWDF\Wdf;
 use stdClass;
 use ScavixWDF\WdfException;
 
@@ -109,6 +110,7 @@ class AjaxResponse
 	 */
 	public static function Renderable(Renderable $content, $force_dependency_loading = null)
 	{
+        $start = microtime(true);
 		$wrapped = new stdClass();
 
 		$wrapped->html = $content->WdfRenderAsRoot();
@@ -127,6 +129,7 @@ class AjaxResponse
         }
 		$res = AjaxResponse::Json($wrapped);
 		$res->_translated = true;
+        Wdf::Measure(__METHOD__, $start);
 		return $res;
 	}
 
@@ -177,21 +180,29 @@ class AjaxResponse
 	 */
 	function Render()
 	{
-		if( $this->_data )
-		{
-			if( isset($this->_data->script) )
-				$this->_data->script = "<script>".implode("\n",$this->_data->script)."</script>";
-			$res = system_to_json($this->_data);
-		}
-		elseif( $this->_text )
+        $start = microtime(true);
+        try
         {
-            $res = !$this->_translated&&system_is_module_loaded("translation")? __translate($this->_text):$this->_text;
-			$res = json_encode($res);
-            $this->_translated = true;
+            if ($this->_data)
+            {
+                if (isset($this->_data->script))
+                    $this->_data->script = "<script>" . implode("\n", $this->_data->script) . "</script>";
+                $res = system_to_json($this->_data);
+            }
+            elseif ($this->_text)
+            {
+                $res = !$this->_translated && system_is_module_loaded("translation") ? __translate($this->_text) : $this->_text;
+                $res = json_encode($res);
+                $this->_translated = true;
+            }
+            else
+                return '""'; // return an empty string JSON encoded to not kill the app JS side
+            return $res;
         }
-		else
-			return '""'; // return an empty string JSON encoded to not kill the app JS side
-        return $res;
+        finally
+        {
+            Wdf::Measure(__METHOD__, $start);
+        }
 	}
 
 	/**
