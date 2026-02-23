@@ -271,8 +271,12 @@ class Template extends Renderable
             if ($this->cache && ($key = ifavail($this->cache,'key')))
             {
                 $ck = get_class_simple($this, true) . "_{$key}";
-                if (($cached = restore_object($ck)) && $cached->eol < time() )
+                if (($cached = restore_object($ck)) && $cached->eol > time())
+                {
+                    // this releases the object from quick-access but also from automatic serialization
+                    unset(\ScavixWDF\Session\ObjectStore::$buffer[$ck]);
                     return $cached->content;
+                }
             }
 
             $tempvars = Renderable::RenderTree($this->get_vars());
