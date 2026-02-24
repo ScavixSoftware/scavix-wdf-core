@@ -157,7 +157,7 @@ class Serializer
 
             $vars = get_object_vars($data);
             if( $this->sleepmap[$classname] )
-                $vars = array_diff_key($vars, $this->sleepmap[$classname]);
+                $vars = array_intersect_key($vars, $this->sleepmap[$classname]);
             $res = ($data instanceof Model)
                 ? "o:$id:" . \count($vars) . ":$classname:{$data->DataSourceName()}\n"
                 : "o:$id:" . \count($vars) . ":$classname:\n";
@@ -167,7 +167,6 @@ class Serializer
                 // $res .= $this->Ser_Inner($n,$stack); // format:swdf-0
                 $res .= $this->Ser_Inner($v,$stack);
             }
-
 			return $res;
 		}
 	}

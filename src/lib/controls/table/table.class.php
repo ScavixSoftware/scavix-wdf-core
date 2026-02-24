@@ -97,7 +97,7 @@ class Table extends Control
         {
             if( count($stack)>20 || is_in($entry['function'],"system_invoke_request","system_execute") )
                 break;
-            $stack[] = $entry['file'].':'.$entry['line'];
+            $stack[] = ($entry['file'] ?? '(null)') . ':' . ($entry['line'] ?? '(null)');
             if( !isset($entry['class']) )
                 continue;
             if( $entry['class'] == $cls || is_subclass_of($entry['class'],$cls) )

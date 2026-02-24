@@ -144,8 +144,11 @@ class WdfClosure
 
 	public function __wakeup()
 	{
-		extract($this->used_variables ?? []);
-        eval('$_function = '.$this->code.';');
+        if ($this->code)
+        {
+            extract($this->used_variables ?? []);
+            eval ('$_function = ' . $this->code . ';');
+        }
 		if (isset($_function) && ($_function instanceOf \Closure))
 		{
 			$this->reflection = new \ReflectionFunction($_function);
