@@ -574,20 +574,44 @@ function ends_iwith($string,...$end)
 }
 
 /**
+ * Return the last part of a string starting after (so not including) the given sequence.
+ *
+ * If sequence is not found, the complete string is returned.
+ * ```php
+ * substr_from('Hello, nice world!',', '); // nice world!
+ * substr_from('Hello, nice world!','--'); // Hello, nice world!
+ * substr_from('Hello, nice world!','o'); // rld!
+ * substr_from('Hello, nice world!','o',true); // , nice world!
+ * ```
+ * @param string $string The string to search in
+ * @param string $sequence The sequence to start at
+ * @param bool $greedy If false, matches only the last occurrence, otherwise us the first one
+ * @return string The resulting substring
+ */
+function substr_from(string $string, string $sequence, bool $greedy = false)
+{
+    $p = $greedy ? strpos($string, $sequence) : strrpos($string, $sequence);
+    return ($p !== false) ? substr($string, $p + strlen($sequence)) : $string;
+}
+
+/**
  * Return the first part of a string until (but not including) the given sequence.
  *
  * If sequence is not found, the complete string is returned.
  * ```php
  * substr_until('Hello, nice world!',', '); // Hello
  * substr_until('Hello, nice world!','--'); // Hello, nice world!
+ * substr_until('Hello, nice world!','o'); // Hell
+ * substr_until('Hello, nice world!','o',true); // Hello, nice w
  * ```
  * @param string $string The string to search in
  * @param string $sequence The sequence to stop at
  * @return string The resulting substring
  */
-function substr_until(string $string, string $sequence)
+function substr_until(string $string, string $sequence, bool $greedy = false)
 {
-    return substr($string, 0, strcspn($string, $sequence));
+    $p = $greedy ? strrpos($string, $sequence) : strpos($string, $sequence);
+    return ($p !== false) ? substr($string, 0, $p) : $string;
 }
 
 /**
@@ -1431,7 +1455,7 @@ function get_requested_file($url)
     if( strpos($url,'?wdf_route=') === false )
         return parse_url($url,PHP_URL_PATH);
 
-    parse_str(array_last(explode("?",$url,2)),$res);
+    parse_str(substr_from($url, "?", true), $res);
     return $res['wdf_route'];
 }
 

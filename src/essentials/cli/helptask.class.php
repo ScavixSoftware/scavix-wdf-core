@@ -32,7 +32,7 @@ class HelpTask extends \ScavixWDF\Tasks\Task
 
 			$comment = $ref->getCommentObject($method?$method->getName():false);
 			$md = $comment?$comment->RenderAsMD():'';
-			$name = strtolower(str_ireplace("task","",array_last(explode("\\",$cls))));
+            $name = strtolower(str_ireplace("task", "", substr_from($cls, "\\")));
 			log_info("\nClassname  : {$ref->getName()}");
 
 			$par = $ref->getParentClass();

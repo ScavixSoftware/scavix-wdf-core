@@ -975,12 +975,12 @@ function __search_file_for_class($class_name,$extension="class.php",$classpath_l
 	$short_class_name = "";
 	if( strpos($class_name,"_") !== false )
 	{
-		$short_class_name = array_last(explode("_",$class_name));
+		$short_class_name = substr_from($class_name, "_");
 		$short_class_name_lc = strtolower($short_class_name);
 	}
 	elseif( strpos($class_name,"\\") !== false )
 	{
-		$short_class_name = array_last(explode("\\",$class_name));
+		$short_class_name = substr_from($class_name, "\\");
 		$short_class_name_lc = strtolower($short_class_name);
 	}
 

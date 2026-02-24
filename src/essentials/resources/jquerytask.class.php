@@ -208,7 +208,7 @@ class jQueryTask extends \ScavixWDF\Tasks\Task
                 continue;
 
             $texture = str_replace("_", "-", $texture);
-            $name = array_last(explode("exture", $k));
+            $name = substr_from($k, "exture");
             $op = $args["bgImgOpacity{$name}"] ?? '10';
             $col = trim($args["bgColor{$name}"] ?? '444444', ' #');
             $size = $sizes[$texture] ?? '10x8';

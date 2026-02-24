@@ -385,7 +385,7 @@ abstract class Renderable implements \JsonSerializable
                             $parents[] = resFile("$cnl.js");
                         $static_stack[$cnl] = true;
                     }
-					$classname = array_last(explode('\\',get_parent_class(fq_class_name($classname))));
+                    $classname = substr_from(get_parent_class(fq_class_name($classname)), '\\');
     				$cnl = strtolower($classname);
 				}
 				while($classname != "");

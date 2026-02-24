@@ -87,7 +87,7 @@ class SysAdminUser
     function hasAccess($controller,$method)
     {
         list($controller,$method) = array_map('strtolower',[$controller,$method]);
-        $controller = array_last(explode("\\",$controller));
+        $controller = substr_from($controller, "\\");
         switch( $controller )
         {
             case 'login':
