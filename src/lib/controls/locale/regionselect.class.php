@@ -80,7 +80,7 @@ class RegionSelect extends Select
 		else
 			$this->AddOption(null, 'TXT_PLEASE_CHOOSE');
 
-		if( count($regions)>0 )
+		if( \count($regions)>0 )
 		{
 			$cc = current_controller(false);
 			$translations_active = ($cc instanceof Renderable) && $cc->_translate;

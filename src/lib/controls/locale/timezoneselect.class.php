@@ -63,7 +63,7 @@ class TimezoneSelect extends Select
         if(!$sel && (strpos($current_timezone, ':')))
         {
             $isDst = date('I');
-            list($hours, $minutes) = explode(':', $current_timezone);
+            [$hours, $minutes] = explode(':', $current_timezone);
             $seconds = $hours * 60 * 60 + $minutes * 60;
             // Get timezone name from seconds
             $tz = timezone_name_from_abbr('', $seconds, $isDst);

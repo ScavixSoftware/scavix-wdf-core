@@ -122,7 +122,7 @@ class DataSource
 
     function __toString()
     {
-        return get_class($this)."({$this->_storage_id})";
+        return \get_class($this)."({$this->_storage_id})";
     }
 
     function __construct($alias=false, $dsn=false, $username=false, $password=false)
@@ -227,7 +227,7 @@ class DataSource
 		if( isset($CONFIG['session']) )
 		{
 			$name = explode("::",$this->_storage_id,2);
-			if( count($name) < 2 )
+			if( \count($name) < 2 )
 				$name = [$this->_storage_id, $this->_storage_id];
 
 			$ds = model_datasource($name[1]);
@@ -250,7 +250,7 @@ class DataSource
 	function __wakeup_extended()
 	{
 		$name = explode("::",$this->_storage_id,2);
-		if( count($name) < 2 )
+		if( \count($name) < 2 )
 			$name = [$this->_storage_id, $this->_storage_id];
 
 		$ds = model_datasource($name[1]);
@@ -264,7 +264,7 @@ class DataSource
 
 	function __equals(&$ds)
 	{
-		if( !is_object($ds) || get_class($this) != get_class($ds) )
+		if( !\is_object($ds) || \get_class($this) != \get_class($ds) )
 			return false;
 
 		return $this->_dsn == $ds->_dsn && $this->_username == $ds->_username && $this->_password == $ds->_password;
@@ -300,10 +300,10 @@ class DataSource
 	 */
 	function EscapeArgument($value)
 	{
-        if( !is_string($value) )
+        if( !\is_string($value) )
             log_warn(__METHOD__." needs string argument, will be enforces in future versions. Called from ".system_get_caller());
 		$res = $this->_pdo->quote("$value");
-		return substr($res, 1, strlen($res)-2);
+		return substr($res, 1, \strlen($res)-2);
 	}
 
 	/**
@@ -314,7 +314,7 @@ class DataSource
 	 */
 	function QuoteArgument($value)
 	{
-        if( !is_string($value) )
+        if( !\is_string($value) )
             log_warn(__METHOD__." needs string argument, will be enforces in future versions. Called from ".system_get_caller());
 		return $this->_pdo->quote("$value");
 	}
@@ -343,7 +343,7 @@ class DataSource
      */
     function BuildInConstraint($field, $values)
     {
-        if( !is_array($values) || count($values)==0 )
+        if( !\is_array($values) || \count($values)==0 )
             return "(0=1)";
         $r = [];
         foreach( $values as $v )
@@ -370,7 +370,7 @@ class DataSource
 	 */
     function BuildNotInConstraint($field, $values)
     {
-        if( !is_array($values) || count($values)==0 )
+        if( !\is_array($values) || \count($values)==0 )
             return "(1=1)";
         $r = [];
         foreach( $values as $v )
@@ -413,12 +413,12 @@ class DataSource
 	{
         try
         {
-            if ( count(self::$registeredLogSlowQueries)>0 && ($id = md5($sql)) && isset(self::$registeredLogSlowQueries[$id]) )
+            if ( \count(self::$registeredLogSlowQueries)>0 && ($id = md5($sql)) && isset(self::$registeredLogSlowQueries[$id]) )
             {
                 $mem_runtime = DataSource::$LogSlowQueriesSeconds;
                 DataSource::$LogSlowQueriesSeconds = self::$registeredLogSlowQueries[$id];
             }
-            if (!is_array($parameter))
+            if (!\is_array($parameter))
                 $parameter = [$parameter];
 
             $stmt = $this->Prepare($sql);
@@ -458,7 +458,7 @@ class DataSource
 
 		$key = 'DB_Cache_Sql_'.md5( $sql.serialize($prms).$lifetime );
 		$null = null;
-		if( $cacherefresh || is_null($res = cache_get($key, $null, true, false)) )
+		if( $cacherefresh || \is_null($res = cache_get($key, $null, true, false)) )
 		{
 			$res = $this->ExecuteSql($sql, $prms);
 			if( $res )
@@ -484,7 +484,7 @@ class DataSource
 
 		$key = 'DB_Cache_Look_'.md5( $field_name.$table_name.$where_condition.serialize($parameter).$lifetime );
 		$null = null;
-		if( is_null($res = cache_get($key, $null, true, false)) )
+		if( \is_null($res = cache_get($key, $null, true, false)) )
 		{
 			$res = $this->DLookUp($field_name, $table_name, $where_condition, $parameter);
 			cache_set($key, $res, $lifetime, true, false);
@@ -522,7 +522,7 @@ class DataSource
 		$obj->__init_db_values($as_new);
 		$attr = array_change_key_case(array_flip($obj->GetColumnNames()), CASE_LOWER);
 		foreach( $fields as $k=>$v )
-			if( array_key_exists(strtolower($k), $attr) )
+			if( \array_key_exists(strtolower($k), $attr) )
 				$obj->$k = $v;
 		return $obj;
 	}
@@ -601,7 +601,7 @@ class DataSource
 
 		$key = 'SB_Cache_Scalar_'.md5( $sql.serialize($prms).$lifetime );
 		$null = null;
-		if( is_null($res = cache_get($key, $null, $glob, $sess)) )
+		if( \is_null($res = cache_get($key, $null, $glob, $sess)) )
 		{
 			$res = $this->ExecuteScalar($sql, $prms);
 			cache_set($key, $res, $sess?false:$lifetime, $glob, $sess);
@@ -665,9 +665,9 @@ class DataSource
 	function ErrorMsg()
 	{
 		$ei = $this->_pdo->errorInfo();
-		if( count($ei) == 1 && $ei[0] === "00000" )
+		if( \count($ei) == 1 && $ei[0] === "00000" )
 			return false;
-		if( count($ei) == 0 )
+		if( \count($ei) == 0 )
 			return false;
 		return $ei[2];
 	}
@@ -762,7 +762,7 @@ class DataSource
      */
     public function getLock($name,$timeout=10)
     {
-        $lock = (strlen($name)<500)?$name:sha1($name);
+        $lock = (\strlen($name)<500)?$name:sha1($name);
         return system_get_lock($lock,$this,$timeout);
     }
 
@@ -771,7 +771,7 @@ class DataSource
      */
     public function releaseLock($name)
     {
-        $lock = (strlen($name)<500)?$name:sha1($name);
+        $lock = (\strlen($name)<500)?$name:sha1($name);
         system_release_lock($lock,$this);
     }
 

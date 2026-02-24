@@ -100,13 +100,13 @@ class TranslationAdmin extends TranslationAdminBase
 
 		$counts = [];
 		foreach( $this->ds->ExecuteSql("SELECT lang,count(*) as cnt FROM wdf_translations GROUP BY lang") as $row )
-			$counts[$row['lang']] = intval($row['cnt']);
-        $total = count($counts) ? max($counts) : 0;
+			$counts[$row['lang']] = \intval($row['cnt']);
+        $total = \count($counts) ? max($counts) : 0;
         $def = $GLOBALS['CONFIG']['localization']['default_language'];
         $allowed = $this->user->getProperty('languages','all');
 		foreach( Localization::get_language_names() as $code=>$name )
 		{
-            if( $allowed!=='all' && $code != $def && !in_array($code,$allowed) )
+            if( $allowed!=='all' && $code != $def && !\in_array($code,$allowed) )
                 continue;
 			if( isset($counts[$code]) )
 			{
@@ -180,7 +180,7 @@ class TranslationAdmin extends TranslationAdminBase
                 $js_texts[] = $k;
         }
         $js_texts = array_unique($js_texts);
-        if( count($js_texts)>0 )
+        if( \count($js_texts)>0 )
         {
             $div->content('<h2>Texts detected as needed in JS</h2>');
             $div->content("<a style='font-weight:normal' href='javascript:void(0)' onclick='document.getElementById(\"js_texts\").select(); document.execCommand(\"Copy\");'>copy</a>");
@@ -252,12 +252,12 @@ class TranslationAdmin extends TranslationAdminBase
             }
         }
 
-        if(count($written_languages) > 0)
+        if(\count($written_languages) > 0)
         {
             $ds = model_datasource($GLOBALS['CONFIG']['translation']['sync']['datasource']);
             $ds->ExecuteSql("DELETE FROM wdf_unknown_strings");
             $allids = $ds->ExecuteSql('SELECT DISTINCT id FROM wdf_translations')->Enumerate('id');
-            if(count($allids))
+            if(\count($allids))
                 $ds->ExecuteSql('DELETE FROM wdf_unknown_strings_data WHERE term NOT IN ("'.join('","', $allids).'")');
             $this->content("<div>Cleared the unknown strings tables &#10003;</div>");
 
@@ -330,7 +330,7 @@ class TranslationAdmin extends TranslationAdminBase
             unset($GLOBALS['translation']['strings']);
             $filename = $CONFIG['translation']['data_path'].$lang.'.inc.php';
             include($filename);
-            $cnt = count($GLOBALS['translation']['strings']);
+            $cnt = \count($GLOBALS['translation']['strings']);
             if($cnt > 0)
             {
                 $cnt = 0;
@@ -338,7 +338,7 @@ class TranslationAdmin extends TranslationAdminBase
                     $ds->ExecuteSql("DELETE FROM wdf_translations WHERE lang=?", [$lang]);
                 foreach($GLOBALS['translation']['strings'] as $k => $v)
                 {
-                    if( in_array($k,$GLOBALS['translation']['properties'][$lang]['unknown']))
+                    if( \in_array($k,$GLOBALS['translation']['properties'][$lang]['unknown']))
                         continue;
                     $ds->ExecuteSql("REPLACE INTO wdf_translations SET lang=?, id=?, content=?", [$lang, $k, $v]);
                     $cnt++;
@@ -514,7 +514,7 @@ class TranslationAdmin extends TranslationAdminBase
         $allowed = $this->user->getProperty('languages','all');
         foreach( Localization::get_language_names() as $lang=>$name )
         {
-            if( $allowed!=='all' && $lang != $def && !in_array($lang,$allowed) )
+            if( $allowed!=='all' && $lang != $def && !\in_array($lang,$allowed) )
                 continue;
 
             $dbrow = $this->ds->Query("wdf_translations")->eq('lang',$lang)->eq('id',$term)->current();
@@ -522,7 +522,7 @@ class TranslationAdmin extends TranslationAdminBase
 
             $ta = new TextArea($row['content']);
 			$ta->class = $row['id'];
-			$ta->rows = count(explode('<br />', nl2br($row['content']))) + 1;
+			$ta->rows = \count(explode('<br />', nl2br($row['content']))) + 1;
 
             $btn = new Button('Save');
 			$btn->addClass('save')->data('term',$row['id'])->data('lang',$lang);
@@ -541,7 +541,7 @@ class TranslationAdmin extends TranslationAdminBase
             foreach( $variables as $k=>$v )
                 $wrap->append( "<span class='termdata' title='Sample: {$v}' onclick=\"$(this).closest('.td').find('textarea').insertAtCaret($(this).text());\">{$k}</span>" );
 
-            if (in_array($lang, $started))
+            if (\in_array($lang, $started))
             {
                 $tr = $tab->NewRow(["$name ({$lang})", $wrap, $btn]);
                 $tr->data('lang', $lang);
@@ -628,12 +628,12 @@ class TranslationAdmin extends TranslationAdminBase
 			foreach( json_decode($json_string,true) as $entry )
 			{
 				$entry = array_values($entry);
-				if( count($entry) < 2 || !$entry[1] )
+				if( \count($entry) < 2 || !$entry[1] )
 					continue;
 				$this->ds->ExecuteSql("REPLACE INTO wdf_translations(lang,id,content)VALUES(?,?,?)",array($lang,$entry[0],$entry[1]));
 				$count++;
 
-				if( !$is_default && !in_array($entry[0],$knowns) )
+				if( !$is_default && !\in_array($entry[0],$knowns) )
 				{
 					$unknowns[] = $entry[0];
 					default_string($entry[0],"Imported from $lang: ".$entry[1]);

@@ -169,7 +169,7 @@ class MySql implements IDatabaseDriver
         if( PHP_OS_FAMILY == "Linux" && file_exists("/run/shm") )
         {
             $um = umask(0);
-            $dir = '/run/shm/wdf-'.md5(__SCAVIXWDF__.(defined("DATABASE_VERSION")?'-'.DATABASE_VERSION:''));
+            $dir = '/run/shm/wdf-'.md5(__SCAVIXWDF__.(\defined("DATABASE_VERSION")?'-'.DATABASE_VERSION:''));
             @mkdir($dir,0777,true);
 
             $schemafile = $dir."/".md5($this->_ds->GetDsn()."/$tablename").".schema";
@@ -194,7 +194,7 @@ class MySql implements IDatabaseDriver
 			$save_needed = true;
         }
 
-        if( !count($res->Columns) )
+        if( !\count($res->Columns) )
         {
             $sql = "show full columns from `$tablename`";
             foreach($this->pdoQuery($sql)->finishAll() as $row)
@@ -238,7 +238,7 @@ class MySql implements IDatabaseDriver
 			$save_needed = true;
         }
 
-		if( !count($res->Keys) )
+		if( !\count($res->Keys) )
         {
             $sql = "show keys from `$tablename`";
             foreach ($this->pdoQuery($sql)->finishAll() as $row)
@@ -291,7 +291,7 @@ class MySql implements IDatabaseDriver
 			WdfDbException::RaiseStatement($stmt);
 		$row = $stmt->fetch();
         $stmt->closeCursor();
-		$ret = is_array($row) && count($row)>0;
+		$ret = \is_array($row) && \count($row)>0;
         $this->_tableexistbuffer[$tablename] = $ret;
         return $ret;
 
@@ -352,7 +352,7 @@ class MySql implements IDatabaseDriver
             */
 
 			$tv = $model->TypedValue($col);
-			if( is_string($tv) && (starts_iwith($tv,"now(") || starts_iwith($tv,"current_timestamp(")) )
+			if( \is_string($tv) && (starts_iwith($tv,"now(") || starts_iwith($tv,"current_timestamp(")) )
 			{
 				$cols[] = "`$col`=$tv";
 				$all[] = "`$col`";
@@ -360,7 +360,7 @@ class MySql implements IDatabaseDriver
 			}
 			else
 			{
-                if( is_null($tv) && ($cd = $model->GetTableSchema()->GetColumn($col)) )
+                if( \is_null($tv) && ($cd = $model->GetTableSchema()->GetColumn($col)) )
                 {
                     if( $cd->IsNullAllowed() )
                     {
@@ -377,7 +377,7 @@ class MySql implements IDatabaseDriver
                         continue;
                     }
                 }
-                $argn = ":a".sprintf('%03d', count($cols));
+                $argn = ":a".\sprintf('%03d', \count($cols));
 				$cols[] = "`$col`=$argn";
 				$all[] = "`$col`";
 				$vals[] = "$argn";
@@ -388,14 +388,14 @@ class MySql implements IDatabaseDriver
 				 */
 				if( $args["$argn"] instanceof DateTime )
 					$args["$argn"] = $args["$argn"]->format('Y-m-d H:i:s');
-				elseif( is_object($args["$argn"]) || is_array($args["$argn"]) )
+				elseif( \is_object($args["$argn"]) || \is_array($args["$argn"]) )
 					$args["$argn"] = @json_encode($args["$argn"]);
 			}
 		}
 
 		if( $model->_saved )
 		{
-			if( count($cols) == 0 )
+			if( \count($cols) == 0 )
 				return false;
 
 			$sql  = "UPDATE `".$model->GetTableName()."`";
@@ -405,7 +405,7 @@ class MySql implements IDatabaseDriver
 		}
 		else
 		{
-			if( count($all) == 0 )
+			if( \count($all) == 0 )
 				$sql = (\ScavixWDF\Model\Model::$SaveDelayed?"INSERT DELAYED INTO `":"INSERT INTO `").$model->GetTableName()."`";
 			else
 				$sql = (\ScavixWDF\Model\Model::$SaveDelayed?"INSERT DELAYED INTO `":"INSERT INTO `").$model->GetTableName()."`(".implode(",",$all).")VALUES(".implode(',',$vals).")";
@@ -428,7 +428,7 @@ class MySql implements IDatabaseDriver
 				$args[":$col"] = $model->$col;
 			}
 		}
-		if( count($cols) == 0 )
+		if( \count($cols) == 0 )
 			return false;
 
 		$sql = "DELETE FROM `".$model->GetTableName()."` WHERE ".implode(" AND ",$cols)." LIMIT 1";
@@ -441,7 +441,7 @@ class MySql implements IDatabaseDriver
 	function getPagedStatement($sql,$page,$items_per_page)
 	{
 		$offset = ($page-1)*$items_per_page;
-        if(intval($offset) < 0)
+        if(\intval($offset) < 0)
             $offset = 0;
 		$sql = preg_replace('/LIMIT\s+[\d\s,]+/', '', $sql);
 		$sql .= " LIMIT $offset,$items_per_page";
@@ -459,12 +459,12 @@ class MySql implements IDatabaseDriver
 			return false;
 
 		$amounts = explode(",",$amounts[1]);
-		if( count($amounts) > 1 )
+		if( \count($amounts) > 1 )
             [$offset, $length] = $amounts;
 		else
             [$offset, $length] = [0, $amounts[0]];
-        $offset = intval($offset);
-		$length = intval($length);
+        $offset = \intval($offset);
+		$length = \intval($length);
 
         $key = 'DB_Cache_FoundRows_'.md5($sql.serialize($input_arguments));
         $found_rows = cache_get($key,false,false,true);
@@ -483,16 +483,16 @@ class MySql implements IDatabaseDriver
                 :$sql_columns;
 
             $ok = $this->_ds->ExecuteScalar("SELECT count(1) FROM ($sql) AS x",
-                is_null($input_arguments)?[]:array_clean_assoc_or_sequence($input_arguments)
+                \is_null($input_arguments)?[]:array_clean_assoc_or_sequence($input_arguments)
             );
-            $total = intval($ok);
+            $total = \intval($ok);
             if( $ok === false )
                 $this->_ds->LogLastStatement("Error querying paging info");
             else
                 cache_set($key,$total,60,false,true);
         }
         else
-            $total = intval($found_rows);
+            $total = \intval($found_rows);
 
         return [
             'rows_per_page' => $length,

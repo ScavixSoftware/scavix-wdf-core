@@ -266,7 +266,7 @@ class WdfListingFilter extends Template
             if( !starts_with($sql,"(") ) $sql = "($sql)";
             $res[] = $sql;
         }
-        $sql = count($res)==0?"(1=1)":"(".implode("AND",$res).")";
+        $sql = \count($res)==0?"(1=1)":"(".implode("AND",$res).")";
         if( $for_listing_injection )
             $sql = "/*BEG {$this->prefix}*/".$sql."/*{$this->prefix} END*/";
 
@@ -287,7 +287,7 @@ class WdfListingFilter extends Template
                 foreach( $columns as $col )
                     $res[] = "(".$ds->QuoteColumnName($col)." LIKE '%$t%')";
             }
-            if( count($res)>0 )
+            if( \count($res)>0 )
                 return "(".implode("OR",$res).")";
             return "";
         });
@@ -297,7 +297,7 @@ class WdfListingFilter extends Template
     {
         return new WdfClosure(function($name,$value)use($column)
         {
-            if( $value !== false && $value !== '' && !is_null($value) )
+            if( $value !== false && $value !== '' && !\is_null($value) )
             {
                 $ds = \ScavixWDF\Model\DataSource::Get();
                 return $ds->QuoteColumnName($column)."='".$ds->EscapeArgument($value)."'";

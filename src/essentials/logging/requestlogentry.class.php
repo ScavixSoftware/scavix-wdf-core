@@ -138,7 +138,7 @@ class RequestLogEntry extends Model
             return;
 
         $post = $_POST;
-        if(count($post) == 0)
+        if(\count($post) == 0)
         {
             $post = json_decode(@file_get_contents('php://input'), true);
             if(!$post)
@@ -188,7 +188,7 @@ class RequestLogEntry extends Model
         foreach( $data as $k=>$v )
             if( stripos($k,'pass') !== false )
                 $data[$k] = '***';
-            else if( is_string($v) && starts_iwith($v,"data:") )
+            else if( \is_string($v) && starts_iwith($v,"data:") )
                 $data[$k] = substr($v,0,30)."-TRUNCATED";
         return $data;
     }
@@ -214,20 +214,20 @@ class RequestLogEntry extends Model
             $message = json_encode($message->messages);
         elseif( $message instanceof Renderable )
             $message = $message->WdfRender();
-        if( !is_string($message) )
+        if( !\is_string($message) )
             $message = json_encode($message);
 
         $this->ms = ceil( (microtime(true)-$this->started)*1000 );
         $this->result = $message;
 
         $changedcols = $this->GetChanges();
-        if(count($changedcols) == 0)
+        if(\count($changedcols) == 0)
             return;
         $args = [];
         $sql = 'UPDATE LOW_PRIORITY `wdf_requests` SET ';
         foreach($changedcols as $col => $vals)
         {
-            $sql .= ((count($args) > 0) ? ', ' : '').'`'.$col.'`=?';
+            $sql .= ((\count($args) > 0) ? ', ' : '').'`'.$col.'`=?';
             $args[] = $vals[1];
         }
         $sql .= ' WHERE id=?';
@@ -301,7 +301,7 @@ class RequestLogEntry extends Model
             log_error(__METHOD__ . " can only run from a task");
             return;
         }
-        $cls = get_called_class();
+        $cls = \get_called_class();
         $inst = new $cls();
         $tab = $inst->getTableName();
         DataSource::Get()->OptimizeTable($tab, "$cls::onBeforeOptimize", "$cls::onAfterOptimize", true);

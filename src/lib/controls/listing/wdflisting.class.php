@@ -106,21 +106,21 @@ class WdfListing extends Control implements \ScavixWDF\ICallable
 	public static function Make(...$args)
 	{
         $controller = $datatype = $table = false;
-		if( count($args)>3 )
+		if( \count($args)>3 )
             log_warn(__METHOD__.": Calling with more that 3 arguments is obsolete. Use setter methods for assignment!","Called from ".system_get_caller());
 
-        if( count($args)>2 )
+        if( \count($args)>2 )
 		{
 			$datatype = $args[0];
 			$controller = $args[1];
 			$table = $args[2];
 		}
-        elseif( count($args)>1 )
+        elseif( \count($args)>1 )
         {
 			$datatype = $args[0];
 			$table = $args[1];
         }
-        elseif( count($args)>0 )
+        elseif( \count($args)>0 )
         {
 			$datatype = $args[0];
         }
@@ -395,7 +395,7 @@ class WdfListing extends Control implements \ScavixWDF\ICallable
      */
     function extendInnerTable()
     {
-        if( count($this->summary) > 0 && !$this->extended )
+        if( \count($this->summary) > 0 && !$this->extended )
         {
             $this->extended = true;
             $sumcols = array_filter(
@@ -409,7 +409,7 @@ class WdfListing extends Control implements \ScavixWDF\ICallable
                 [" "," "],
                 $this->table->Sql?:$this->table->GetSQL()
             );
-            if( count($sumcols)> 0 )
+            if( \count($sumcols)> 0 )
             {
                 $formats = [];
                 foreach ($this->formats as $n => $v)
@@ -420,10 +420,10 @@ class WdfListing extends Control implements \ScavixWDF\ICallable
                 $sums = $this->ds->ExecuteSql("SELECT ".implode(",", array_map(function($c) { return "sum(`$c`) as '{$c}'"; }, $sumcols))." FROM( {$sql} )as x")->current();
                 $footer = $this->table->Footer(true);
                 $cols = $this->visibleColumns();
-                $plain_sum_count = count(array_filter(array_keys($sums), function ($c) { return !avail($this->summary_names, $c); }));
+                $plain_sum_count = \count(array_filter(array_keys($sums), function ($c) { return !avail($this->summary_names, $c); }));
                 if ($plain_sum_count > 0)
                 {
-                    $row = $footer->NewRow(array_fill(0, count($cols), ''));
+                    $row = $footer->NewRow(array_fill(0, \count($cols), ''));
                     foreach ($sums as $name => $val)
                     {
                         if (avail($this->summary_names, $name))
@@ -440,7 +440,7 @@ class WdfListing extends Control implements \ScavixWDF\ICallable
                         }
                     }
                 }
-                if( count($this->summary_names) > 0 )
+                if( \count($this->summary_names) > 0 )
                 {
                     $row = Control::Make('div')->addClass('named-summary')->appendTo($this->table);
                     $sum = Control::Make('table')->appendTo($row);
@@ -485,7 +485,7 @@ class WdfListing extends Control implements \ScavixWDF\ICallable
     function WdfRender()
     {
         if( $this->onPreRender )
-            call_user_func($this->onPreRender,$this);
+            \call_user_func($this->onPreRender,$this);
 
         if( !self::$ShowCompleteData && $this->exportable && ($this->table->ResultSet->Count() > 0) )
         {
@@ -498,7 +498,7 @@ class WdfListing extends Control implements \ScavixWDF\ICallable
         }
         $this->extendInnerTable();
 
-        if( count($this->_multiactions)>0 )
+        if( \count($this->_multiactions)>0 )
         {
             $div = Control::Make('div')
                 ->addClass('multi-actions')
@@ -507,7 +507,7 @@ class WdfListing extends Control implements \ScavixWDF\ICallable
                 $div->css('display', 'none');
             $n = $this->_multiselectname;
 
-            if( $this->_groupMultiActionsTreshold>0 && count($this->_multiactions)>=$this->_groupMultiActionsTreshold )
+            if( $this->_groupMultiActionsTreshold>0 && \count($this->_multiactions)>=$this->_groupMultiActionsTreshold )
             {
                 $masel = Select::Make()->appendTo($div)
                     ->AddOption('',tds("TXT_CHOOSE_MULTI_ACTION","(choose action)"))
@@ -537,7 +537,7 @@ class WdfListing extends Control implements \ScavixWDF\ICallable
      */
 	function setCulture($ci)
 	{
-		$this->ci = is_string($ci)?\ScavixWDF\Localization\Localization::getCultureInfo($ci):$ci;
+		$this->ci = \is_string($ci)?\ScavixWDF\Localization\Localization::getCultureInfo($ci):$ci;
 		$this->table->SetCulture($this->ci);
 		return $this;
 	}
@@ -703,7 +703,7 @@ class WdfListing extends Control implements \ScavixWDF\ICallable
     {
         $this->columns[$name] = $label;
         $this->alignments[$name] = $alignment;
-        if( $format && is_callable($format) && !in_array($format, ['duration', 'fixed', 'pre', 'preformatted', 'date', 'time', 'datetime', 'currency', 'int', 'integer', 'percent', 'float', 'double', 'custom']) )
+        if( $format && is_callable($format) && !\in_array($format, ['duration', 'fixed', 'pre', 'preformatted', 'date', 'time', 'datetime', 'currency', 'int', 'integer', 'percent', 'float', 'double', 'custom']) )
         {
             $this->formats[$name] = false;
             $this->addColCallback([$name], $format);
@@ -1202,7 +1202,7 @@ class WdfListing extends Control implements \ScavixWDF\ICallable
                 default:
                     if($label != '')
                     {
-                        if( $this->sortable && $this->table->ResultSet && ($current = $this->table->ResultSet->current()) && array_key_exists($name, $current) )
+                        if( $this->sortable && $this->table->ResultSet && ($current = $this->table->ResultSet->current()) && \array_key_exists($name, $current) )
                             $a = Anchor::Make('javascript:void(0)', $label)->data("sort", $name);
                         else
                             $a = Control::Make('span')->append($label);
@@ -1235,7 +1235,7 @@ class WdfListing extends Control implements \ScavixWDF\ICallable
             $names = array_keys($this->filterToVisible($this->columns));
             $this->colClasses = array_combine($names, $names);
         }
-        if( count($this->colClasses)>0 )
+        if( \count($this->colClasses)>0 )
         {
             $names = array_keys($this->filterToVisible($this->columns));
             foreach( $table->header->Rows() as $tr )
@@ -1388,7 +1388,7 @@ class WdfListing extends Control implements \ScavixWDF\ICallable
         {
             if( $this->javascript )
             {
-                if( is_string($this->javascript) )
+                if( \is_string($this->javascript) )
                 {
                     $js = preg_replace_callback('/\{([a-z0-9_]+)\}/i', function ($m) use ($row)
                     {
@@ -1481,9 +1481,9 @@ class WdfListing extends Control implements \ScavixWDF\ICallable
         $this->summary_names = [];
         foreach( $args as $def )
         {
-            if( is_array($def) )
+            if( \is_array($def) )
             {
-                if( count($def)<3 ) $def[] = '';
+                if( \count($def)<3 ) $def[] = '';
                 list($n,$l,$f) = $def;
                 $this->summary[$n] = 0;
                 $this->summary_names[$n] = [$l,$f];
@@ -1528,7 +1528,7 @@ class WdfListing extends Control implements \ScavixWDF\ICallable
     {
         $colnames = force_array($colnames);
         foreach($colnames as $colname)
-            $this->columnCallbacks[$colname] = is_string($callback)?$callback:new \ScavixWDF\Base\WdfClosure($callback);
+            $this->columnCallbacks[$colname] = \is_string($callback)?$callback:new \ScavixWDF\Base\WdfClosure($callback);
         return $this;
     }
 
@@ -1541,7 +1541,7 @@ class WdfListing extends Control implements \ScavixWDF\ICallable
      */
     function addColClass($name,$class=false)
     {
-        if( !is_array($name) )
+        if( !\is_array($name) )
         {
             if( $name === true )
             {
@@ -1550,7 +1550,7 @@ class WdfListing extends Control implements \ScavixWDF\ICallable
             }
             $name = [$name=>$class];
         }
-        if( !is_array($this->colClasses) )
+        if( !\is_array($this->colClasses) )
             $this->colClasses = [];
         foreach( $name as $n=>$c )
             if( isset($this->colClasses[$n]) )
@@ -1693,7 +1693,7 @@ class WdfListing extends Control implements \ScavixWDF\ICallable
             {
                 if (isset($lst->columnCallbacks[$k]))
                     $val = $lst->columnCallbacks[$k]($val, $row);
-                if( is_string($val) )
+                if( \is_string($val) )
                     $val = __translate($val);
                 $row[$k] = ($val ? strip_tags(str_replace(['&nbsp;', '<br/>', '<br>'], [' ', ', ', ', '], $val)) : $val);
             }

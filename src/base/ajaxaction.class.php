@@ -39,18 +39,18 @@ class AjaxAction
 	{
 		if( $data )
 		{
-			if( is_string($data) )
+			if( \is_string($data) )
 				return "$data";
-			if( is_array($data) || is_object($data) )
+			if( \is_array($data) || \is_object($data) )
 				return json_encode($data);
-			WdfException::Raise("Invalid argmuent: 'data' should be string, array or object, but '".gettype($data)."' detected");
+			WdfException::Raise("Invalid argmuent: 'data' should be string, array or object, but '".\gettype($data)."' detected");
 		}
 		return '';
 	}
-	
+
 	/**
 	 * Creates a valid URL to a controler('s method).
-	 * 
+	 *
 	 * @param mixed $controller Controller object, Classname or _storage_id of the controller
 	 * @param string $event Optional method to be called
 	 * @return string A valid URL for use in JavaScript wdf object
@@ -58,13 +58,13 @@ class AjaxAction
 	public static function Url($controller,$event='')
 	{
 		if( $controller instanceof HtmlPage )
-			$controller = log_return("Using classname instead of id to reference controller:",get_class($controller));
+			$controller = log_return("Using classname instead of id to reference controller:",\get_class($controller));
 		return ($controller instanceof Renderable)?"{$controller->_storage_id}/$event":"$controller/$event/";
 	}
-	
+
 	/**
 	 * Creates a wdf.post call.
-	 * 
+	 *
 	 * @param mixed $controller Controller to call
 	 * @param string $event Method to call
 	 * @param string|array $data Data to be posted
@@ -79,10 +79,10 @@ class AjaxAction
 		if( $callback ) $callback = ",$callback";
 		return "wdf.post('$q'$data$callback);";
 	}
-	
+
 	/**
 	 * High level confirm procedure.
-	 * 
+	 *
 	 * This will return a standard confirmation dialog that will perform the specified action
 	 * when OK is clicked. Will also set a session variable so that the OK action PHP side code
 	 * can simply test with <AjaxAction::IsConfirmed>($text_base) if the confirmation was really shown and accepted by the user.
@@ -104,10 +104,10 @@ class AjaxAction
 		$dlg->data('confirmed', $_SESSION['ajax_confirm'][$text_base]);
 		return $dlg;
 	}
-    
+
 	/**
 	 * Like <AjaxAction::Confirm>, but returning a Dialog that may/should be extended in code.
-	 * 
+	 *
 	 * @see <AjaxAction::Confirm>
 	 * @param string $text_base Text constants basename (like CONFIRMATION). Confirmation will need TITLE_$text_base and TXT_$text_base
 	 * @param mixed $controller Controller for OK action
@@ -125,10 +125,10 @@ class AjaxAction
         $dlg->form->AddHidden('confirmed',$_SESSION['ajax_confirm'][$text_base]);
 		return $dlg;
 	}
-	
+
 	/**
 	 * Checks if the user has seen and accepted a confirmation.
-	 * 
+	 *
 	 * See <AjaxAction::Confirm>
 	 * @param string $text_base Text base the user confirmed
 	 * @return bool True if user clicked OK
@@ -139,10 +139,10 @@ class AjaxAction
 			return true;
 		return false;
 	}
-    
+
     /**
 	 * Return JS code to close a previously generated confirmation dialog
-	 * 
+	 *
 	 * See <AjaxAction::Confirm>
 	 * @param string $text_base Text base the user confirmed
 	 * @return string JS code to close the dialog if present

@@ -161,7 +161,7 @@ class PhpDocComment
 				if( preg_match_all('/([^\s]+)/',$t['data'],$matches) )
 				{
 					$props = [];
-					for($i=0;$i<count($properties)-1;$i++)
+					for($i=0;$i<\count($properties)-1;$i++)
 						$props[] = array_shift($matches[1]);
 					$props[] = implode(" ",$matches[1]);
 
@@ -221,7 +221,7 @@ class PhpDocComment
 	function get($name)
 	{
 		$tag = $this->getTag($name,array('desc'));
-		if( count($tag) == 0 )
+		if( \count($tag) == 0 )
 			return false;
 		return $tag[0]->desc;
 	}

@@ -186,7 +186,7 @@ class SqLite implements IDatabaseDriver
 		if( !$stmt->execute() )
 			WdfDbException::RaiseStatement($stmt);
 		$row = $stmt->fetch();
-		return is_array($row) && count($row)>0;
+		return \is_array($row) && \count($row)>0;
 	}
 
 	/**
@@ -230,7 +230,7 @@ class SqLite implements IDatabaseDriver
 		$columns_to_update = $columns_to_update?$columns_to_update:$model->GetColumnNames(true);
 		foreach( $columns_to_update as $col )
 		{
-			if( in_array($col,$pks) || !$model->HasColumn($col) || !$model->HasValue($col) )
+			if( \in_array($col,$pks) || !$model->HasColumn($col) || !$model->HasValue($col) )
 				continue;
 
 			/* DEPRECATED! We do not set dynamic properties anymore but handle them via __get/__set.
@@ -251,13 +251,13 @@ class SqLite implements IDatabaseDriver
             */
 
 			$tv = $model->TypedValue($col);
-			if( is_string($tv) && strtolower($tv)=="now()" )
+			if( \is_string($tv) && strtolower($tv)=="now()" )
 			{
 				$cols[] = "`$col`=datetime('now')";
 				$all[] = "`$col`";
 				$vals[] = "datetime('now')";
 			}
-            elseif( is_null($tv) && ($cd = $model->GetTableSchema()->GetColumn($col)) && !$cd->IsNullAllowed() )
+            elseif( \is_null($tv) && ($cd = $model->GetTableSchema()->GetColumn($col)) && !$cd->IsNullAllowed() )
             {
                 if( !$cd->HasDefault() )
                     log_warn("NULL value is not allowed for column '$col' (" . system_get_caller() . ")");
@@ -276,7 +276,7 @@ class SqLite implements IDatabaseDriver
 
 		if( $model->_saved )
 		{
-			if( count($cols) == 0 )
+			if( \count($cols) == 0 )
 				return false;
 
 			$sql  = "UPDATE `".$model->GetTableName()."`";
@@ -285,7 +285,7 @@ class SqLite implements IDatabaseDriver
 		}
 		else
 		{
-			if( count($all) == 0 )
+			if( \count($all) == 0 )
 				$sql = "INSERT INTO `".$model->GetTableName()."`";
 			else
 				$sql  = "INSERT INTO `".$model->GetTableName()."`(".implode(",",$all).")VALUES(".implode(',',$vals).")";
@@ -311,7 +311,7 @@ class SqLite implements IDatabaseDriver
 				$args[":$col"] = $model->$col;
 			}
 		}
-		if( count($cols) == 0 )
+		if( \count($cols) == 0 )
 			return false;
 
 		$sql = "DELETE FROM `".$model->GetTableName()."` WHERE ".implode(" AND ",$cols);
@@ -340,18 +340,18 @@ class SqLite implements IDatabaseDriver
 			return false;
 
 		$amounts = explode(",",$amounts[1]);
-		if( count($amounts) > 1 )
+		if( \count($amounts) > 1 )
             [$offset, $length] = $amounts;
 		else
             [$offset, $length] = [0, $amounts[0]];
-        $offset = intval($offset);
-		$length = intval($length);
+        $offset = \intval($offset);
+		$length = \intval($length);
 
 		$sql = preg_replace('/LIMIT\s+[\d\s,]+/i', '', $sql);
 		$sql = "SELECT count(*) FROM ($sql) AS x";
 		$stmt = $this->_pdo->prepare($sql);
 		$stmt->execute($input_arguments);
-		$total = intval($stmt->fetchColumn());
+		$total = \intval($stmt->fetchColumn());
 
 		return [
             'rows_per_page' => $length,

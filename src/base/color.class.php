@@ -30,23 +30,23 @@ namespace ScavixWDF\Base;
 class Color
 {
     public $r, $g, $b, $a;
-    
+
     protected function __construct($parts,$convert_alpha=false)
     {
-        if( !is_array($parts) || count($parts)!=4 )
+        if( !\is_array($parts) || \count($parts)!=4 )
             \ScavixWDF\WdfException::Raise("Invalid arguments ".json_encode($parts));
         if( min($parts)<0 || max($parts)>255 )
             \ScavixWDF\WdfException::Raise("Argument out of range ".json_encode($parts));
-        list($this->r,$this->g,$this->b,$this->a) = $parts;
-        if( $convert_alpha ) 
+        [$this->r, $this->g, $this->b, $this->a] = $parts;
+        if( $convert_alpha )
             $this->a /= 255;
         if( $this->a>1 )
             \ScavixWDF\WdfException::Raise("Invalid alpha '{$this->a}': must be 0-1");
     }
-    
+
     /**
      * Composes a Color object from a valid HTML color string.
-     * 
+     *
      * @param string $hex_string Valid HTML color string
      * @return Color
      */
@@ -67,7 +67,7 @@ class Color
             "darkturquoise" => "00ced1", "deepskyblue" => "00bfff", "dodgerblue" => "1e90ff",
             "royalblue" => "4169e1", "navy" => "000080", "darkblue" => "00008b",
             "mediumblue" => "0000cd", "blue" => "0000ff", "blueviolet" => "8a2be2",
-            "darkorchid" => "9932cc", "darkviolet" => "9400d3", "purple" => "800080", 
+            "darkorchid" => "9932cc", "darkviolet" => "9400d3", "purple" => "800080",
             "darkmagenta" => "8b008b", "fuchsia" => "ff00ff", "magenta" => "ff00ff",
             "mediumvioletred" => "c71585", "deeppink" => "ff1493", "hotpink" => "ff69b4",
             "crimson" => "dc143c", "brown" => "a52a2a", "indianred" => "cd5c5c",
@@ -101,29 +101,29 @@ class Color
             "silver" => "c0c0c0", "lightgrey" => "d3d3d3", "gainsboro" => "dcdcdc",
             "whitesmoke" => "f5f5f5", "white" => "ffffff"
         ];
-        
-        
+
+
         $hex = strtolower(trim(trim("$hex_string",'#')));
         if( isset($named[$hex]) )
             $hex = $named[$hex];
         if( $hex == "transparent" )
             return new Color([0,0,0,0]);
-        
+
         $hex = preg_replace('/^([0-9a-f])([0-9a-f])([0-9a-f])([0-9a-f])$/i','$1$1$2$2$3$3$4$4', $hex);
         $hex = preg_replace('/^([0-9a-f])([0-9a-f])([0-9a-f])$/i','$1$1$2$2$3$3', $hex);
-        if( strlen($hex) < 8 )
+        if( \strlen($hex) < 8 )
             $hex .= "ff";
-        
+
         if( preg_match('/([^0-9a-f])/i',$hex) )
             \ScavixWDF\WdfException::Raise("Invalid color code: $hex_string");
-        
+
         $parts = array_map('hexdec', str_split($hex,2));
         return new Color($parts,true);
     }
 
     /**
      * Composes a <Color> object from RGBA values.
-     * 
+     *
      * @param int $r Red component (0-255)
      * @param int $g Green component (0-255)
      * @param int $b Blue component (0-255)
@@ -134,10 +134,10 @@ class Color
     {
         return new Color([$r,$g,$b,$a]);
     }
-    
+
     /**
      * Composes a <ColorRange> object.
-     * 
+     *
      * @param mixed $from Optional string or <Color> defining the start
      * @param mixed $to Optional string or <Color> defining the end
      * @return \ScavixWDF\Base\Color\ColorRange
@@ -148,10 +148,10 @@ class Color
         $to = $to instanceof Color?$to:Color::hex($to);
         return new Color\ColorRange($from,$to);
     }
-    
+
     /**
      * Composes a random <Color>.
-     * 
+     *
      * @param mixed $min Optional string or <Color> defining the minimum
      * @param mixed $max Optional string or <Color> defining the maximum
      * @return \ScavixWDF\Base\Color
@@ -162,14 +162,14 @@ class Color
         if( $max && !($max instanceof Color) ) $max = Color::hex($max);
         if( !$min ) $min = Color::rgba(0, 0, 0);
         if( !$max ) $max = Color::rgba(255, 255, 255);
-        
+
         $parts = [];
         foreach( ['r','g','b'] as $p )
             $parts[$p] = random_int($min->$p,$max->$p);
         extract($parts);
         return Color::rgba($r,$g,$b);
     }
-    
+
     public function __toString()
     {
         $t = "{$this->r},{$this->g},{$this->b},{$this->a}";
@@ -179,15 +179,15 @@ class Color
             case "255,255,255,1": return "#FFF";
         }
         if( $this->a == 1 )
-            return sprintf("#%02X%02X%02X",$this->r,$this->g,$this->b);
+            return \sprintf("#%02X%02X%02X",$this->r,$this->g,$this->b);
         return "rgba($t)";
     }
-    
+
     /**
      * Sets the alpha value of the color.
-     * 
+     *
      * @param float|string $a Alpha value as float (0..1) or string (00..FF)
-     * @return static 
+     * @return static
      */
     public function setAlpha($a)
     {
@@ -195,10 +195,10 @@ class Color
         $this->a = $c->a;
         return $this;
     }
-    
+
     /**
      * Returns 'white' or 'black', which ever will be better readable if the given color is a background.
-     * 
+     *
      * @param Color $c The background color
      * @param int $swapvalue Value when the default 'black' is replaced by 'white' (default: 100)
      * @return Color Black or White
@@ -215,30 +215,30 @@ namespace ScavixWDF\Base\Color;
 
 /**
  * Represents a color range.
- * 
- * Never construct a ColorRange directly, but use <Color::range>, 
+ *
+ * Never construct a ColorRange directly, but use <Color::range>,
  * otherwise the classloader may fail.
  */
 class ColorRange
 {
     public $from, $to, $min, $max;
-    
+
     function __toString()
     {
         if( $this->min && $this->max)
             return "ColorRange {$this->from}->{$this->to} ({$this->min}->{$this->max})";
         return "ColorRange {$this->from}->{$this->to}";
     }
-    
+
     public function __construct(\ScavixWDF\Base\Color $from, \ScavixWDF\Base\Color $to)
     {
-        $this->from = $from; 
+        $this->from = $from;
         $this->to = $to;
     }
-    
+
     /**
      * Sets values that act as min and max when querying data.
-     * 
+     *
      * @param int|float $min Minimum value
      * @param int|float $max Maximum value
      * @return ColorRange $this
@@ -249,10 +249,10 @@ class ColorRange
         $this->max = max($min,$max);
         return $this;
     }
-    
+
     /**
      * Return the color corresponding to a value in the range.
-     * 
+     *
      * @param int|float $value The value (between min and max) to get the color for
      * @return \ScavixWDF\Base\Color
      */
@@ -262,10 +262,10 @@ class ColorRange
         $v = $value - $this->min;
         return $this->fromPercent($v / $t * 100);
     }
-    
+
     /**
      * Return the color corresponding to percent in the range.
-     * 
+     *
      * @param int|float $percent The percent (0-100) to get the color for
      * @return \ScavixWDF\Base\Color
      */

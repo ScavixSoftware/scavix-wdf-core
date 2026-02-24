@@ -82,38 +82,38 @@ class DateTimeFormatSelect extends Select
 			foreach( $tf as $t )
 			{
 				$sv = $dtf->Format($value, $d)." ".$dtf->Format($value, $t);
-				$this->AddOption(json_encode(array($d,$t)), $sv);
-			}
-		}
-		store_object($this);
-	}
+				$this->AddOption(json_encode([$d, $t]), $sv);
+            }
+        }
+        store_object($this);
+    }
 
-	/**
-	 * Returns a list of option elements.
-	 *
-	 * Called via AJAX to dynamically update the control.
-	 * @param string $culture_code Selected culture code
-	 * @return <AjaxResponse::Text> Html string with options
-	 */
+    /**
+     * Returns a list of option elements.
+     *
+     * Called via AJAX to dynamically update the control.
+     * @param string $culture_code Selected culture code
+     * @return <AjaxResponse::Text> Html string with options
+     */
     #[Text('culture_code')]
-	public function ListOptions($culture_code)
-	{
-		$this->culture_code = $culture_code;
+    public function ListOptions($culture_code)
+    {
+        $this->culture_code = $culture_code;
 
-		$df = [DateTimeFormat::DF_LONGDATE, DateTimeFormat::DF_SHORTDATE, DateTimeFormat::DF_MONTHDAY, DateTimeFormat::DF_YEARMONTH];
+        $df = [DateTimeFormat::DF_LONGDATE, DateTimeFormat::DF_SHORTDATE, DateTimeFormat::DF_MONTHDAY, DateTimeFormat::DF_YEARMONTH];
         $tf = [DateTimeFormat::DF_LONGTIME, DateTimeFormat::DF_SHORTTIME];
 
         $value = time();
-		$ci = Localization::getCultureInfo($culture_code);
-		if(!$ci)
-			$ci = Localization::getCultureInfo('en-US');
-		$dtf = $ci->DateTimeFormat;
-		foreach( $df as $d )
-		{
-			foreach( $tf as $t )
-			{
-				$sv = $dtf->Format($value, $d)." ".$dtf->Format($value, $t);
-				$res[] = "<option value='".json_encode(array($d,$t))."'>$sv</option>";
+        $ci = Localization::getCultureInfo($culture_code);
+        if (!$ci)
+            $ci = Localization::getCultureInfo('en-US');
+        $dtf = $ci->DateTimeFormat;
+        foreach ($df as $d)
+        {
+            foreach ($tf as $t)
+            {
+                $sv = $dtf->Format($value, $d) . " " . $dtf->Format($value, $t);
+                $res[] = "<option value='" . json_encode([$d, $t]) . "'>$sv</option>";
 			}
 		}
 		return AjaxResponse::Text(implode("\n",$res));

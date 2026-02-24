@@ -82,7 +82,7 @@ class LogReport
 	 */
 	public function render()
 	{
-		$lines = [$this->Name . " (" . count($this->Lines) . " lines):"];
+		$lines = [$this->Name . " (" . \count($this->Lines) . " lines):"];
         foreach ($this->Lines as $i => $l)
         {
             $line = ["[#" . ($i + 1) . "]"];

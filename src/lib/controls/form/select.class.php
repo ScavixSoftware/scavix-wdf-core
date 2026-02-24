@@ -74,7 +74,7 @@ class Select extends Control
 	function setValue($value)
 	{
 		$this->_current = $value;
-        if(count($this->_content) > 0)
+        if(\count($this->_content) > 0)
             $this->_setval($this->_content, $value);
 		return $this;
 	}
@@ -94,11 +94,11 @@ class Select extends Control
     {
         foreach($children as $opt)
         {
-            if(is_object($opt))
+            if(\is_object($opt))
             {
                 if(isset($opt->Tag) && ($opt->Tag == 'optgroup'))
                     $this->_setval($opt->_content, $val);
-                if((is_array($val) && in_array($opt->value, $val)) || (($opt->value == $val) && ($opt->Tag != 'optgroup')))
+                if((\is_array($val) && \in_array($opt->value, $val)) || (($opt->value == $val) && ($opt->Tag != 'optgroup')))
                     $opt->attr('selected', 'selected');
                 elseif(isset($opt->_attributes['selected']))
                     unset($opt->_attributes['selected']);

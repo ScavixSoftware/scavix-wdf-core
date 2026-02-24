@@ -56,7 +56,7 @@ class uiMessage extends uiControl
         {
             if ($autoclose === true)
                 $autoclose = 10;
-            $this->sub->script("setTimeout(function() { $('#".$this->sub->id."').parent().slideUp('fast', function(){ $(this).remove(); }); }, ".intval($autoclose)."*1000);");
+            $this->sub->script("setTimeout(function() { $('#".$this->sub->id."').parent().slideUp('fast', function(){ $(this).remove(); }); }, ".\intval($autoclose)."*1000);");
         }
         if($closeable)
             $this->sub->content("<span class='ui-icon ui-icon-close' onclick=\"$(this).parent().parent().slideUp('fast', function(){ $(this).remove(); })\"></span>");

@@ -194,8 +194,8 @@ class SqlFormatter
         return [
             'hits' => self::$cache_hits,
             'misses' => self::$cache_misses,
-            'entries' => count(self::$token_cache),
-            'size' => strlen(serialize(self::$token_cache))
+            'entries' => \count(self::$token_cache),
+            'size' => \strlen(serialize(self::$token_cache))
         ];
     }
 
@@ -260,7 +260,7 @@ class SqlFormatter
 
             if ($last === false)
             {
-                $last = strlen($string);
+                $last = \strlen($string);
             }
 
             return [
@@ -335,7 +335,7 @@ class SqlFormatter
             {
                 return [
                     self::TOKEN_TYPE => self::TOKEN_TYPE_RESERVED_TOPLEVEL,
-                    self::TOKEN_VALUE => substr($string, 0, strlen($matches[1]))
+                    self::TOKEN_VALUE => substr($string, 0, \strlen($matches[1]))
                 ];
             }
             // Newline Reserved Word
@@ -343,7 +343,7 @@ class SqlFormatter
             {
                 return [
                     self::TOKEN_TYPE => self::TOKEN_TYPE_RESERVED_NEWLINE,
-                    self::TOKEN_VALUE => substr($string, 0, strlen($matches[1]))
+                    self::TOKEN_VALUE => substr($string, 0, \strlen($matches[1]))
                 ];
             }
             // Other Reserved Word
@@ -351,7 +351,7 @@ class SqlFormatter
             {
                 return [
                     self::TOKEN_TYPE => self::TOKEN_TYPE_RESERVED,
-                    self::TOKEN_VALUE => substr($string, 0, strlen($matches[1]))
+                    self::TOKEN_VALUE => substr($string, 0, \strlen($matches[1]))
                 ];
             }
         }
@@ -364,7 +364,7 @@ class SqlFormatter
         {
             return [
                 self::TOKEN_TYPE => self::TOKEN_TYPE_RESERVED,
-                self::TOKEN_VALUE => substr($string, 0, strlen($matches[1]) - 1)
+                self::TOKEN_VALUE => substr($string, 0, \strlen($matches[1]) - 1)
             ];
         }
 
@@ -409,14 +409,14 @@ class SqlFormatter
         $tokens = [];
 
         // Used for debugging if there is an error while tokenizing the string
-        $original_length = strlen($string);
+        $original_length = \strlen($string);
 
         // Used to make sure the string keeps shrinking on each iteration
-        $old_string_len = strlen($string) + 1;
+        $old_string_len = \strlen($string) + 1;
 
         $token = null;
 
-        $current_length = strlen($string);
+        $current_length = \strlen($string);
 
         // Keep processing the string until it is empty
         while ($current_length)
@@ -444,12 +444,12 @@ class SqlFormatter
             if ($cacheKey && isset(self::$token_cache[$cacheKey])) {
                 // Retrieve from cache
                 $token = self::$token_cache[$cacheKey];
-                $token_length = strlen($token[self::TOKEN_VALUE]);
+                $token_length = \strlen($token[self::TOKEN_VALUE]);
                 self::$cache_hits++;
             } else {
                 // Get the next token and the token type
                 $token = self::getNextToken($string, $token);
-                $token_length = strlen($token[self::TOKEN_VALUE]);
+                $token_length = \strlen($token[self::TOKEN_VALUE]);
                 self::$cache_misses++;
 
                 // If the token is shorter than the max length, store it in cache
@@ -576,7 +576,7 @@ class SqlFormatter
                     }
                 }
 
-                $inline_count += strlen($token[self::TOKEN_VALUE]);
+                $inline_count += \strlen($token[self::TOKEN_VALUE]);
             }
 
             // Opening parentheses increase the block indent level and start a new line
@@ -609,7 +609,7 @@ class SqlFormatter
                         break;
                     }
 
-                    $length += strlen($next[self::TOKEN_VALUE]);
+                    $length += \strlen($next[self::TOKEN_VALUE]);
                 }
 
                 if ($inline_parentheses && $length > 30) {
@@ -916,7 +916,7 @@ class SqlFormatter
         if (self::is_cli()) {
             $token = $token[self::TOKEN_VALUE];
         } else {
-            if (defined('ENT_IGNORE')) {
+            if (\defined('ENT_IGNORE')) {
               $token = htmlentities($token[self::TOKEN_VALUE],ENT_COMPAT | ENT_IGNORE ,'UTF-8');
             } else {
               $token = htmlentities($token[self::TOKEN_VALUE],ENT_COMPAT,'UTF-8');

@@ -288,7 +288,7 @@ function global_exception_handler($ex)
  */
 function global_fatal_handler()
 {
-    if( !system_is_ajax_call() && function_exists('session_update') )
+    if( !Wdf::Request()->isAjax() && function_exists('session_update') )
         session_update();
 
 	$error = error_get_last();

@@ -184,7 +184,7 @@ class uiDatePicker extends uiControl
      */
     public static function PromoteDefaults(\ScavixWDF\Base\HtmlPage $page, $cultureInfo, $options = [])
     {
-        $cls = get_called_class();
+        $cls = \get_called_class();
         $temp = new $cls();
         $temp->SetCulture($cultureInfo);
         $def = json_encode(array_merge($temp->Options,$options));

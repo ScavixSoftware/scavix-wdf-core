@@ -94,7 +94,7 @@ class Logger
 
 	protected function __construct($config)
 	{
-		if( !is_array($config) )
+		if( !\is_array($config) )
 			$config = include($config);
 
         $config = array_merge([
@@ -109,13 +109,13 @@ class Logger
 		if( !$this->path )
 			$this->path = dirname(ini_get('error_log'))."/";
 
-		if( !is_object($this) || !isset($this) )
+		if( !\is_object($this) || !isset($this) )
 			error_log(getmypid()." STACK: ".var_export(debug_backtrace(),true));
 		$this->path = realpath($this->path);
 
 		if( isset($this->min_severity) )
 		{
-			$this->min_severity = constant("self::".$this->min_severity);
+			$this->min_severity = constant("self::{$this->min_severity}");
 			if( $this->min_severity == null )
 				unset($this->min_severity);
 		}
@@ -131,7 +131,7 @@ class Logger
 	 */
 	public static function Get($config)
 	{
-		if( count(self::$FilenamePatterns) == 0 )
+		if( \count(self::$FilenamePatterns) == 0 )
 		{
 			foreach( $_SERVER as $k=>$v )
 				self::$FilenamePatterns[$k] = $v;
@@ -166,7 +166,7 @@ class Logger
 			$this->filename = ini_get('error_log');
 		else
 		{
-			$this->filename = $this->path.'/'.$this->filename_pattern;
+			$this->filename = "{$this->path}/{$this->filename_pattern}";
 			if( !preg_match_all('/{(.+)}/U', $this->filename_pattern, $matches, PREG_SET_ORDER) )
 				return $touch();
 
@@ -175,14 +175,14 @@ class Logger
 				$k = $m[1];
 				$v = isset($this->$k)?$this->$k:"";
 				if( $v )
-					$this->filename = str_replace("{".$k."}","-".$v,$this->filename);
+					$this->filename = str_replace("{$k}","-$v",$this->filename);
 				else
 				{
 					$v = isset(self::$FilenamePatterns[$k])?self::$FilenamePatterns[$k]:"";
 					if( $v )
-						$this->filename = str_replace("{".$k."}","-".$v,$this->filename);
+						$this->filename = str_replace("{$k}","-$v",$this->filename);
 					else
-						$this->filename = str_replace("{".$k."}","",$this->filename);
+						$this->filename = str_replace("{$k}","",$this->filename);
 				}
 			}
 		}
@@ -207,12 +207,12 @@ class Logger
 
 		$ext = pathinfo($this->filename, PATHINFO_EXTENSION);
 
-		$archived = preg_replace('/.'.$ext.'$/',"_".date("Y-m-d-H-i-s").".$ext",$this->filename);
+		$archived = preg_replace("/.$ext\$/","_".date("Y-m-d-H-i-s").".$ext",$this->filename);
 		if(!@rename($this->filename,$archived))
 			return;
 
 		$source = $archived;
-		$archived = $archived.".gz";
+		$archived = "$archived.gz";
 
 		if($fp_out=gzopen($archived,'wb9'))
 		{
@@ -354,7 +354,7 @@ class Logger
 	 */
     function addCategory($name)
 	{
-		if( !in_array($name, $this->categories) )
+		if( !\in_array($name, $this->categories) )
 			$this->categories[] = $name;
 	}
 
@@ -366,7 +366,7 @@ class Logger
 	 */
     function hasCategory($name)
 	{
-		return in_array($name, $this->categories);
+		return \in_array($name, $this->categories);
 	}
 
 	/**

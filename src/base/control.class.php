@@ -31,6 +31,7 @@
 namespace ScavixWDF\Base;
 
 use ScavixWDF\Reflection\Attributes\Resource;
+use ScavixWDF\Wdf;
 use ScavixWDF\WdfException;
 
 /**
@@ -165,7 +166,7 @@ class Control extends Renderable
     function __toString()
     {
         $r = parent::__toString();
-        return $r." ".$this->__renderStructure([]);
+        return "$r ".$this->__renderStructure([]);
     }
 
 	/**
@@ -181,7 +182,7 @@ class Control extends Renderable
         $this->Tag = strtolower("$tag");
         $class = strtolower(get_class_simple($this));
 
-        if( $class != $this->Tag && $class != "control" )
+        if ($class != $this->Tag && $class != "control")
             $this->class = $class;
 	}
 
@@ -199,7 +200,7 @@ class Control extends Renderable
 
 	function __initialize($tag = "")
 	{
-		WdfException::Raise(get_class($this)," calling obsolete __initialize, please implement constructor!");
+		WdfException::Raise(\get_class($this)," calling obsolete __initialize, please implement constructor!");
 	}
 
 	/**
@@ -242,7 +243,7 @@ class Control extends Renderable
 		if( property_exists($this,$name) )
 			return true;
 
-		if( array_key_exists($name,$this->_attributes) )
+		if( \array_key_exists($name,$this->_attributes) )
 			return true;
 
 		return false;
@@ -276,7 +277,7 @@ class Control extends Renderable
 	 */
 	public static function Make(...$args)
     {
-		$className = get_called_class();
+		$className = \get_called_class();
 		$res = new $className(...$args);
 		return $res;
 	}
@@ -292,7 +293,7 @@ class Control extends Renderable
 	function css($name,$value)
 	{
 		$name = strtolower("$name");
-		$this->_css[$name] = ($name!='flex'&&is_numeric($value))?$value.'px':$value;
+        $this->_css[$name] = ($name != 'flex' && is_numeric($value)) ? "{$value}px" : $value;
 		return $this;
 	}
 
@@ -303,7 +304,7 @@ class Control extends Renderable
 	 */
 	protected function CloseTagNeeded()
 	{
-		return (isset(Control::$html_close_tag_needed[$this->Tag]) || (count($this->_content) > 0));
+		return (isset(Control::$html_close_tag_needed[$this->Tag]) || (\count($this->_content) > 0));
 	}
 
 	/**
@@ -346,15 +347,15 @@ class Control extends Renderable
 		if( $this->_skipRendering )
 			return;
 
-		if( count($args) > 0 && count($this->_script) > 0 )
+		if( \count($args) > 0 && \count($this->_script) > 0 )
 		{
 			$controller = $args[0];
-            if( is_null($controller) || ($this != $controller && !$this->isChildOf($controller)) )
+            if($controller === null || ($this != $controller && !$this->isChildOf($controller)) )
                 return;
 			if( method_exists($controller,'addDocReady') )
             {
 				$controller->addDocReady(implode("\n",$this->_script));
-                if( system_is_ajax_call() )
+                if( Wdf::Request()->isAjax() )
                     $this->_script = [];
             }
 		}
@@ -387,7 +388,7 @@ class Control extends Renderable
 		if( isset(Control::$html_skip_if_empty[$this->Tag]) )
 			if( trim(implode(" ",$content)) == "" )
 				return "";
-        $content = count($content)>0?implode("",$content):"";
+        $content = \count($content)>0?implode("",$content):"";
         if( !$this->Tag )
             return "$content";
 
@@ -405,8 +406,8 @@ class Control extends Renderable
 		foreach( $this->_css as $key=>$val )
 			$css[] = "$key:$val;";
 
-		$attr = count($attr)>0?" ".implode(" ",$attr):"";
-		$css = count($css)>0?" style=\"".implode(" ",$css)."\"":"";
+		$attr = \count($attr)>0?" ".implode(" ",$attr):"";
+		$css = \count($css)>0?" style=\"".implode(" ",$css)."\"":"";
 
         if( $content || $this->CloseTagNeeded() )
             return "<{$this->Tag}{$attr}{$css}>{$content}</{$this->Tag}>";
@@ -422,7 +423,7 @@ class Control extends Renderable
 		$content = Renderable::RenderTree($this->_content);
         $res = $this->__renderStructure($content);
 
-		if( system_is_ajax_call() && count($this->_script)>0 )
+		if( Wdf::Request()->isAjax() && \count($this->_script)>0 )
         {
             $scriptCode = "$('#{$this->id}').on('remove',function(){ $('[data-wdf-remove-with=\"{$this->id}\"]').remove(); });";
             $k = "k".md5($scriptCode);
@@ -442,7 +443,7 @@ class Control extends Renderable
 	 */
 	function addClass($class)
 	{
-        $class = is_array($class)?$class:explode(" ",$class);
+        $class = \is_array($class)?$class:explode(" ",$class);
         $class = array_merge(explode(" ","{$this->class}"),$class);
 		$this->class = trim(implode(" ",array_unique($class)));
 		return $this;
@@ -473,7 +474,7 @@ class Control extends Renderable
 	function setData($name,$value)
 	{
         log_warn("Control::setData is obsolete, use Control::data instead. Called from ".system_get_caller());
-		if( is_array($value) || is_object($value) )
+		if( \is_array($value) || \is_object($value) )
 			$this->_data_attributes[$name] = system_to_json($value);
 		else
 			$this->_data_attributes[$name] = $value;
@@ -516,14 +517,14 @@ class Control extends Renderable
 	 */
 	function data(...$args)
 	{
-        $cnt = count($args);
+        $cnt = \count($args);
 		switch( $cnt )
 		{
 			case 0:
 				return $this->_data_attributes;
 			case 1:
 				$name = $args[0];
-				if( is_array($name) )
+				if( \is_array($name) )
 				{
 					foreach( $name as $n=>$v )
 						$this->data($n,$v);
@@ -533,8 +534,8 @@ class Control extends Renderable
                     ?$this->_data_attributes[$name]
                     :null;
 			case 2:
-                list($name,$value) = $args;
-                if( is_array($value) || is_object($value) )
+                [$name, $value] = $args;
+                if( \is_array($value) || \is_object($value) )
                     $this->_data_attributes[$name] = system_to_json($value);
                 else
                     $this->_data_attributes[$name] = $value;
@@ -565,14 +566,14 @@ class Control extends Renderable
 	 */
 	function attr(...$args)
 	{
-		$cnt = count($args);
+		$cnt = \count($args);
 		switch( $cnt )
 		{
 			case 0:
 				return $this->_attributes;
 			case 1:
 				$name = $args[0];
-				if( is_array($name) )
+				if( \is_array($name) )
 				{
 					foreach( $name as $n=>$v )
 						$this->attr($n,$v);

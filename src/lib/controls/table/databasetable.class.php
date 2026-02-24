@@ -122,7 +122,7 @@ class DatabaseTable extends Table implements ICallable
             $logtimer = start_timer("[".\ScavixWDF\Model\ResultSet::MergeSql($this->DataSource,$sql,$prms)."]");
 
 		if( $this->ExecuteSqlHandler )
-			call_user_func($this->ExecuteSqlHandler,$this,$sql,$prms);
+			\call_user_func($this->ExecuteSqlHandler,$this,$sql,$prms);
 		else
 		{
 			if( $this->ItemsPerPage )
@@ -145,7 +145,7 @@ class DatabaseTable extends Table implements ICallable
 		}
         $this->TotalItems = $this->ResultSet?$this->ResultSet->GetpagingInfo('total_rows'):0;
 		if( $this->DataSource->ErrorMsg() )
-			log_error(get_class($this).": ".$this->DataSource->ErrorMsg());
+			log_error(\get_class($this).": ".$this->DataSource->ErrorMsg());
         elseif( isset($logtimer) )
             finish_timer($logtimer,$this->logIfSlow);
 	}
@@ -207,14 +207,14 @@ class DatabaseTable extends Table implements ICallable
         if( !$this->Limit )
             $this->Limit = $this->GetLimit();
 
-        if( is_array($this->Columns) )
+        if( \is_array($this->Columns) )
         {
             foreach( $this->Columns as $k=>$v )
                 if( !preg_match('/[^a-zA-Z0-9]/',$v) )
                     $this->Columns[$k] = "`$v`";
         }
 
-        $this->Columns = is_array($this->Columns)?implode(",",$this->Columns):$this->Columns;
+        $this->Columns = \is_array($this->Columns)?implode(",",$this->Columns):$this->Columns;
         $this->Join = $this->Join?$this->Join:"";
         $this->Where = $this->Where?$this->Where:"";
         $this->GroupBy = $this->GroupBy?$this->GroupBy:"";
@@ -574,7 +574,7 @@ class DatabaseTable extends Table implements ICallable
 		$max_cell = 0;
 		$ci = ExcelCulture::FromCode(isset($this->Culture) && $this->Culture ? $this->Culture->Code : 'en-US');
 		$head_rows = $this->_export_get_header();
-		$first_data_row = count($head_rows)+1;
+		$first_data_row = \count($head_rows)+1;
 
         if( !\PhpOffice\PhpSpreadsheet\Settings::setLocale($ci->Code) )
         if( !\PhpOffice\PhpSpreadsheet\Settings::setLocale($ci->LanguageCode) )
@@ -619,11 +619,11 @@ class DatabaseTable extends Table implements ICallable
         //     }
         // }
 
-		if(count($head_rows))
+		if(\count($head_rows))
         	$sheet->freezePane('A2');
         $sheet->setSelectedCell('A1');
 
-        if( isset(self::$export_def[$format]['metadata']) && is_array(self::$export_def[$format]['metadata']) )
+        if( isset(self::$export_def[$format]['metadata']) && \is_array(self::$export_def[$format]['metadata']) )
         {
             foreach( self::$export_def[$format]['metadata'] as $name=>$value )
             {
@@ -679,7 +679,7 @@ class DatabaseTable extends Table implements ICallable
 		header("Content-Type: $mime");
 		header("Content-Disposition: attachment; filename=\"".$filename."\";");
 		header("Content-Transfer-Encoding: binary");
-		header("Content-Length: ".strlen($csv));
+		header("Content-Length: ".\strlen($csv));
 		header('Expires: 0');
 		header('Pragma: public');
 		header('Cache-Control: must-revalidate, post-check=0, pre-check=0');

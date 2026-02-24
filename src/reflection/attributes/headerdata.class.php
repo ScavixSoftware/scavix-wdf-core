@@ -66,7 +66,7 @@ class HeaderData extends WdfAttribute implements IRequestAttribute
                 if (str_replace('-', '_', $header) == $this_header)
                 {
                     $result = $this->getDataFromString($this->pattern, $value,'.');
-                    if (count($result))
+                    if (\count($result))
                         return $result;
                 }
             }

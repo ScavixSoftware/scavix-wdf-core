@@ -41,55 +41,55 @@ class ExcelCulture extends CultureInfo
 	private static $FORMAT_MAP = [];
 
     public $LanguageCode;
-	
+
 	static function FromCode($code)
 	{
 		$res = new ExcelCulture();
 		$ci = Localization::getCultureInfo($code);
-		
+
 		foreach( get_object_vars($ci) as $prop=>$value )
 			$res->$prop = $value;
-	
+
         $res->LanguageCode = $ci->ResolveToLanguage()->Code;
-        
+
 		return $res;
 	}
-	
+
 	function FormatDate($date, $format_id = false, $convert_to_timezone = 'default')
 	{
 		$date = $this->_ensureTimeStamp($date);
 		return \PhpOffice\PhpSpreadsheet\Shared\Date::formattedPHPToExcel(date("Y",$date),date("m",$date),date("d",$date));
 	}
-	
+
 	function FormatTime($date, $format_id = false, $convert_to_timezone = 'default')
 	{
 		$date = $this->_ensureTimeStamp($date);
         $timeStart = new DateTime();
 		return fmod(\PhpOffice\PhpSpreadsheet\Shared\Date::PHPToExcel($timeStart->setTimestamp($date)),1);
 	}
-	
+
 	function FormatDateTime($date, $format_id = false, $convert_to_timezone = 'default')
 	{
 		$date = $this->_ensureTimeStamp($date);
         $timeStart = new DateTime();
 		return \PhpOffice\PhpSpreadsheet\Shared\Date::PHPToExcel($timeStart->setTimestamp($date));
 	}
-	
+
 	function FormatInt($number)
 	{
-		return intval($number);
+		return \intval($number);
 	}
-	
+
 	function FormatNumber($number, $decimals = false, $use_plain = false)
 	{
-		return doubleval($number);
+		return \doubleval($number);
 	}
-	
+
 	function FormatCurrency($amount, $use_plain = false, $only_value = false, $escape_group_separator = true)
 	{
-		return doubleval($amount);
+		return \doubleval($amount);
 	}
-	
+
 	function GetExcelFormat($cellformat)
 	{
 		$f = strtolower($cellformat->GetFormat());
@@ -145,7 +145,7 @@ class ExcelCulture extends CultureInfo
                 }
     			log_warn("Unknown column format: $f");
 				self::$FORMAT_MAP[$f] = \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_GENERAL;
-				break; 
+				break;
 		}
 		return self::$FORMAT_MAP[$f];
 	}

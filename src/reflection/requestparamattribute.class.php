@@ -59,7 +59,7 @@ class RequestParamAttribute extends WdfAttribute implements IRequestAttribute
         $this->Default = $default;
         $this->Filter = $filter;
 
-        if (!is_null($this->Type) && is_null($this->Filter))
+        if (!\is_null($this->Type) && \is_null($this->Filter))
         {
             switch (strtolower($this->Type))
             {
@@ -86,7 +86,7 @@ class RequestParamAttribute extends WdfAttribute implements IRequestAttribute
         $name = $GLOBALS['CONFIG']['requestparam']['ignore_case'] ? strtolower($this->Name) : $this->Name;
         if (isset($args[$name]))
             return;
-        if (!is_null($this->Default))
+        if (!\is_null($this->Default))
             $args[$this->Name] = $this->Default;
         elseif (($this instanceof RequestParamAttribute) || ($this instanceof RequestParam))
         {
@@ -115,7 +115,7 @@ class RequestParamAttribute extends WdfAttribute implements IRequestAttribute
 
         if (!isset($request_data[$name]))
             return [];
-        if (is_null($this->Type))
+        if (\is_null($this->Type))
             return [$this->Name => $request_data[$name]];
 
         switch (strtolower($this->Type))
@@ -126,13 +126,13 @@ class RequestParamAttribute extends WdfAttribute implements IRequestAttribute
                 return [$this->Name => restore_object($request_data[$name])];
             case 'array':
             case 'file':
-                if (isset($request_data[$name]) && is_array($request_data[$name]))
+                if (isset($request_data[$name]) && \is_array($request_data[$name]))
                     return [$this->Name => $request_data[$name]];
                 else
                     $this->returnError('invalid array value: ' . $request_data[$name]);
             case 'string':
             case 'text':
-                if (is_array($request_data[$name]))
+                if (\is_array($request_data[$name]))
                     return $this->returnError("invalid {$this->Type} value");
                 if ($this->Filter)
                     return [$this->Name => preg_replace('/\x00|<[^>]*>?/', '', "{$request_data[$name]}")];      // see https://stackoverflow.com/questions/69207368/constant-filter-sanitize-string-is-deprecated
@@ -145,9 +145,9 @@ class RequestParamAttribute extends WdfAttribute implements IRequestAttribute
                 return [$this->Name => filter_var($request_data[$name], FILTER_SANITIZE_URL)];
             case 'int':
             case 'integer':
-                if (intval($request_data[$name]) . "" != $request_data[$name])
+                if (\intval($request_data[$name]) . "" != $request_data[$name])
                     return $this->returnError('invalid int value: ' . $request_data[$name]);
-                return [$this->Name => intval($request_data[$name])];
+                return [$this->Name => \intval($request_data[$name])];
             case 'float':
             case 'double':
             case 'currency':

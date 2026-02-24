@@ -34,7 +34,7 @@ use ScavixWDF\Localization\CultureInfo;
 
 /**
  * Generic Argument wrapper class
- * 
+ *
  * Provides functionality to savely get values from the $_GET, $_POST,... superglobals.
  * Supports:
  * - GET
@@ -43,12 +43,12 @@ use ScavixWDF\Localization\CultureInfo;
  * - SERVER
  * - ENV
  * - SESSION
- * 
+ *
  * Use the shortcut methods if you want to query a specific (of the) variables (above).
  * Args::get(...), Args::post(...),...
  * You may use the Args::request method to query a mix of the superglobals defined by
- * the Args::setOrder() method (default is GPC -> Cookie overrides Post overrides Get). 
- * 
+ * the Args::setOrder() method (default is GPC -> Cookie overrides Post overrides Get).
+ *
  * See method commets for details.
  */
 class Args
@@ -57,16 +57,16 @@ class Args
 	private static $_order = "GPC";
 	private static $_buffer = [];
 	private static $_ci = null;
-	
+
 	/**
 	 * Returns a names variable
-	 * 
+	 *
 	 * Queries the Superglobals for a variable named $name and optionally filters it
 	 * for a specific type. Superglobals to be included in the query and their order
 	 * may be given optionally.
-	 * 
+	 *
 	 * For details on the possible values for $filter see Args::sanitize below.
-	 * 
+	 *
 	 * @param string $name Name of the variable, if false a list of keys in the requested array is returned
 	 * @param mixed $default Default value, null if none
 	 * @param string $order Specific Superglobals order. NULL if default shall be used. See setOrder for details
@@ -76,31 +76,31 @@ class Args
 	 */
 	public static function sanitized($name=false,$default=null,$order=null,$filter=null,$filter_options=null)
 	{
-		$order = is_null($order)?self::$_order:$order;
+		$order = \is_null($order)?self::$_order:$order;
 		if( !isset(self::$_buffer[$order]) )
 		{
 			self::$_buffer[$order] = [];
-			for($i=0;$i<strlen($order);$i++)
+			for($i=0;$i<\strlen($order);$i++)
 			{
 				switch( $order[$i] )
 				{
-					case "G": 
+					case "G":
 						self::$_buffer[$order] = array_merge(self::$_buffer[$order],self::$_ignore_case?array_change_key_case($_GET):$_GET);
 						break;
-					case "P": 
-						self::$_buffer[$order] = array_merge(self::$_buffer[$order],self::$_ignore_case?array_change_key_case($_POST):$_POST); 
+					case "P":
+						self::$_buffer[$order] = array_merge(self::$_buffer[$order],self::$_ignore_case?array_change_key_case($_POST):$_POST);
 						break;
-					case "C": 
-						self::$_buffer[$order] = array_merge(self::$_buffer[$order],self::$_ignore_case?array_change_key_case($_COOKIE):$_COOKIE); 
+					case "C":
+						self::$_buffer[$order] = array_merge(self::$_buffer[$order],self::$_ignore_case?array_change_key_case($_COOKIE):$_COOKIE);
 						break;
-					case "S": 
-						self::$_buffer[$order] = array_merge(self::$_buffer[$order],self::$_ignore_case?array_change_key_case($_SERVER):$_SERVER); 
+					case "S":
+						self::$_buffer[$order] = array_merge(self::$_buffer[$order],self::$_ignore_case?array_change_key_case($_SERVER):$_SERVER);
 						break;
-					case "E": 
-						self::$_buffer[$order] = array_merge(self::$_buffer[$order],self::$_ignore_case?array_change_key_case($_ENV):$_ENV); 
+					case "E":
+						self::$_buffer[$order] = array_merge(self::$_buffer[$order],self::$_ignore_case?array_change_key_case($_ENV):$_ENV);
 						break;
-					case "O": 
-						self::$_buffer[$order] = array_merge(self::$_buffer[$order],self::$_ignore_case?array_change_key_case($_SESSION):$_SESSION); 
+					case "O":
+						self::$_buffer[$order] = array_merge(self::$_buffer[$order],self::$_ignore_case?array_change_key_case($_SESSION):$_SESSION);
 						break;
 				}
 			}
@@ -110,14 +110,14 @@ class Args
 		if( self::$_ignore_case )
 			$name = strtolower("$name");
 		if( isset(self::$_buffer[$order][$name]) )
-			return is_null($filter)?self::$_buffer[$order][$name]:self::sanitize(self::$_buffer[$order][$name],$filter,$filter_options);
-		if( !is_null($default) )
-			return is_null($filter)?$default:self::sanitize($default,$filter,$filter_options);
+			return \is_null($filter)?self::$_buffer[$order][$name]:self::sanitize(self::$_buffer[$order][$name],$filter,$filter_options);
+		if( !\is_null($default) )
+			return \is_null($filter)?$default:self::sanitize($default,$filter,$filter_options);
 	}
-	
+
 	/**
 	 * Sets ignore case flag.
-	 * 
+	 *
 	 * If true, Args class will ignore the case of the argument names. If false will respect case.
 	 * @param bool $ignore true|false
 	 * @return void
@@ -128,10 +128,10 @@ class Args
 			self::$_buffer = [];
 		self::$_ignore_case = $ignore;
 	}
-	
+
 	/**
 	 * Clears all internal buffers.
-	 * 
+	 *
 	 * In some cases it may be usefule to let <Args> parse again instead of relying on previously calculated values.
 	 * @return void
 	 */
@@ -139,10 +139,10 @@ class Args
 	{
 		self::$_buffer = [];
 	}
-	
+
 	/**
 	 * Sets the default superglobal query range.
-	 * 
+	 *
 	 * Supported values and their meanings:
 	 * G - GET
 	 * P - POST
@@ -150,9 +150,9 @@ class Args
 	 * S - SERVER
 	 * E - ENV
 	 * O - SESSION (use O to have the S for PHP compatibility as it means SERVER there)
-	 * 
+	 *
 	 * Note: GPC is default. This will use Cookie before Post before Get, so order is reversed!
-	 * 
+	 *
 	 * @param string $order Order string (sample: GPCSEO)
 	 * @return void
 	 */
@@ -160,10 +160,10 @@ class Args
 	{
 		self::$_order = $order;
 	}
-	
+
 	/**
 	 * Sets a CultureInfo object.
-	 * 
+	 *
 	 * This is optional but will allow you to parse inputs correctly in a given
 	 * Cultures format. So if the user enters a number like this
 	 * 1,042.23 (one thousant fourty two point twenty three) this is US formatting
@@ -176,10 +176,10 @@ class Args
 	{
 		self::$_ci = $cultureInfo;
 	}
-	
+
 	/**
 	 * Performs value sanitation.
-	 * 
+	 *
 	 * Sanitizes a value with a given filter.
 	 * Valid values for $filter are all PHP defined FILTER_SANITIZE_* constants or a string value.
 	 * If $filter is one of those constants, $filter_options apply as in PHP documentation.
@@ -194,11 +194,11 @@ class Args
 	 * - 'object': Will treat the value as object and simply return it if it is one.
 	 *             May also be a string defining the storage_id of an object in object store.
 	 *             In that case restore_object($value) will be returned.
-	 * 
+	 *
 	 * Another note: sanitize will fill the log with messages severity WARN if something unexpected
 	 * happen. This is especially the case when default values are returned for invalid inputs.
 	 * So have an eye on the logs!
-	 * 
+	 *
 	 * @param mixed $value The value to be sanitized
 	 * @param string|int $filter Type of filter
 	 * @param mixed $filter_options Optional options for the filter
@@ -206,40 +206,40 @@ class Args
 	 */
 	public static function sanitize($value,$filter,$filter_options=null)
 	{
-		if( is_string($filter) )
+		if( \is_string($filter) )
 		{
 			$filter = strtoupper($filter);
 			switch( $filter )
 			{
-				case 'STRING': 
-				case 'TEXT': 
+				case 'STRING':
+				case 'TEXT':
 				case 'STRIPPED':
 				case 'VARCHAR':
 					return htmlspecialchars("$value");
-				case 'URL': 
-				case 'URI': 
+				case 'URL':
+				case 'URI':
 					return filter_var($value,FILTER_SANITIZE_URL);
-				case 'MAIL': 
-				case 'EMAIL': 
+				case 'MAIL':
+				case 'EMAIL':
 					$value = filter_var($value,FILTER_SANITIZE_EMAIL);
 					if( !preg_match("/^[a-zA-Z0-9,!#\$%&'\*\+\/=\?\^_`\{\|}~-]+(\.[a-zA-Z0-9,!#\$%&'\*\+\/=\?\^_`\{\|}~-]+)*@[a-zA-Z0-9-]+(\.[a-z0-9-]+)*\.([a-zA-Z]{2,})$/", $value) )
 					{
-						if( is_null($filter_options) || $filter_options=false )
+						if( \is_null($filter_options) || $filter_options=false )
 						{
 							log_warn("Invalid eMail address '$value'. Retuning empty string");
 							return "";
 						}
 					}
 					return $value;
-				case 'INT': 
-				case 'INTEGER': 
-					if( intval($value)."" == "$value" )
-						return intval($value);
+				case 'INT':
+				case 'INTEGER':
+					if( \intval($value)."" == "$value" )
+						return \intval($value);
 					log_warn("Value '$value' is no valid '$filter'. Returning 0");
 					return 0;
 				case 'BOOL':
 				case 'BOOLEAN':
-					if( is_string($value) )
+					if( \is_string($value) )
 						if( $value == '' || $value == '0' || strtolower("$value") == "false" )
 							return false;
 						else
@@ -247,27 +247,27 @@ class Args
 					return $value == true;
 				case 'FLOAT':
 				case 'DOUBLE':
-					if( is_string($value) && !is_null(self::$_ci) )
+					if( \is_string($value) && !\is_null(self::$_ci) )
 						return self::$_ci->NumberFormat->StrToNumber($value);
 					log_warn("No CultureInfo specified for '$filter'. Returning doubleval($value)");
-					return doubleval($value);
+					return \doubleval($value);
 				case 'CURRENCY':
-					if( is_string($value) && !is_null(self::$_ci) )
+					if( \is_string($value) && !\is_null(self::$_ci) )
 						return self::$_ci->CurrencyFormat->StrToCurrencyValue($value);
 					log_warn("No CultureInfo specified for '$filter'. Returning doubleval($value)");
-					return doubleval($value);
+					return \doubleval($value);
 				case 'ARRAY':
-					if( is_array($value) )
+					if( \is_array($value) )
 					{
-						if( !is_null($filter_options) )
+						if( !\is_null($filter_options) )
 						{
-							if( is_string($filter_options) )
+							if( \is_string($filter_options) )
 							{
 								foreach( $value as $k=>$v )
 									$value[$k] = self::sanitize($v,"$filter_options");
 								return $value;
 							}
-							if( is_array($filter_options) )
+							if( \is_array($filter_options) )
 							{
 								foreach( $value as $k=>$v )
 									if( isset($filter_options[$k]) )
@@ -282,9 +282,9 @@ class Args
 					log_warn("Value is no array. Returning empty array");
 					return [];
 				case 'OBJECT':
-					if( is_string($value) && in_object_storage($value) )
+					if( \is_string($value) && in_object_storage($value) )
 						return restore_object($value);
-					if( is_object($value) )
+					if( \is_object($value) )
 						return $value;
 					log_warn("Value is not an object nor in session storage. Returning NULL");
 					return null;
@@ -294,7 +294,7 @@ class Args
 		}
 		return filter_var($value,$filter,$filter_options);
 	}
-	
+
 	/**
 	 * @shortcut To access ENV values.
 	 */
@@ -302,7 +302,7 @@ class Args
 	{
 		return self::sanitized($name,$default,"E",$filter,$filter_options);
 	}
-	
+
 	/**
 	 * @shortcut To access GET values.
 	 */
@@ -310,7 +310,7 @@ class Args
 	{
 		return self::sanitized($name,$default,"G",$filter,$filter_options);
 	}
-	
+
 	/**
 	 * @shortcut To access POST values.
 	 */
@@ -318,7 +318,7 @@ class Args
 	{
 		return self::sanitized($name,$default,"P",$filter,$filter_options);
 	}
-	
+
 	/**
 	 * @shortcut To access COOKIE values.
 	 */
@@ -326,7 +326,7 @@ class Args
 	{
 		return self::sanitized($name,$default,"C",$filter,$filter_options);
 	}
-	
+
 	/**
 	 * @shortcut To access SERVER values.
 	 */
@@ -334,7 +334,7 @@ class Args
 	{
 		return self::sanitized($name,$default,"S",$filter,$filter_options);
 	}
-	
+
 	/**
 	 * @shortcut To access SESSION values.
 	 */
@@ -342,20 +342,20 @@ class Args
 	{
 		return self::sanitized($name,$default,"O",$filter,$filter_options);
 	}
-	
+
 	/**
 	 * @shortcut To access REQUEST values.
-	 * 
+	 *
 	 * Uses the default (or set via setOrder) superglobal query order.
 	 */
 	public static function request($name=false,$default=null,$filter=null,$filter_options=null)
 	{
 		return self::sanitized($name,$default,null,$filter,$filter_options);
 	}
-	
+
 	/**
 	 * Strips given tags from request data.
-	 * 
+	 *
 	 * @return void
 	 */
 	public static function strip_tags()
@@ -367,7 +367,7 @@ class Args
 		self::array_strip_tags($_COOKIE);
 		$_REQUEST = array_merge($_GET, $_POST, $_COOKIE);
 	}
-	
+
    /**
 	* @private
 	* See http://www.php.net/manual/en/function.strip-tags.php#93567
@@ -378,9 +378,9 @@ class Args
 	   if( !$tags )
 		   return;
 
-	   $size = sizeof($tags);
+	   $size = \sizeof($tags);
 	   $keys = array_keys($tags);
-	   $paramsize = sizeof($params);
+	   $paramsize = \sizeof($params);
 	   $paramkeys = array_keys($params);
 
 	   for ($j=0; $j<$paramsize; $j++)
@@ -388,12 +388,12 @@ class Args
 		   for ($i=0; $i<$size; $i++)
 		   {
 			   $tag = $tags[$keys[$i]];
-			   if(is_string($params[$paramkeys[$j]]))
+			   if(\is_string($params[$paramkeys[$j]]))
 			   {
 				   if(stripos($params[$paramkeys[$j]], $tag) !== false)
 					   $params[$paramkeys[$j]] = preg_replace('#</?'.$tag.'[^>]*>#is', '', $params[$paramkeys[$j]]);
 			   }
-			   elseif(is_array($params[$paramkeys[$j]]))
+			   elseif(\is_array($params[$paramkeys[$j]]))
 				   Args::array_strip_tags($params[$paramkeys[$j]]);
 		   }
 	   }

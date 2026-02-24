@@ -59,7 +59,7 @@ class CellFormat
 	{
 		if( $format !== false )
 		{
-			if( is_string($format) )
+			if( \is_string($format) )
 			{
 				switch( strtolower($format) )
 				{
@@ -84,7 +84,7 @@ class CellFormat
 	 */
 	function GetFormat()
 	{
-		if( is_array($this->format) )
+		if( \is_array($this->format) )
 			list($format,$options) = $this->format;
 		else
 			$format = $this->format;
@@ -117,7 +117,7 @@ class CellFormat
     {
         if( is_numeric($val) )
             return 0+$val;
-        if( count(explode(",","$val")) == 2 )
+        if( \count(explode(",","$val")) == 2 )
             return $this->getNumeric(str_replace(",", ".", $val));
         return false;
     }
@@ -137,14 +137,14 @@ class CellFormat
 		if( !$this->format )
 			return $full_content;
 
-        if( is_array($this->format) )
+        if( \is_array($this->format) )
 		{
             $format = strtolower($this->format[0]);
-            $options = array_slice($this->format,1);
-			if(!is_array($options))
+            $options = \array_slice($this->format,1);
+			if(!\is_array($options))
 				$options = [$options];
 		}
-        elseif(is_callable($this->format) && !in_array($this->format, ['duration', 'fixed', 'pre', 'preformatted', 'date', 'time', 'datetime', 'currency', 'int', 'integer', 'percent', 'float', 'double', 'custom']))
+        elseif(is_callable($this->format) && !\in_array($this->format, ['duration', 'fixed', 'pre', 'preformatted', 'date', 'time', 'datetime', 'currency', 'int', 'integer', 'percent', 'float', 'double', 'custom']))
         {
             $cb = $this->format;
             return $cb($full_content);
@@ -154,23 +154,23 @@ class CellFormat
 
 		if( $format == 'duration' )
 		{
-			if( intval($content)."" != $content && doubleval($content)."" != $content )
+			if( \intval($content)."" != $content && \doubleval($content)."" != $content )
 				return $full_content;
 
-            $completedur = $dur = intval($content);
-			$s = sprintf("%02u",$dur % 60);
+            $completedur = $dur = \intval($content);
+			$s = \sprintf("%02u",$dur % 60);
 			$dur = floor($dur / 60);
 			$h = floor($dur / 60);
 			if( $completedur == 0 )
 				$content = "0:00";
 			elseif( $h > 0 )
 			{
-				$m = sprintf("%02u",$dur % 60);
+				$m = \sprintf("%02u",$dur % 60);
 				$content = str_replace($content,"$h:$m:$s",$full_content);
 			}
 			else
 			{
-				$m = sprintf("%u",$dur % 60);
+				$m = \sprintf("%u",$dur % 60);
 				$content = str_replace($content,"$m:$s",$full_content);
 			}
 		}
@@ -212,7 +212,7 @@ class CellFormat
 					$v = $this->getNumeric($content);
                     if( $v === false ) return $full_content;
                     if(isset($options[0]))
-                        $content = str_replace($content,$culture->FormatNumber($v,intval($options[0])).'%',$full_content);
+                        $content = str_replace($content,$culture->FormatNumber($v,\intval($options[0])).'%',$full_content);
                     else
                         $content = str_replace($content,$culture->FormatNumber($v).'%',$full_content);
 					break;
@@ -221,17 +221,17 @@ class CellFormat
 					$v = $this->getNumeric($content);
                     if( $v === false ) return $full_content;
                     if(isset($options[0]))
-                        $content = str_replace($content,$culture->FormatNumber($v,intval($options[0])),$full_content);
+                        $content = str_replace($content,$culture->FormatNumber($v,\intval($options[0])),$full_content);
                     else
                         $content = str_replace($content,$culture->FormatNumber($v),$full_content);
 					break;
                 case 'custom':
-                    $content = str_replace($content,sprintf($options[0],$content),$full_content);
+                    $content = str_replace($content,\sprintf($options[0],$content),$full_content);
                     break;
 			}
 		}
 		else
-			$content = str_replace($content,sprintf($format,$content),$full_content);
+			$content = str_replace($content,\sprintf($format,$content),$full_content);
 
 		return $content;
 	}
@@ -248,12 +248,12 @@ class CellFormat
 			{
 				case 'neg':
 				case 'negative':
-					if( floatval($content) < 0 )
+					if( \floatval($content) < 0 )
 						return $css;
 					break;
 				case 'pos':
 				case 'positive':
-					if( floatval($content) > 0 )
+					if( \floatval($content) > 0 )
 						return $css;
 					break;
 				case 'copy':
@@ -262,27 +262,27 @@ class CellFormat
 					if( !preg_match('/(.+)\((\d+)\)/', $cond, $m) )
 						break;
 
-					$v = intval($m[2]);
+					$v = \intval($m[2]);
 					switch( $m[1] )
 					{
 						case 'gt':
-							if( floatval($content) > $v )
+							if( \floatval($content) > $v )
 								return $css;
 							break;
 						case 'gte':
-							if( floatval($content) >= $v )
+							if( \floatval($content) >= $v )
 								return $css;
 							break;
 						case 'lt':
-							if( floatval($content) < $v )
+							if( \floatval($content) < $v )
 								return $css;
 							break;
 						case 'lte':
-							if( floatval($content) <= $v )
+							if( \floatval($content) <= $v )
 								return $css;
 							break;
 						case 'eq':
-							if( floatval($content) == $v )
+							if( \floatval($content) == $v )
 								return $css;
 							break;
 					}

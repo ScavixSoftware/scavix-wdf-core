@@ -55,7 +55,7 @@ class SelectQuery extends Query
 
 	function setResultFields($fields_as_array_or_commaseparated)
 	{
-		$cols = is_array($fields_as_array_or_commaseparated)
+		$cols = \is_array($fields_as_array_or_commaseparated)
 			?implode(",",$fields_as_array_or_commaseparated)
 			:$fields_as_array_or_commaseparated;
 		$this->_initialSequence = str_replace("*",$cols,$this->_initialSequence);
@@ -63,7 +63,7 @@ class SelectQuery extends Query
 
 	protected function __generateSql()
 	{
-		if( count($this->_knownmodels) > 0 )
+		if( \count($this->_knownmodels) > 0 )
 		{
 			$this->__fqFields($this->_groupBy);
 			$this->__fqFields($this->_orderBy);
@@ -74,7 +74,7 @@ class SelectQuery extends Query
 
 		$sql = parent::__generateSql();
 
-		if( count($this->_join) > 0 )
+		if( \count($this->_join) > 0 )
 		{
 			//debug($this->_join);
 			$tmp = [];
@@ -83,7 +83,7 @@ class SelectQuery extends Query
 			$sql = implode(" ",$tmp)." ".$sql;
 		}
 
-		if( count($this->_groupBy) > 0 )
+		if( \count($this->_groupBy) > 0 )
 		{
 			$tmp = [];
 			foreach( $this->_groupBy as $g )
@@ -95,7 +95,7 @@ class SelectQuery extends Query
 		if( $this->_having instanceof ConditionTree )
 			$sql .= $this->_having->__generateSql();
 
-		if( count($this->_orderBy) > 0 )
+		if( \count($this->_orderBy) > 0 )
 		{
 			$tmp = [];
 			foreach( $this->_orderBy as $k=>$d )
@@ -107,7 +107,7 @@ class SelectQuery extends Query
 			$sql .= "/*BEG-ORDER*/ORDER BY ".implode(",",$tmp)."/*END-ORDER*/";
 		}
 
-		if( count($this->_limit) > 0 )
+		if( \count($this->_limit) > 0 )
 		{
 			$sql .= "/*BEG-LIMIT*/LIMIT {$this->_limit[0]},{$this->_limit[1]}/*END-LIMIT*/";
             // $sql .= " LIMIT {$this->_limit[0]},{$this->_limit[1]}";

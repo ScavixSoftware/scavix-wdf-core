@@ -23,10 +23,6 @@
  */
 namespace ScavixWDF\Reflection\Attributes;
 
-use Attribute;
-use ScavixWDF\IRequestAttribute;
-use ScavixWDF\Reflection\WdfAttribute;
-
 /**
  * Holds some common methods useful in RequestAttribute classes.
  */
@@ -47,7 +43,7 @@ trait RequestAttributeCommons
 
     protected function setDefaults(array $defaults)
     {
-        if (count(array_filter(array_keys($defaults), 'is_numeric')))
+        if (\count(array_filter(array_keys($defaults), 'is_numeric')))
             log_warn("[{$this->path}] Invalid defaults, please use named arguments: ", $defaults);
         else
             $this->defaults = $defaults;
@@ -62,7 +58,7 @@ trait RequestAttributeCommons
     {
         $this->detectedNames = [];
         $parts = [];
-        foreach (preg_split("/({[a-z0-9_]+})/i", $path_definition, -1, PREG_SPLIT_DELIM_CAPTURE) as $part)
+        foreach (\preg_split("/({[a-z0-9_]+})/i", $path_definition, -1, PREG_SPLIT_DELIM_CAPTURE) as $part)
         {
             if (!empty($part) && $part[0] == '{')
             {
@@ -80,17 +76,17 @@ trait RequestAttributeCommons
         }
         $this->regex = "/^" . implode("", $parts) . "$/i";
 
-        $defaults = array_intersect_key($this->defaults, $this->detectedNames);
-        $diff = array_diff_key($this->defaults, $defaults);
-        if (count($diff))
+        $defaults = \array_intersect_key($this->defaults, $this->detectedNames);
+        $diff = \array_diff_key($this->defaults, $defaults);
+        if (\count($diff))
         {
             $this->_error = "wrong default values: " . json_encode($diff);
             $this->defaults = $defaults;
         }
 
         // log_debug("regex: ",$this->regex,"datastring $data_string");
-        if (preg_match($this->regex, $data_string, $matches) === false)
+        if (\preg_match($this->regex, $data_string, $matches) === false)
             return [];
-        return array_intersect_key($matches, $this->detectedNames);
+        return \array_intersect_key($matches, $this->detectedNames);
     }
 }

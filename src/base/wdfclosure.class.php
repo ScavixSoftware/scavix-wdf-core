@@ -96,7 +96,7 @@ class WdfClosure
             }
             elseif ($start)
             {
-                $end = $t->pos + strlen("{$t->text}");
+                $end = $t->pos + \strlen("{$t->text}");
                 if ($t->text == $brackets[0])
                     $d++;
                 elseif ($t->text == $brackets[1])

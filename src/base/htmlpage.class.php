@@ -79,14 +79,14 @@ class HtmlPage extends Template implements ICallable
      */
     public static function AddPolyfills($pf)
     {
-        if( is_string($pf) )
+        if( \is_string($pf) )
             $pf = explode(",", str_replace([' ','|'],[',',','],$pf));
         self::$POLYFILLS = array_merge(self::$POLYFILLS,$pf);
     }
 
     function __toString()
     {
-        return "{$this->_storage_id} [".get_class($this)."]";
+        return "{$this->_storage_id} [".\get_class($this)."]";
     }
 
 	/**
@@ -176,7 +176,7 @@ class HtmlPage extends Template implements ICallable
                 log_warn('"render_noscript" config is deprecated, use HtmlPage::$RENDER_NOSCRIPT instead');
 
             self::$_renderingRoot = $this;
-            execute_hooks(HOOK_PRE_RENDER, array($this));
+            execute_hooks(HOOK_PRE_RENDER, [$this]);
 
             $init_data = $this->wdf_settings;
             $init_data['request_id'] = request_id();
@@ -353,7 +353,7 @@ class HtmlPage extends Template implements ICallable
 	 */
 	function addDocReady($js_code,$jq_wrapped=true)
 	{
-		if( is_array($js_code) )
+		if( \is_array($js_code) )
 			$js_code = implode("\n",$js_code);
 		if( !trim($js_code) )
 			return $this;

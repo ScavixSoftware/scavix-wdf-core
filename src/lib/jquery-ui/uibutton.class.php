@@ -29,13 +29,13 @@ namespace ScavixWDF\JQueryUI;
 
 /**
  * Wrapper around jQueryUI Butto
- * 
+ *
  * See http://jqueryui.com/button/
  */
 class uiButton extends uiControl
 {
 	private $_icon;
-	
+
 	/**
 	 * @param string $text Label
 	 * @param string $icon Valid <uiControl::Icon>
@@ -45,15 +45,15 @@ class uiButton extends uiControl
 		parent::__construct("button");
 		if( $icon )
 			$this->_icon = self::Icon($icon);
-		
+
 		$this->type = "button";
 		if( $text )
 			$this->content($text);
 	}
-	
+
 	/**
 	 * Overrides <Control::Make> with own logic.
-	 * 
+	 *
 	 * @deprecated (2022/07) Use <uiButton::Textual> instead
 	 * @param string $label Label
 	 * @param string $onclick OnClick JS code
@@ -64,15 +64,15 @@ class uiButton extends uiControl
         log_debug(__METHOD__,"Deprecated. Use uiButton::Textual instead");
         $label = isset($args[0])?$args[0]:'';
         $onclick = isset($args[1])?$args[1]:'';
-        
+
 		$res = new uiButton($label);
 		if( $onclick ) $res->onclick = $onclick;
 		return $res;
 	}
-    
+
     /**
 	 * Button creation shortcut
-	 * 
+	 *
 	 * @param string $label Label
 	 * @param string $onclick OnClick JS code
 	 * @return uiButton The new button
@@ -83,10 +83,10 @@ class uiButton extends uiControl
 		if( $onclick ) $res->onclick = $onclick;
 		return $res;
 	}
-	
+
 	/**
 	 * Sets the <uiButton>s icon.
-	 * 
+	 *
 	 * @param string $icon Valid <uiControl::Icon>
 	 * @return static
 	 */
@@ -101,20 +101,20 @@ class uiButton extends uiControl
 	 */
 	function PreRender($args=[])
 	{
-		if( count($args) > 0 )
+		if( \count($args) > 0 )
 		{
 			if(isset($this->_icon))
 				$this->opt('icons',array('primary'=>"ui-icon-".$this->_icon));
-			
-			if( count($this->_content)==0 )
+
+			if( \count($this->_content)==0 )
 				$this->opt('text',false);
 		}
 		return parent::PreRender($args);
 	}
-	
+
 	/**
 	 * Creates javascript code to redirect elsewhere on button click.
-	 * 
+	 *
  	 * @param mixed $controller The controller to be loaded (can be <Renderable> or string)
 	 * @param string $method The method to be executed
 	 * @param array|string $data Optional data to be passed

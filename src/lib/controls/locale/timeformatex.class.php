@@ -87,7 +87,7 @@ class TimeFormatEx extends Control
 	{
 		$value = time();
 		if( $json_dtf )
-			list($date_format,$time_format) = json_decode($json_dtf);
+            [$date_format, $time_format] = json_decode($json_dtf);
 
 		$ci = Localization::getCultureInfo($this->culture_code);
 		if(!$ci)

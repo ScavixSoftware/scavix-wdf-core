@@ -90,14 +90,14 @@ class ResultSet implements Iterator, ArrayAccess, \Serializable
 	 */
 	public static function MergeSql($ds,$sql,$arguments)
 	{
-		if( is_array($arguments) )
+		if( \is_array($arguments) )
         {
             $hasqm = ( stripos($sql,"?") !== false );
 			foreach( $arguments as $n => $a )
 			{
                 $args = [];
                 foreach( force_array($a,false) as $arg )
-                    $args[] = is_null($arg)?"null":((is_numeric($arg) && !starts_with("$arg",'0') && (strpos($arg, '+') === false)) ?"$arg":"'".$ds->EscapeArgument("$arg")."'");
+                    $args[] = \is_null($arg)?"null":((is_numeric($arg) && !starts_with("$arg",'0') && (strpos($arg, '+') === false)) ?"$arg":"'".$ds->EscapeArgument("$arg")."'");
                 $a = implode(",",$args);
 				if($hasqm)
 					$sql = preg_replace('/\?/', $a, $sql, 1);
@@ -150,7 +150,7 @@ class ResultSet implements Iterator, ArrayAccess, \Serializable
 	public function LogDebug($label='')
 	{
         if( $label ) $label = "$label\n";
-        if( $this->_arguments_used && count($this->_arguments_used) )
+        if( $this->_arguments_used && \count($this->_arguments_used) )
             log_debug("{$label}SQL   : ".$this->_sql_used."\nARGS  : ".json_encode($this->_arguments_used)."\nMERGED: ".SqlFormatter::format(ResultSet::MergeSql($this->_ds,$this->_sql_used,$this->_arguments_used),false));
         else
             log_debug("{$label}SQL: ".SqlFormatter::format($this->_sql_used, false));
@@ -207,11 +207,11 @@ class ResultSet implements Iterator, ArrayAccess, \Serializable
 			elseif (strpos($sql, $n) === false)
 				continue;
 
-			if (is_integer($v))
+			if (\is_integer($v))
 				$this->bindValue($n, $v, PDO::PARAM_INT);
 			elseif ($v instanceof DateTime)
 				$this->bindValue($n, $v->format("Y-m-d H:i:s"));
-			elseif (is_string($v))
+			elseif (\is_string($v))
 				$this->bindValue($n, $v, PDO::PARAM_STR);
 			else
 				$this->bindValue($n, $v);
@@ -320,7 +320,7 @@ class ResultSet implements Iterator, ArrayAccess, \Serializable
 			$this->_arguments_used = [];
 		$this->_arguments_used[$parameter] = $value;
 
-        if( is_null($data_type) )
+        if( \is_null($data_type) )
 			return $this->_stmt->bindValue($parameter, $value);
 		else
 			return $this->_stmt->bindValue($parameter, $value, $data_type);
@@ -337,13 +337,13 @@ class ResultSet implements Iterator, ArrayAccess, \Serializable
 	 */
 	function execute($input_parameters = null)
 	{
-		if( !is_null($input_parameters) && !is_array($input_parameters) )
+		if( !\is_null($input_parameters) && !\is_array($input_parameters) )
 			$input_parameters = [$input_parameters];
 
 		$this->_sql_used = $this->_stmt->queryString;
-		if( !is_null($input_parameters) )
+		if( !\is_null($input_parameters) )
 		{
-			if( is_null($this->_arguments_used) )
+			if( \is_null($this->_arguments_used) )
 				$this->_arguments_used = $input_parameters;
 			else
 				$this->_arguments_used = array_merge($this->_arguments_used,$input_parameters);
@@ -357,7 +357,7 @@ class ResultSet implements Iterator, ArrayAccess, \Serializable
         {
             try
             {
-                if( is_null($input_parameters) )
+                if( \is_null($input_parameters) )
                     $result = $this->_stmt->execute();
                 else
                     $result = $this->_stmt->execute($input_parameters);
@@ -400,7 +400,7 @@ class ResultSet implements Iterator, ArrayAccess, \Serializable
     function fetch(?int $mode = null, ?int $cursorOrientation = null, ?int $cursorOffset = null)
 	{
 		$this->_data_fetched = true;
-		if( $this->_index < (count($this->_rowbuffer)-1) )
+		if( $this->_index < (\count($this->_rowbuffer)-1) )
 		{
 			$this->_index++;
 			$this->_current = $this->_rowbuffer[$this->_index];
@@ -416,13 +416,13 @@ class ResultSet implements Iterator, ArrayAccess, \Serializable
 			$mode = $this->FetchMode;
 
 		$this->_current = $this->_stmt->fetch(
-            is_null($mode)?PDO::FETCH_DEFAULT:$mode,
-            is_null($cursorOrientation)?PDO::FETCH_ORI_NEXT:$cursorOrientation,
-            is_null($cursorOffset)?0:$cursorOffset
+            \is_null($mode)?PDO::FETCH_DEFAULT:$mode,
+            \is_null($cursorOrientation)?PDO::FETCH_ORI_NEXT:$cursorOrientation,
+            \is_null($cursorOffset)?0:$cursorOffset
         );
 		if( $this->_current !== false )
 		{
-			$this->_index = count($this->_rowbuffer);
+			$this->_index = \count($this->_rowbuffer);
 			$this->_rowbuffer[] = $this->_current;
 		}
 		return $this->_current;
@@ -456,9 +456,9 @@ class ResultSet implements Iterator, ArrayAccess, \Serializable
 		}
 
 		// weird calling because PHP doesnt know the nullarray type so we cannot just put null valued arguments to the parent
-		if( is_null($ctor_args) )
-			if( is_null($column_index) )
-				if( is_null($fetch_style) )
+		if( \is_null($ctor_args) )
+			if( \is_null($column_index) )
+				if( \is_null($fetch_style) )
 					$this->_rowbuffer = $this->_stmt->fetchAll();
 				else
 					$this->_rowbuffer = $this->_stmt->fetchAll($fetch_style);
@@ -467,7 +467,7 @@ class ResultSet implements Iterator, ArrayAccess, \Serializable
 		else
 			$this->_rowbuffer = $this->_stmt->fetchAll($fetch_style, $column_index, $ctor_args);
 
-		if( count($this->_rowbuffer) > 0 )
+		if( \count($this->_rowbuffer) > 0 )
 		{
 			$this->_index = 0;
 			$this->_current = $this->_rowbuffer[$this->_index];
@@ -476,7 +476,7 @@ class ResultSet implements Iterator, ArrayAccess, \Serializable
 		// call init method on objects after they are loaded. Other methods do not work as documented :(
 		if( $fetch_style == PDO::FETCH_CLASS )
 		{
-			$cnt = count($this->_rowbuffer);
+			$cnt = \count($this->_rowbuffer);
 			for( $i=0; $i<$cnt; $i++ )
 			{
 				$this->_rowbuffer[$i]->__constructed($this->_ds);
@@ -555,7 +555,7 @@ class ResultSet implements Iterator, ArrayAccess, \Serializable
         {
             if( !$this->_ds || !$this->_ds->Driver )
                 return $key?0:[];
-            $args = is_null($this->_arguments_used)?null:array_clean_assoc_or_sequence($this->_arguments_used);
+            $args = \is_null($this->_arguments_used)?null:array_clean_assoc_or_sequence($this->_arguments_used);
 			$this->_paging_info = $this->_ds->Driver->getPagingInfo($this->_stmt->queryString,$args);
         }
 		if( $key && isset($this->_paging_info[$key]) )
@@ -581,16 +581,16 @@ class ResultSet implements Iterator, ArrayAccess, \Serializable
 		if( !$this->_data_fetched )
 			$this->fetchAll();
 		$res = [];
-		if( is_integer($column_name) && count($this->_rowbuffer)>0 )
+		if( \is_integer($column_name) && \count($this->_rowbuffer)>0 )
 		{
 			$temp = array_keys($this->_rowbuffer[0]);
 			$column_name = $temp[$column_name];
 		}
 		foreach( $this->_rowbuffer as $row )
 		{
-			if( $distinct && in_array($row[$column_name], $res) )
+			if( $distinct && \in_array($row[$column_name], $res) )
                 continue;
-			if( $key_column_name && is_string($key_column_name) )
+			if( $key_column_name && \is_string($key_column_name) )
                 $res[$row[$key_column_name]] = $row[$column_name];
             else
                 $res[] = $row[$column_name];
@@ -611,7 +611,7 @@ class ResultSet implements Iterator, ArrayAccess, \Serializable
 		if( !$this->_data_fetched )
 			$this->fetchAll();
 
-		$cnt = count($this->_rowbuffer);
+		$cnt = \count($this->_rowbuffer);
 		if( $cnt > 0 )
 		{
 			for($i=0; $i<$cnt; $i++)
@@ -649,7 +649,7 @@ class ResultSet implements Iterator, ArrayAccess, \Serializable
                 try
                 {
                     $stmt = $this->_pdo->prepare("SELECT count(*) FROM( {$this->_sql_used} ) as x");
-                    $args = is_null($this->_arguments_used) ? null : array_clean_assoc_or_sequence($this->_arguments_used);
+                    $args = \is_null($this->_arguments_used) ? null : array_clean_assoc_or_sequence($this->_arguments_used);
                     $stmt->execute($args);
                     $this->_rowCount = $stmt->finishScalar();
                 }

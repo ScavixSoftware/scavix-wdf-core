@@ -89,11 +89,11 @@ class uiDialog extends uiControl
 	 */
 	function PreRender($args=[])
 	{
-		if( count($args) > 0 )
+		if( \count($args) > 0 )
 		{
 			$controller = &$args[0];
 			// just to render close button with the right id
-			if( !is_null($this->CloseButton) )
+			if( !\is_null($this->CloseButton) )
 			{
 				$temp = [$this->CloseButton => $this->CloseButtonAction];
 				$this->Buttons = array_merge($this->Buttons, $temp);

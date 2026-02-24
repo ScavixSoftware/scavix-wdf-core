@@ -86,7 +86,7 @@ class Query
     {
         if( $this->argNameCounter > 99 && $this->argNameLength == 2 )
         {
-            $this->argNamePrefix = chr(ord($this->argNamePrefix) + 1);
+            $this->argNamePrefix = \chr(\ord($this->argNamePrefix) + 1);
             $this->argNameCounter = 0;
             if( $this->argNamePrefix == 'z' )
                 $this->argNameLength = 9;
@@ -123,7 +123,7 @@ class Query
 	{
 		$sql = $injected_sql?$injected_sql:$this->__toString();
 		if( $injected_arguments )
-            $this->_values = is_array($injected_arguments)?$injected_arguments:[$injected_arguments];
+            $this->_values = \is_array($injected_arguments)?$injected_arguments:[$injected_arguments];
         else
             $this->_values = $this->_where->__getArgs();
 
@@ -134,7 +134,7 @@ class Query
             // log_debug("Query:",$this);
 			WdfDbException::RaiseStatement($this->_statement);
         }
-		$res = $this->_statement->fetchAll(PDO::FETCH_CLASS,get_class($this->_object),$ctor_args);
+		$res = $this->_statement->fetchAll(PDO::FETCH_CLASS,\get_class($this->_object),$ctor_args);
 		return $res;
 	}
 
@@ -149,7 +149,7 @@ class Query
 	{
 		if( !$property )
 			return;
-		if( !is_array($property) )
+		if( !\is_array($property) )
 			$property->__fqFields($this->_knownmodels);
 		else
 			foreach( $property as &$p )
@@ -159,7 +159,7 @@ class Query
 
 	protected function __generateSql()
 	{
-		if( count($this->_knownmodels) > 0 )
+		if( \count($this->_knownmodels) > 0 )
 			$this->__fqFields($this->_where);
 		$sql = $this->_where->__generateSql();
 		return $sql;
@@ -303,20 +303,20 @@ class Query
 
 	public function in($property,$values)
 	{
-		if( count($values) == 0 )
+		if( \count($values) == 0 )
 			return;
         $args = [];
-        foreach( is_array($values)?$values:[$values]  as $value )
+        foreach( \is_array($values)?$values:[$values]  as $value )
             $args[] = new ConditionArgument($this->argName(), $value);
         $this->__conditionTree()->Add(new Condition('IN', $property, $args));
 	}
 
 	public function notIn($property,$values)
 	{
-		if( count($values) == 0 )
+		if( \count($values) == 0 )
 			return;
         $args = [];
-        foreach( is_array($values)?$values:[$values]  as $value )
+        foreach( \is_array($values)?$values:[$values]  as $value )
             $args[] = new ConditionArgument($this->argName(), $value);
         $this->__conditionTree()->Add(new Condition('NOT IN', $property, $args));
 	}
@@ -376,13 +376,13 @@ class ConditionTree
 
 	function __generateSql()
 	{
-		if( count($this->_conditions) < 1 )
+		if( \count($this->_conditions) < 1 )
 			return "";
 
 		$sql = [];
 		foreach( $this->_conditions as $c )
 		{
-			if( is_string($c) )
+			if( \is_string($c) )
 				$s = $c;
 			elseif( $c instanceof Condition )
 				$s = $c->__toSql();
@@ -391,11 +391,11 @@ class ConditionTree
 			if( $s )
 				$sql[] = $s;
 		}
-		if( count($sql) == 0 )
+		if( \count($sql) == 0 )
 			return "";
         if( $this->_operator == "IF" )
         {
-            if( count($sql) != 1 )
+            if( \count($sql) != 1 )
                 \ScavixWDF\WdfException::Raise("Cannot handle more that 1 conditions in matched 'if' tree, use andX/orX/...");
             if (!$this->_firstToken)
                 return "";
@@ -425,7 +425,7 @@ class ConditionTree
 	function __ensureClose()
 	{
 		if( $this->_current->_parent && $this->_current->_maxConditions > -1 &&
-			count($this->_current->_conditions) == $this->_current->_maxConditions )
+			\count($this->_current->_conditions) == $this->_current->_maxConditions )
 		{
 			$this->_current = $this->_current->_parent;
 			$this->__ensureClose();
@@ -454,13 +454,13 @@ class ConditionTree
 	{
 		$mem = $this->_current;
 		$this->_current->_conditions[] = new ConditionTree($conditionCount,$operator,$firstToken);
-		$this->_current = $this->_current->_conditions[count($this->_current->_conditions)-1];
+		$this->_current = $this->_current->_conditions[\count($this->_current->_conditions)-1];
 		$this->_current->_parent = $mem;
 	}
 
     function Close()
     {
-        $this->_current->_maxConditions = count($this->_current->_conditions);
+        $this->_current->_maxConditions = \count($this->_current->_conditions);
         $this->__ensureClose();
     }
 }
@@ -493,7 +493,7 @@ class Condition
         if ($this->_operator == " SQL ")
             return "{$this->_op1}";
 
-        if (is_array($this->_op2))
+        if (\is_array($this->_op2))
         {
             $op2 = [];
             foreach ($this->_op2 as $o)
@@ -536,7 +536,7 @@ class Condition
         {
             $args[$obj->name] = $obj->value;
         }
-        elseif (is_array($obj))
+        elseif (\is_array($obj))
             foreach ($obj as $o)
                 $this->__fillArgs($args, $o, $log);
     }

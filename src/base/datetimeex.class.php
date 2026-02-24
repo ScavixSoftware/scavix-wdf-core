@@ -81,21 +81,21 @@ class DateTimeEx extends DateTime
 			if (is_numeric($source))
 			{
 				$source = 0 + $source;		// convert to int or float
-				if(is_integer($source))
+				if(\is_integer($source))
 				{
-					$l = strlen("$source");
+					$l = \strlen("$source");
 					if($l >= 16)
 						$source = $source / 1000000;	// assuming microseconds
 					elseif($l >= 13)
 						$source = $source / 1000;		// assuming milliseconds
 				}
-				if(is_float($source))
+				if(\is_float($source))
 				{
 					$dt = DateTimeEx::createFromFormat('U.u', number_format($source, 6, '.', ''));
 					$dt->setTimezone(new \DateTimeZone('Europe/Berlin'));
 					return $dt;
 				}
-				return new DateTimeEx(date('c', intval("$source")));
+				return new DateTimeEx(date('c', \intval("$source")));
 			}
 			return new DateTimeEx($source);
 		}
@@ -146,7 +146,7 @@ class DateTimeEx extends DateTime
 	 */
 	public static function FirstDayOfYear($date=false)
 	{
-		return new DateTimeEx(date('Y-1-1 00:00:00', intval(DateTimeEx::Make($date)->format('U'))));
+		return new DateTimeEx(date('Y-1-1 00:00:00', \intval(DateTimeEx::Make($date)->format('U'))));
 	}
 
 	/**
@@ -158,7 +158,7 @@ class DateTimeEx extends DateTime
 	 */
 	public static function FirstDayOfMonth($date=false)
 	{
-		return new DateTimeEx(date('Y-m-1 00:00:00', intval(DateTimeEx::Make($date)->format('U'))));
+		return new DateTimeEx(date('Y-m-1 00:00:00', \intval(DateTimeEx::Make($date)->format('U'))));
 	}
 
 	/**
@@ -170,7 +170,7 @@ class DateTimeEx extends DateTime
 	 */
 	public static function FirstDayOfWeek($date=false)
 	{
-		$dt = new DateTimeEx(date('Y-m-d 0:00:00', intval(DateTimeEx::Make($date)->format('U'))));
+		$dt = new DateTimeEx(date('Y-m-d 0:00:00', \intval(DateTimeEx::Make($date)->format('U'))));
 		$dt->sub(new DateInterval('P'.($dt->format('w') > 0 ? $dt->format('w')-1 : 7).'D'));
 		return $dt;
 	}
@@ -266,7 +266,7 @@ class DateTimeEx extends DateTime
 	 */
 	public function youngerThan($value,$interval)
 	{
-		$other = new DateTime("-".intval($value)." $interval");
+		$other = new DateTime("-".\intval($value)." $interval");
 		return $this > $other;
 	}
 
@@ -285,7 +285,7 @@ class DateTimeEx extends DateTime
 	 */
 	public function olderThan($value,$interval)
 	{
-		$other = new DateTime("-".intval($value)." $interval");
+		$other = new DateTime("-".\intval($value)." $interval");
 		return $this < $other;
 	}
 
@@ -390,7 +390,7 @@ class DateTimeEx extends DateTime
      */
     public function getTimestampMs()
     {
-        return intval($this->format('Uv'));
+        return \intval($this->format('Uv'));
     }
 
     /**

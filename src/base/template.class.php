@@ -31,6 +31,7 @@
 namespace ScavixWDF\Base;
 
 use ScavixWDF\Reflection\Attributes\Resource;
+use ScavixWDF\Wdf;
 use ScavixWDF\WdfException;
 use stdClass;
 
@@ -57,7 +58,7 @@ class Template extends Renderable
     function __toString()
     {
         $r = parent::__toString();
-        return $r." ".$this->file;
+        return "$r {$this->file}";
     }
 
 	function __getContentVars(){ return array_merge(parent::__getContentVars(), ['_data']); }
@@ -77,7 +78,7 @@ class Template extends Renderable
 	 */
 	static function Make($template_basename=false)
 	{
-		$className = get_called_class();
+		$className = \get_called_class();
 		if( $template_basename && file_exists($template_basename) )
 			$tpl_file = $template_basename;
 		else
@@ -121,7 +122,7 @@ class Template extends Renderable
 
 	function __initialize($file = "")
 	{
-		WdfException::Raise(get_class($this)," calling obsolete __initialize, please implement constructor!");
+		WdfException::Raise(\get_class($this)," calling obsolete __initialize, please implement constructor!");
 	}
 
 	/**
@@ -143,15 +144,15 @@ class Template extends Renderable
 	 */
 	function PreRender($args=[])
 	{
-		if( count($args) > 0 && count($this->_script) > 0 )
+		if( \count($args) > 0 && \count($this->_script) > 0 )
 		{
 			$controller = $args[0];
-            if( is_null($controller) || ($this != $controller && !$this->isChildOf($controller)) )
+            if($controller === null || ($this != $controller && !$this->isChildOf($controller)) )
                 return;
 			if( method_exists($controller,'addDocReady') )
             {
 				$controller->addDocReady(implode("\n",$this->_script)."\n");
-                if( system_is_ajax_call() )
+                if( Wdf::Request()->isAjax() )
                     $this->_script = [];
             }
 		}
@@ -197,7 +198,7 @@ class Template extends Renderable
 			$value->_parent = $this;
 		if( !isset($this->_data[$name]) )
 			$this->_data[$name] = [$value];
-        elseif (!is_array($this->_data[$name]))
+        elseif (!\is_array($this->_data[$name]))
             $this->_data[$name] = [$this->_data[$name], $value];
         else
 			$this->_data[$name][] = $value;
@@ -230,7 +231,7 @@ class Template extends Renderable
 	 */
 	function get($name)
 	{
-		return isset($this->_data[$name])?$this->_data[$name]:null;
+		return $this->_data[$name] ?? null;
 	}
 
 	/**
@@ -250,7 +251,7 @@ class Template extends Renderable
 	{
         self::$_renderingRoot = $this;
 		if( !hook_already_fired(HOOK_PRE_RENDER) )
-			execute_hooks(HOOK_PRE_RENDER,array($this));
+			execute_hooks(HOOK_PRE_RENDER, [$this]);
         return $this->WdfRender();
 	}
 
@@ -301,7 +302,7 @@ class Template extends Renderable
 
             if (($this instanceof HtmlPage) && $this->isHtmlPageTemplate($this->file))
             {
-                $__template_file = __autoload__template($this, $this->SubTemplate ? $this->SubTemplate : "");
+                $__template_file = __autoload__template($this, $this->SubTemplate ?: "");
                 if ($__template_file === false)
                     WdfException::Raise("SubTemplate for class '" . \get_class($this) . "' not found: " . $this->file, $this->SubTemplate);
 
@@ -328,7 +329,7 @@ class Template extends Renderable
             $contents = $render_in_context($__template_file, $tempvars);
 
             $script = '';
-            if (system_is_ajax_call())
+            if (Wdf::Request()->isAjax())
             {
                 if (\count($this->_script) > 0)
                     $script = implode("\n", $this->_script);
@@ -339,11 +340,11 @@ class Template extends Renderable
             if (trim($script) != '')
                 $contents .= "<script>" . $script . "</script>";
 
-            if (!empty($ck))
+            if (!empty($ck) && ($ttl = \intval(ifavail($this->cache, 'ttl') ?: 0)))
             {
                 $ce = new stdClass();
                 $ce->_storage_id = $ck;
-                $ce->eol = time() + intval(ifavail($this->cache, 'ttl') ?: 0);
+                $ce->eol = time() + $ttl;
                 $ce->content = $contents;
                 store_object($ce);
                 // log_debug("storing precompiled for later use {$ce->_storage_id}");
@@ -354,11 +355,11 @@ class Template extends Renderable
         finally
         {
             if( empty($ck) )
-                \ScavixWDF\Wdf::Measure(__METHOD__, $start);
+                Wdf::Measure(__METHOD__, $start);
             elseif( empty($cached) )
-                \ScavixWDF\Wdf::Measure(__METHOD__ . ' Cache miss', $start);
+                Wdf::Measure(__METHOD__ . ' Cache miss', $start);
             else
-                \ScavixWDF\Wdf::Measure(__METHOD__ . ' Cache hit', $start);
+                Wdf::Measure(__METHOD__ . ' Cache hit', $start);
         }
 	}
 }

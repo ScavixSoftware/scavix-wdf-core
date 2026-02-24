@@ -34,7 +34,7 @@ use ScavixWDF\Base\Control;
 
 /**
  * A table row written as div.
- * 
+ *
  */
 class Tr extends Control
 {
@@ -42,7 +42,7 @@ class Tr extends Control
     public $options = false;
     public $current_cell = false;
 	public $model = false;
-    
+
     public static $CURRENTLY_ODD = false;
 
 	/**
@@ -71,7 +71,7 @@ class Tr extends Control
 
 	/**
 	 * Gets the current cell.
-	 * 
+	 *
 	 * @return Td The current cell of false if none
 	 */
 	function &CurrentCell()
@@ -81,7 +81,7 @@ class Tr extends Control
 
 	/**
 	 * Creates a new cell.
-	 * 
+	 *
 	 * @param mixed $content Contents for it
 	 * @param array $options See <Td::__construct> for options
 	 * @return Td The created cell
@@ -98,7 +98,7 @@ class Tr extends Control
 
 	/**
 	 * Get the cell at index.
-	 * 
+	 *
 	 * @param int $index Zero based index
 	 * @return Td The cell
 	 */
@@ -106,30 +106,30 @@ class Tr extends Control
 	{
 		return $this->_content[$index];
 	}
-	
+
 	/**
 	 * Returns all cells.
-	 * 
+	 *
 	 * @return array List of <Td> objects
 	 */
 	function Cells()
 	{
 		return $this->_content;
 	}
-	
+
 	/**
 	 * Gets the cell count.
-	 * 
+	 *
 	 * @return int Count of cells
 	 */
 	function CountCells()
 	{
-		return count($this->_content);
+		return \count($this->_content);
 	}
-    
+
     /**
      * Applies the format to all cells.
-     * 
+     *
      * @param Table $table Optional <Table> object (this <Tr> belongs to)
      * @return void
      */
@@ -137,10 +137,10 @@ class Tr extends Control
     {
         if( $this->_parent instanceof THead )
             return;
-        
+
         $tab = $table?$table:$this->closest("Table");
         $culture = $tab?$tab->Culture:false;
-        $rcnt = count($this->_content);
+        $rcnt = \count($this->_content);
         for($i=0; $i<$rcnt; $i++)
         {
             if( !isset($this->_content[$i]) )
@@ -168,10 +168,10 @@ class Tr extends Control
 
 		return parent::WdfRender();
 	}
-	
+
     /**
      * Sets the alignment for all columns.
-     * 
+     *
      * @param array $alignment Array of alignments for each column l(eft)|r(ight)|c(enter)
      * @return static
      */

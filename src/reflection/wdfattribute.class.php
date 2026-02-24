@@ -58,7 +58,7 @@ class WdfAttribute
     function __sleep()
     {
         $this->Reflector = $this->Object = null;
-        $res = array_map(function ($a)
+        $res = \array_map(function ($a)
         {
             return $a->name;
         }, WdfReflector::GetInstance($this)->getProperties(\ReflectionProperty::IS_PUBLIC));

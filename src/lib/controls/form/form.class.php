@@ -69,9 +69,9 @@ class Form extends Control
 				$inp = new PasswordInput($name);
 				break;
 			case "hidden":
-                if( is_array($value) )
+                if( \is_array($value) )
                 {
-                    if(count($value))
+                    if(\count($value))
                     {
                         foreach( $value as $i=>$v )
                             $inp = HiddenInput::Make($v, "{$name}[{$i}]")->appendTo($this);

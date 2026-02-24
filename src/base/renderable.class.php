@@ -99,7 +99,7 @@ abstract class Renderable implements \JsonSerializable
      */
     public static function PopRenderer()
     {
-        array_pop(self::$_renderingStack);
+        \array_pop(self::$_renderingStack);
     }
 
     /**
@@ -501,7 +501,7 @@ abstract class Renderable implements \JsonSerializable
 			foreach( $this->_content as &$c )
 				if( $c instanceof Renderable )
 					$c->_parent = false;
-			$this->_content = \is_array($content)?$content:array($content);
+			$this->_content = \is_array($content)?$content: [$content];
 		}
 		else
 			$this->_content[] = $content;

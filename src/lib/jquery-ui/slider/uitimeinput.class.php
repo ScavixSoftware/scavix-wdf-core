@@ -32,7 +32,7 @@ use ScavixWDF\JQueryUI\uiControl;
 
 /**
  * Double slider input control allowing you to input time values.
- * 
+ *
  */
 class uiTimeInput extends uiControl
 {
@@ -45,7 +45,7 @@ class uiTimeInput extends uiControl
 		parent::__construct("div");
 		$this->InitFunctionName = false;
 
-		$defvalue = intval($defvalue);
+		$defvalue = \intval($defvalue);
 
 		$m = floor($defvalue / 60);
 		$s = $defvalue % 60;
@@ -100,9 +100,9 @@ class uiTimeInput extends uiControl
 		$value->content($minuteval);
 		$value->content("<div style='float:left'>:</div>");
 		$value->content($secval);
-		
+
         $name = $name?$name:$id;
-        
+
 		$this->content($container);
 		$this->content($value);
 		$this->content("<input type='hidden' id='{$id}_hidden' name='{$name}' value='$defvalue' onchange='$onchange'/>");

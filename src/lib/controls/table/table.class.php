@@ -37,6 +37,7 @@ use ScavixWDF\Localization\CultureInfo;
 use ScavixWDF\Reflection\Attributes\Integer;
 use ScavixWDF\Reflection\Attributes\RequestParam;
 use ScavixWDF\Reflection\Attributes\Text;
+use ScavixWDF\Wdf;
 use ScavixWDF\WdfException;
 
 /**
@@ -81,7 +82,7 @@ class Table extends Control
 	{
 		parent::__construct("div");
 		$this->class = 'table';
-        if(system_is_ajax_call())
+        if(Wdf::Request()->isAjax())
             $this->force_ajax_dependenciesloading = true;
 	}
 
@@ -95,7 +96,7 @@ class Table extends Control
         $stack = [];
         foreach( $trace as $entry )
         {
-            if( count($stack)>20 || is_in($entry['function'],"system_invoke_request","system_execute") )
+            if( \count($stack)>20 || is_in($entry['function'],"system_invoke_request","system_execute") )
                 break;
             $stack[] = ($entry['file'] ?? '(null)') . ':' . ($entry['line'] ?? '(null)');
             if( !isset($entry['class']) )
@@ -114,7 +115,7 @@ class Table extends Control
     protected function storage()
     {
         if( !$this->persistance_storage )
-            $this->persistance_storage = \ScavixWDF\Wdf::GetBuffer("table_storage")->mapToSession("table_storage");
+            $this->persistance_storage = Wdf::GetBuffer("table_storage")->mapToSession("table_storage");
         return $this->persistance_storage;
     }
 
@@ -155,7 +156,7 @@ class Table extends Control
 
     function __collectResourcesInternal($template,&$static_stack)
 	{
-        if(system_is_ajax_call() && !$this->force_ajax_dependenciesloading)
+        if(Wdf::Request()->isAjax() && !$this->force_ajax_dependenciesloading)
             return [];
         return parent::__collectResourcesInternal($template,$static_stack);
     }
@@ -172,9 +173,9 @@ class Table extends Control
 	function SetColFormat($index,$format,$blank_if_false=false,$conditional_css=[])
 	{
 		$this->ColFormats[$index] = new CellFormat($format, $blank_if_false, $conditional_css);
-		if( array_key_exists('copy',$conditional_css) )
+		if( \array_key_exists('copy',$conditional_css) )
 		{
-			$i = intval($this->ColFormats[$index]->conditional_css['copy']);
+			$i = \intval($this->ColFormats[$index]->conditional_css['copy']);
 			$this->ColFormats[$index]->conditional_css['copy'] = $this->ColFormats[$i];
 		}
 		return $this;
@@ -380,7 +381,7 @@ class Table extends Control
 
         foreach( $this->_content as &$c )
         {
-			if( !is_object($c) )
+			if( !\is_object($c) )
 				continue;
 			if( !($c instanceof TBody) )
 				continue;
@@ -429,7 +430,7 @@ class Table extends Control
 	 */
 	function SetHeader(...$args)
 	{
-        if((count($args) == 1) && is_array($args[0]))
+        if((\count($args) == 1) && \is_array($args[0]))
             $args = $args[0];
 		$this->Header()->NewRow($args);
 		return $this;
@@ -443,7 +444,7 @@ class Table extends Control
 	 */
 	function SetFooter(...$args)
 	{
-        if((count($args) == 1) && is_array($args[0]))
+        if((\count($args) == 1) && \is_array($args[0]))
             $args = $args[0];
 		$this->Footer()->NewRow($args);
 		return $this;
@@ -469,7 +470,7 @@ class Table extends Control
 	 */
 	function AddNewRow(...$args)
 	{
-        if((count($args) == 1) && is_array($args[0]))
+        if((\count($args) == 1) && \is_array($args[0]))
             $args = $args[0];
 		$this->NewRow($args);
 		return $this;
@@ -486,7 +487,7 @@ class Table extends Control
 	 */
 	function SetAlignment(...$args)
 	{
-        if((count($args) == 1) && is_array($args[0]))
+        if((\count($args) == 1) && \is_array($args[0]))
             $args = array_values($args[0]);
         $this->alignments = $args;
 		$this->ColGroup()->SetAlignment($args);
@@ -510,7 +511,7 @@ class Table extends Control
 	 */
 	function SetFormat(...$args)
 	{
-        if((count($args) == 1) && is_array($args[0]))
+        if((\count($args) == 1) && \is_array($args[0]))
             $args = $args[0];
         $this->ColFormats = [];
 		foreach( $args as $i=>$f )
@@ -609,7 +610,7 @@ class Table extends Control
 		if( isset($this->_actionHandler[$action]) )
 		{
 			$model = $this->_rowModels[$row];
-			return call_user_func_array($this->_actionHandler[$action],array($this,$action,$model,$row));
+			return \call_user_func_array($this->_actionHandler[$action],array($this,$action,$model,$row));
 		}
 		log_warn("No handler defined for $action");
 		return AjaxResponse::None();
@@ -639,7 +640,7 @@ class Table extends Control
     #[RequestParam('rows','array',[])]
 	function OnReordered($rows)
 	{
-		return call_user_func_array($this->_sortHandler,array($this,$rows));
+		return \call_user_func_array($this->_sortHandler,array($this,$rows));
 	}
 
 	/**
@@ -655,7 +656,7 @@ class Table extends Control
 	 */
 	function AddPager($items_per_page = 15, $current_page=false, $max_pages_to_show=10, ...$toomany)
 	{
-        if( count($toomany) > 0 )
+        if( \count($toomany) > 0 )
             WdfException::Raise("Use of obsolete method signature");
         $this->checkCallIsCorrectlyListingWrapped();
 
@@ -664,7 +665,7 @@ class Table extends Control
         if($current_page !== false)
             $this->CurrentPage = $current_page;
         elseif( $this->hasSetting('page') )
-            $this->CurrentPage = intval(max(1,$this->getSetting('page')));
+            $this->CurrentPage = \intval(max(1,$this->getSetting('page')));
         elseif(!$this->CurrentPage)
             $this->CurrentPage = 1;
         $this->MaxPagesToShow = $max_pages_to_show;
@@ -685,7 +686,7 @@ class Table extends Control
         $this->persistance_storage = $storage;
         $this->PersistName = $name;
         if( $this->hasSetting('page') )
-            $this->CurrentPage = intval(max(1, $this->getSetting('page')));
+            $this->CurrentPage = \intval(max(1, $this->getSetting('page')));
         else
         {
             $this->setSetting('page',$this->CurrentPage);
@@ -796,7 +797,7 @@ class Table extends Control
 		}
 
         if( $this->ShowTotalText )
-            $ui->append("<span class='total'>".sprintf($this->ShowTotalText, ($this->Culture !== false ? $this->Culture->FormatInt($this->TotalItems) : $this->TotalItems))."</span>");
+            $ui->append("<span class='total'>".\sprintf($this->ShowTotalText, ($this->Culture !== false ? $this->Culture->FormatInt($this->TotalItems) : $this->TotalItems))."</span>");
 
 		return $ui;
 	}

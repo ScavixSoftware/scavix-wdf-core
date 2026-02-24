@@ -67,10 +67,10 @@ class WdfReflector extends ReflectionClass
 	 */
 	public static function &GetInstance($classname)
 	{
-		if( is_object($classname) )
+		if( \is_object($classname) )
 		{
 			$inst = $classname;
-			$classname = get_class($classname);
+			$classname = \get_class($classname);
 		}
 		$classnamel = strtolower($classname);
 
@@ -117,7 +117,7 @@ class WdfReflector extends ReflectionClass
 		global $CONFIG;
 		if( $name == "" )
 			$name = "CLASS";
-		if( !is_array($filter) )
+		if( !\is_array($filter) )
 			$key = "$name:$filter";
 		else
 			$key = "$name:".implode(",",$filter);
@@ -176,7 +176,7 @@ class WdfReflector extends ReflectionClass
 							break;
 					}
 				}
-				if(count($doc) > 0)
+				if(\count($doc) > 0)
 				{
 					$comment = implode("\n",array_reverse($doc));
 					cache_set("doccomment_$key",$comment." ");
@@ -189,7 +189,7 @@ class WdfReflector extends ReflectionClass
 
     private function _getAttributes_PHP8($filter, $object = false, $method = false, $field = false, $allowAttrInheritance = true)
     {
-        $newFilter = is_array($filter) ? $filter : [$filter];
+        $newFilter = \is_array($filter) ? $filter : [$filter];
         foreach ($newFilter as $i => $f)
         {
             switch (strtolower($f))
@@ -219,7 +219,7 @@ class WdfReflector extends ReflectionClass
         foreach ($ref->getAttributes() as $attr)
         {
             $name = $attr->getName();
-            $add = count($newFilter) == 0;
+            $add = \count($newFilter) == 0;
             foreach ($newFilter as $f)
             {
                 // log_debug($name, $f,is_a($name,$f,true)?"IS":"ISNOT",is_subclass_of($name, $f)?"ISSUB":"ISNOTSUB");
@@ -235,7 +235,7 @@ class WdfReflector extends ReflectionClass
                 $attr = $attr->newInstance();
                 $attr->Reflector = $this;
                 $attr->Class = $this->Classname;
-                if ($object && is_object($object))
+                if ($object && \is_object($object))
                     $attr->Object = $object;
                 if ($method)
                     $attr->Method = $method->getName();
@@ -253,7 +253,7 @@ class WdfReflector extends ReflectionClass
 		if( !preg_match_all($pattern, $comment, $matches) )
 			return [];
 
-		if( !is_array($filter) )
+		if( !\is_array($filter) )
 			$filter = [$filter];
 		foreach( $filter as $i=>$f )
 			$filter[$i] = strtolower(str_replace("Attribute","",$f));
@@ -289,7 +289,7 @@ class WdfReflector extends ReflectionClass
 			eval('$attr = new '.$attr.';');
 
 			$name = strtolower($name);
-			$add = count($filter) == 0;
+			$add = \count($filter) == 0;
 			foreach( $filter as $f )
 			{
 				if( $f == $name || ($allowAttrInheritance && is_subclass_of($attr, $f."Attribute")) )
@@ -303,7 +303,7 @@ class WdfReflector extends ReflectionClass
 			{
 				$attr->Reflector = $this;
 				$attr->Class = $this->Classname;
-				if( $object && is_object($object) ) $attr->Object = $object;
+				if( $object && \is_object($object) ) $attr->Object = $object;
 				if( $method ) $attr->Method = $method->getName();
 				if( $field ) $attr->Field = $field;
 				$res[] = $attr;
@@ -351,7 +351,7 @@ class WdfReflector extends ReflectionClass
 	 */
 	public function GetClassAttributes($filter=[], $allowAttrInheritance=true)
 	{
-		if( !is_array($filter) )
+		if( !\is_array($filter) )
 			$filter = [$filter];
 
         // skip cache: no performance benefit

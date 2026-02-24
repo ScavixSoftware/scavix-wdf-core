@@ -34,7 +34,7 @@ use ScavixWDF\Base\Control;
 
 /**
  * This is tbody in div annotation.
- * 
+ *
  */
 class TBody extends Control
 {
@@ -49,8 +49,8 @@ class TBody extends Control
 
 	/**
 	 * Constructs a new <TBody>.
-	 * 
-	 * Possible options: 
+	 *
+	 * Possible options:
 	 * - 'collapsible' := true|false
 	 * - 'visible' := true|false
 	 * @param array $options Options
@@ -67,7 +67,7 @@ class TBody extends Control
 
 	/**
 	 * Creates a header.
-	 * 
+	 *
 	 * We treat tbody headers as the first row in the tbody element.
 	 * @return Tr The created header
 	 */
@@ -80,7 +80,7 @@ class TBody extends Control
 
 	/**
 	 * Creates a new row.
-	 * 
+	 *
 	 * @param array $data If given creates new cells in the row (see <Tr::NewCell>)
 	 * @param array $options See <Tr> for options
 	 * @return Tr
@@ -95,7 +95,7 @@ class TBody extends Control
             $i = 0;
 			foreach( force_array($data, false) as $rowdata )
             {
-                $cell = $this->current_row->NewCell(is_null($rowdata) ? false : $rowdata);
+                $cell = $this->current_row->NewCell(\is_null($rowdata) ? false : $rowdata);
                 if($this->table && $this->table->colgroup && isset($this->table->colgroup->_content[$i]) &&
 					isset($this->table->colgroup->_content[$i]->_attributes["align"]) && $this->table->colgroup->_content[$i]->_attributes["align"] )
                     $cell->align = $this->table->colgroup->_content[$i]->_attributes["align"];
@@ -126,30 +126,30 @@ class TBody extends Control
 			return $null;
 		return $this->current_row->GetCell($index);
 	}
-	
+
 	/**
 	 * Returns all rows.
-	 * 
+	 *
 	 * @return array List of <Tr> objects
 	 */
 	function Rows()
 	{
 		return $this->_content;
 	}
-	
+
 	/**
 	 * Return the current row, if any.
-	 * 
+	 *
 	 * @return Tr The last added row object or false
 	 */
 	function GetCurrentRow()
 	{
 		return $this->current_row;
 	}
-	
+
 	/**
 	 * Returns the maximum cell count.
-	 * 
+	 *
 	 * Loops thru all rows and finds the maximum count of cells in a row.
 	 * @return int Maximum cell count
 	 */
@@ -160,10 +160,10 @@ class TBody extends Control
 			$max = max($max,$tr->CountCells());
 		return $max;
 	}
-	
+
 	/**
 	 * Returns all cells contents as array.
-	 * 
+	 *
 	 * Note that this will return a two-dimensional array as it
 	 * loops thru all rows and for each thru all it's cells.
 	 * @return array Contents of all cells
@@ -196,7 +196,7 @@ class TBody extends Control
 				$colcount = 0;
 				foreach( $this->_content as &$row )
                 {
-					$colcount = max($colcount,count($row->_content));
+					$colcount = max($colcount,\count($row->_content));
 					if( !isset($row->_content[0]->class) ) $row->_content[0]->class = "";
 					$row->_content[0]->class .= " indent";
                 }
@@ -241,10 +241,10 @@ class TBody extends Control
 
         return parent::WdfRender();
     }
-	
+
     /**
      * Sets the alignment for all rows.
-     * 
+     *
      * @param array $alignment Array of alignments for each column l(eft)|r(ight)|c(enter)
      * @return static
      */

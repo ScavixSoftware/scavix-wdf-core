@@ -32,7 +32,7 @@ use ScavixWDF\JQueryUI\uiControl;
 
 /**
  * Double slider input control allowing you to input currency values.
- * 
+ *
  */
 class uiCurrencyInput extends uiControl
 {
@@ -45,7 +45,7 @@ class uiCurrencyInput extends uiControl
 		parent::__construct("div");
 		$this->InitFunctionName = false;
 
-		$defvalue = floatval(str_replace(",",".",$defvalue));
+		$defvalue = \floatval(str_replace(",",".",$defvalue));
 
 		$e = floor($defvalue);
 		$c = round(($defvalue-$e),2) * 100;
@@ -101,7 +101,7 @@ class uiCurrencyInput extends uiControl
 		$value->content($euroval);
 		$value->content("<div style='float:left'>,</div>");
 		$value->content($centval);
-		
+
 		$this->content($container);
 		$this->content($value);
 		$this->content("<input type='hidden' id='{$id}_hidden' name='{$id}' value='$defvalue' onchange='$onchange'/>");

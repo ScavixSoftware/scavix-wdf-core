@@ -71,17 +71,17 @@ class JsonData extends WdfAttribute implements IRequestAttribute
         if ($this->path)
         {
             // log_debug($data);
-            if (is_array($data))
+            if (\is_array($data))
                 $data = array_change_key_case($data, CASE_LOWER);
             $path = explode('.', strtolower($this->path));
-            while (count($path) && isset($data[$path[0]]))
+            while (\count($path) && isset($data[$path[0]]))
             {
                 $data = $data[$path[0]];
-                if (is_array($data))
+                if (\is_array($data))
                     $data = array_change_key_case($data, CASE_LOWER);
                 array_shift($path);
-                if (count($path) == 0)
-                    $res[$this->name] = is_string($data) ? trim($data) : $data;
+                if (\count($path) == 0)
+                    $res[$this->name] = \is_string($data) ? trim($data) : $data;
             }
         }
         else

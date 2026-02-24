@@ -91,17 +91,17 @@ class LogEntry
 				$t0['args'] = ["*TRUNCATED*"];
 
 			$stack[] = $t0;
-			if( count($stack) == $max_trace_depth )
+			if( \count($stack) == $max_trace_depth )
 				break;
 		}
 
-		if( $stack[count($stack)-1]['function'] == 'system_execute' )
+		if( $stack[\count($stack)-1]['function'] == 'system_execute' )
 			array_pop($stack);
-		if( $stack[count($stack)-1]['function'] == 'system_exit' )
+		if( $stack[\count($stack)-1]['function'] == 'system_exit' )
 			array_pop($stack);
-		if( $stack[count($stack)-1]['function'] == 'system_invoke_request' )
+		if( $stack[\count($stack)-1]['function'] == 'system_invoke_request' )
 			array_pop($stack);
-		if( $stack[count($stack)-1]['function'] == 'call_user_func_array' )
+		if( $stack[\count($stack)-1]['function'] == 'call_user_func_array' )
 			array_pop($stack);
 
 		return $stack;
@@ -124,9 +124,9 @@ class LogEntry
 				$function = $t0['function'];
 
 			if( isset($t0['location']))
-				$stack[] = sprintf("+ %s(...) [in %s]",$function,$t0['location']);
+				$stack[] = \sprintf("+ %s(...) [in %s]",$function,$t0['location']);
 			elseif($function)
-				$stack[] = sprintf("+ %s(...)",$function);
+				$stack[] = \sprintf("+ %s(...)",$function);
 		}
 		return implode("\n",$stack);
 	}
@@ -141,7 +141,7 @@ class LogEntry
             : '';
         if( $this->severity )
 		    $content .= "[{$this->severity}] ";
-        if( is_array($this->categories) )
+        if( \is_array($this->categories) )
 		    $content .= "(".implode(",",$this->categories).") ";
 		$content .= "{$this->message}";
 		if( $this->trace )
@@ -165,7 +165,7 @@ class LogEntry
 		$res = new stdClass();
 		$res->dt = date("c", round($this->datetime));
 		$res->cat = [];
-        if( is_array($this->categories) )
+        if( \is_array($this->categories) )
             foreach( array_values($this->categories) as $v )
                 if( $v )
                     $res->cat[] = "$v";

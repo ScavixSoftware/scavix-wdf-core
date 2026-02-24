@@ -155,7 +155,7 @@ class uiControl extends Control
 	 */
 	static function Icon($icon_to_test)
 	{
-		if(in_array($icon_to_test, self::$_icons) )
+		if(\in_array($icon_to_test, self::$_icons) )
 			return $icon_to_test;
 		WdfException::Raise("Invalid Icon '$icon_to_test'");
         return '';
@@ -171,7 +171,7 @@ class uiControl extends Control
 	 */
 	function opt($name,$value=null)
 	{
-        if( is_array($name) )
+        if( \is_array($name) )
         {
             foreach( $name as $k=>$v )
                 $this->opt($k,$v);
