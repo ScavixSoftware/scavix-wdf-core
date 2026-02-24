@@ -363,7 +363,7 @@ function system_exit($result=null,$die=true)
         elseif( $result instanceof ScavixWDF\Base\HtmlPage )
         {
             // use this to redirect if some previous AJAX redirect should have in fact been redirected to an HTML page.
-            log_error("Cannot deliver HtmlPage via AJAX, redirecting instead:",system_current_request());
+            log_error("Cannot deliver HtmlPage via AJAX, redirecting instead:", system_current_request(), $_SERVER);
             $response = AjaxResponse::Redirect(system_current_request(true))->Render();
         }
 		elseif( $result instanceof Renderable )
