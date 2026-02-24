@@ -1396,38 +1396,44 @@ if( !function_exists('idn_to_utf8') )
     function idn_to_utf8($domain) { return IDN::decodeIDN($domain); }
 }
 
-/**
- * Returns the first element of a given array.
- *
- * @param array $array The array
- * @return mixed The first element
- */
-function array_first($array)
+if (!function_exists('array_first'))
 {
-    if( is_array($array) )
+    /**
+     * Returns the first element of a given array.
+     *
+     * @param array $array The array
+     * @return mixed The first element
+     */
+    function array_first($array)
     {
-        $keys = array_keys($array);
-        if( isset($keys[0]) )
-            return $array[$keys[0]];
+        if (is_array($array))
+        {
+            $keys = array_keys($array);
+            if (isset($keys[0]))
+                return $array[$keys[0]];
+        }
+        return null;
     }
-    return null;
 }
 
-/**
- * Returns the last element of a given array.
- *
- * @param array $array The array
- * @return mixed The last element
- */
-function array_last($array)
+if (!function_exists('array_last'))
 {
-    if( is_array($array) )
+    /**
+     * Returns the last element of a given array.
+     *
+     * @param array $array The array
+     * @return mixed The last element
+     */
+    function array_last($array)
     {
-        $keys = array_keys($array);
-        if( isset($keys[count($keys)-1]) )
-            return $array[$keys[count($keys)-1]];
+        if (is_array($array))
+        {
+            $keys = array_keys($array);
+            if (isset($keys[count($keys) - 1]))
+                return $array[$keys[count($keys) - 1]];
+        }
+        return null;
     }
-    return null;
 }
 
 /**
