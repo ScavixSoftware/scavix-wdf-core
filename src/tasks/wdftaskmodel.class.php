@@ -173,7 +173,7 @@ class WdfTaskModel extends Model
 
         $pids = [];
         foreach (glob("{$shmdir}/*.*") as $f)
-            $pids[] = intval(array_first(explode(".", basename($f))));
+            $pids[] = intval(substr_until(basename($f),'.'));
         return array_unique(array_filter($pids));
     }
 
@@ -477,7 +477,7 @@ class WdfTaskModel extends Model
                 {
                     if (!($mt = @filemtime($f)) || ($mt > $ttl))
                         continue;
-                    $pid = array_first(explode(".", basename($f)));
+                    $pid = substr_until(basename($f),'.');
                     // if (file_exists("/proc/$pid/cmdline"))
                     if (system_process_running($pid))
                         @touch($f);

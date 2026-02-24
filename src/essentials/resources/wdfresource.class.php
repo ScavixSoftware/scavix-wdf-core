@@ -98,7 +98,7 @@ class WdfResource implements ICallable
     #[Text('res','')]
 	function js($res)
 	{
-		$res = array_first(explode("?",$res));
+        $res = substr_until($res, '?');
         $res = resFile($res,true);
 
 		if( $res )
@@ -119,7 +119,7 @@ class WdfResource implements ICallable
     #[Text('res','')]
 	function skin($res)
 	{
-        $url = array_first(explode("?", $res ?? ''));
+        $url = substr_until($res ?? '', '?');
 		$res = resFile($res,true);
 
 		if( $res )

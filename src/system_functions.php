@@ -574,6 +574,23 @@ function ends_iwith($string,...$end)
 }
 
 /**
+ * Return the first part of a string until (but not including) the given sequence.
+ *
+ * If sequence is not found, the complete string is returned.
+ * ```php
+ * substr_until('Hello, nice world!',', '); // Hello
+ * substr_until('Hello, nice world!','--'); // Hello, nice world!
+ * ```
+ * @param string $string The string to search in
+ * @param string $sequence The sequence to stop at
+ * @return string The resulting substring
+ */
+function substr_until(string $string, string $sequence)
+{
+    return substr($string, 0, strcspn($string, $sequence));
+}
+
+/**
  * Tests if the first given argument is one of the others.
  *
  * Use like this: `is_in('nice','Hello','nice','World')`

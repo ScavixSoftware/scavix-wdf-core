@@ -575,7 +575,7 @@ class WdfIncomingRequest
                 return $this->_url;
             if( is_array($data) )
                 $data = http_build_query($data);
-            return array_first(explode("?", $this->_url)) . "?{$data}";
+            return substr_until($this->_url, '?') . "?{$data}";
         }
         return buildQuery($this->getController(true), $this->getEvent(), $data);
     }

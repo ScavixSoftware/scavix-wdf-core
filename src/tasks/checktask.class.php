@@ -100,7 +100,7 @@ class CheckTask extends Task
                     $used[] = $i;
                     continue;
                 }
-                $pre = array_first(explode("_",$i));
+                $pre = substr_until($i, '_');
                 if( is_in($pre,'TITLE','TXT') )
                 {
                     if( $multifind($i,$c,"{$pre}_","::Confirm(",['"',"'"]) )

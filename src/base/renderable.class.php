@@ -353,7 +353,7 @@ abstract class Renderable implements \JsonSerializable
 				// for Template class check the template file too
 				if( $template instanceof Template )
 				{
-					$fnl = strtolower(array_first(explode(".",basename($template->file))));
+                    $fnl = strtolower(substr_until(basename($template->file), '.'));
                     if( !isset($static_stack[$fnl]) )
                     {
                         if( get_class_simple($template,true) != $fnl )
