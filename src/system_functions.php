@@ -1943,3 +1943,25 @@ if (!function_exists('array_any'))
         return false;
     }
 }
+
+/** @see https://php.watch/versions/8.6/clamp */
+if( !function_exists('clamp') )
+{
+    /**
+     * Return the given value if in range, otherwise return the nearest bound.
+     */
+    function clamp(mixed $value, mixed $min, mixed $max): mixed
+    {
+        if (\is_float($min) && \is_nan($min))
+            throw new \ValueError('clamp(): Argument #2 ($min) must not be NAN');
+        if (\is_float($max) && \is_nan($max))
+            throw new \ValueError('clamp(): Argument #3 ($max) must not be NAN');
+        if ($max < $min)
+            throw new \ValueError('clamp(): Argument #2 ($min) must be smaller than or equal to argument #3 ($max)');
+        if ($value > $max)
+            return $max;
+        if ($value < $min)
+            return $min;
+        return $value;
+    }
+}
