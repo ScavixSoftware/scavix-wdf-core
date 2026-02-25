@@ -267,7 +267,7 @@ abstract class Model implements Iterator, Countable, ArrayAccess, \ScavixWDF\ILo
 	 */
 	public function IsQuery()
 	{
-		return $this->_query;
+		return !!$this->_query;
 	}
 
 	/**
@@ -339,8 +339,22 @@ abstract class Model implements Iterator, Countable, ArrayAccess, \ScavixWDF\ILo
 			log_trace("Missing datasource argument");
     }
 
-	function __wakeup()
+    function __serialize()
+    {
+        return array_merge([
+            '_query' => $this->_query,
+            '_fieldValues' => $this->_fieldValues,
+            '_querySql' => $this->_querySql,
+            '_queryArgs' => $this->_queryArgs,
+            '_saved' => $this->_saved,
+        ], $this->AsArray());
+    }
+
+	function __unserialize($data)
 	{
+        foreach ($data as $k => $v)
+            $this->$k = $v;
+
 		if( isset($this->_query) )
 			return;
 		$q = $this->_ds->Query($this->GetTableName());
@@ -1013,8 +1027,7 @@ abstract class Model implements Iterator, Countable, ArrayAccess, \ScavixWDF\ILo
 		else
 		{
 			foreach( $this->GetColumnNames() as $cn )
-				if( \count($filter)==0 || in_array($cn, $filter) )
-					$res[$cn] = $this->__typedValue($cn);
+                $res[$cn] = $this->__typedValue($cn);
 		}
 		return $res;
 	}

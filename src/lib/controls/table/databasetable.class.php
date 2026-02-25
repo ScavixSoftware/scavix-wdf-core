@@ -91,7 +91,7 @@ class DatabaseTable extends Table implements ICallable
 		store_object($this);
 	}
 
-    function __sleep()
+    function __serialize()
     {
         $res = get_object_vars($this);
         unset($res['persistance_storage']);
@@ -103,10 +103,9 @@ class DatabaseTable extends Table implements ICallable
             unset($res['current_row_group']);
             unset($res['current_row']);
             unset($res['current_cell']);
-
             unset($res['_content']);
         }
-        return array_keys($res);
+        return $res;
     }
 
 	public function __clone()

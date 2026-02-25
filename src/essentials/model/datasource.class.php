@@ -216,15 +216,15 @@ class DataSource
 		}
 	}
 
-	function __sleep()
+	function __serialize()
 	{
-		return ['_storage_id'];
+        return ['_storage_id' => $this->_storage_id];
 	}
 
-	function __wakeup()
+	function __unserialize($data)
 	{
-		global $CONFIG;
-		if( isset($CONFIG['session']) )
+        $this->_storage_id = $data['_storage_id'];
+		if( isset($GLOBALS['CONFIG']['session']) )
 		{
 			$name = explode("::",$this->_storage_id,2);
 			if( \count($name) < 2 )

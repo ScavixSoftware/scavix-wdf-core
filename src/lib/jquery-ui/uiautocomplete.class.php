@@ -65,8 +65,8 @@ class uiAutocomplete extends uiControl
 		return $this;
 	}
 
-    public function __sleep()
+    public function __serialize()
     {
-        return ['_storage_id'];
+        return ['_storage_id' => $this->_storage_id];
     }
 }

@@ -55,13 +55,12 @@ class WdfAttribute
 
 	function __construct() {}
 
-    function __sleep()
+    function __serialize()
     {
         $this->Reflector = $this->Object = null;
-        $res = \array_map(function ($a)
-        {
-            return $a->name;
-        }, WdfReflector::GetInstance($this)->getProperties(\ReflectionProperty::IS_PUBLIC));
+        $res = [];
+        foreach( WdfReflector::GetInstance($this)->getProperties(\ReflectionProperty::IS_PUBLIC) as $p )
+            $res[$p->name] = $p->getValue($this);
         return $res;
     }
 }

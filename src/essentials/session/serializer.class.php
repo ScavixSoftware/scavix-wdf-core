@@ -59,7 +59,6 @@ class Serializer
     }
 
 	public $Stack;
-	public $sleepmap = [];
 	public $Lines;
     public $Index;
     public $Format = "swdf-0";
@@ -148,16 +147,13 @@ class Serializer
 			$stack[$data] = $id;
 
 			$classname = \get_class($data);
-            if (!isset($this->sleepmap[$classname]))
-            {
-                $this->sleepmap[$classname] = method_exists($data, '__sleep')
-                    ? array_fill_keys($data->__sleep(), true)
-                    : false;
-            }
+            if ($this->hasMethod($classname, '__serialize'))
+                $vars = $data->__serialize();
+            elseif ($this->hasMethod($classname, '__sleep'))
+                $vars = array_intersect_key(get_object_vars($data), array_fill_keys($data->__sleep(), true));
+            else
+                $vars = get_object_vars($data);
 
-            $vars = get_object_vars($data);
-            if( $this->sleepmap[$classname] )
-                $vars = array_intersect_key($vars, $this->sleepmap[$classname]);
             $res = ($data instanceof Model)
                 ? "o:$id:" . \count($vars) . ":$classname:{$data->DataSourceName()}\n"
                 : "o:$id:" . \count($vars) . ":$classname:\n";
@@ -206,6 +202,13 @@ class Serializer
     }
 
     private $existsBuffer = [];
+
+    private function hasMethod($classname, $methodname)
+    {
+        if( !isset($this->existsBuffer["$classname::$methodname"]) )
+            $this->existsBuffer["$classname::$methodname"] = method_exists($classname,$methodname);
+        return $this->existsBuffer["$classname::$methodname"];
+    }
 
 	private function Unser_Inner()
 	{
@@ -266,20 +269,20 @@ class Serializer
 					return new WdfReflector($line);
 				case 'z':
 					return simplexml_load_string(stripcslashes($line));
-				case 'o':
-                    [$id, $len, $type, $alias] = explode(':',$line);
-					$datasource = $alias?model_datasource($alias):null;
+                case 'o':
+                    [$id, $len, $type, $alias] = explode(':', $line);
+                    $datasource = $alias ? model_datasource($alias) : null;
 
                     if( $alias )
                         $this->Stack[$id] = new $type($datasource);
                     else
                     {
                         $this->Stack[$id] = WdfReflector::GetInstance($type)->newInstanceWithoutConstructor();
-                        if( !isset($this->existsBuffer["$type::__constructed"]) )
-                            $this->existsBuffer["$type::__constructed"] = method_exists($type,'__constructed');
-                        if( $this->existsBuffer["$type::__constructed"] )
+                        if( $this->hasMethod($type,'__constructed') )
                             $this->Stack[$id]->__constructed();
                     }
+
+                    $data = $this->hasMethod($type, '__unserialize') ? [] : null;
 					for($i=0; $i<$len; $i++)
 					{
                         if ($this->Format == "swdf-1")
@@ -289,13 +292,16 @@ class Serializer
 
 						if( !\is_string($field) || $field == "" )
 							continue;
-						$this->Stack[$id]->$field = $this->Unser_Inner();
+                        if ($data === null)
+						    $this->Stack[$id]->$field = $this->Unser_Inner();
+                        else
+                            $data[$field] = $this->Unser_Inner();
 					}
 
-                    if( !isset($this->existsBuffer["$type::__wakeup"]) )
-                        $this->existsBuffer["$type::__wakeup"] = method_exists($type,'__wakeup');
-                    if( $this->existsBuffer["$type::__wakeup"] )
-						$this->Stack[$id]->__wakeup();
+                    if ($data !== null)
+                        $this->Stack[$id]->__unserialize($data);
+                    elseif ($this->hasMethod($type, '__wakeup'))
+                        $this->Stack[$id]->__wakeup();
 
 					return $this->Stack[$id];
 
