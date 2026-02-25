@@ -186,8 +186,6 @@ Object.defineProperty(String.prototype, 'hashCode', {
 				parts.shift(); parts.shift();
 				url_path += "&"+parts.join("/");
             }
-            if( wdf.settings.session_name && wdf.settings.session_id )
-                url_path += "&" + wdf.settings.session_name + "=" + wdf.settings.session_id;
 
 			return url_path;
 		},
@@ -403,14 +401,6 @@ Object.defineProperty(String.prototype, 'hashCode', {
                         }
                         else
                             s.data.request_id = wdf.request_id;
-
-                        if( wdf.settings.session_name && wdf.settings.session_id )
-                        {
-                            if( s.url.indexOf('?')>=0 )
-                                s.url += "&"+wdf.settings.session_name+"="+wdf.settings.session_id;
-                            else
-                                s.url += "?"+wdf.settings.session_name+"="+wdf.settings.session_id;
-                        }
 
                         if( s.dataType == 'json' || s.dataType == 'script' )
                             return wdf.private.original_ajax(s);

@@ -1097,9 +1097,6 @@ function buildQuery($controller,$event="",$data="", $url_root=false)
 	if( isDev() && isset($_REQUEST["XDEBUG_PROFILE"]) )
         $data .= ($data?"&":"")."XDEBUG_PROFILE";
 
-    if (function_exists('session_needs_url_arguments') && session_needs_url_arguments())
-        $data .= "&" . session_name() . "=" . session_id();
-
 	if( !$url_root )
 		$url_root = $CONFIG['system']['url_root'];
 	return $url_root.$route.($data?"?$data":"").($hash?'#'.$hash:'');
