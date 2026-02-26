@@ -50,7 +50,21 @@ use SimpleXMLElement;
  */
 class Serializer
 {
+    private $existsBuffer = [];
     private static ?Serializer $_instance = null;
+	public $Stack;
+	public $Lines;
+    public $Index;
+    public $Format = "swdf-0"; // standard format
+    private static $unserializing_level = 0;
+
+    private function hasMethod($classname, $methodname)
+    {
+        if( !isset($this->existsBuffer["$classname::$methodname"]) )
+            $this->existsBuffer["$classname::$methodname"] = method_exists($classname,$methodname);
+        return $this->existsBuffer["$classname::$methodname"];
+    }
+
     public static function Get()
     {
         if( self::$_instance === null)
@@ -58,12 +72,10 @@ class Serializer
         return self::$_instance;
     }
 
-	public $Stack;
-	public $Lines;
-    public $Index;
-    public $Format = "swdf-0";
-
-    public static $unserializing_level = 0;
+    public static function isUnserializing(): bool
+    {
+        return self::$unserializing_level > 0;
+    }
 
 	/**
 	 * Serializes a value
@@ -75,9 +87,8 @@ class Serializer
 	function Serialize(&$data)
 	{
 		$stack  = new \SplObjectStorage();
-		// $this->sleepmap = [];
 		$r = $this->Ser_Inner($data, $stack);
-        return "format:swdf-1\n$r";
+        return "format:swdf-1\n$r"; // current format, always count up and handle below in the Inner* methods
 	}
 
 	private function Ser_Inner(&$data,$stack)
@@ -201,15 +212,6 @@ class Serializer
         }
     }
 
-    private $existsBuffer = [];
-
-    private function hasMethod($classname, $methodname)
-    {
-        if( !isset($this->existsBuffer["$classname::$methodname"]) )
-            $this->existsBuffer["$classname::$methodname"] = method_exists($classname,$methodname);
-        return $this->existsBuffer["$classname::$methodname"];
-    }
-
 	private function Unser_Inner()
 	{
 		$orig_line = $this->Lines[$this->Index++];
@@ -217,16 +219,6 @@ class Serializer
 			return null;
 		$type = $orig_line[0];
 		$line = substr($orig_line, 2);
-
-        // backwards compatibility!
-        if( $type == 'k' || $type == 'f' || $type == 'v')
-		{
-            if( isset($line[1]) && $line[1]==':' )
-            {
-            	$type = $line[0];
-                $line = substr($line, 2);
-            }
-		}
 
 		try
 		{

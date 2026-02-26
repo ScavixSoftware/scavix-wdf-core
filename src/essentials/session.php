@@ -126,11 +126,12 @@ function session_run()
 /**
  * Checks if the unserializer is doing something.
  *
+ * @deprecated Use Serializer::isUnserializing() instead.
  * @return bool true if running, else false
  */
 function unserializer_active()
 {
-    return Serializer::$unserializing_level > 0;
+    return Serializer::isUnserializing();
 }
 
 /**
