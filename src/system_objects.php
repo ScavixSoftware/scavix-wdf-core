@@ -350,6 +350,11 @@ class Wdf
             umask($um);
         }
     }
+
+    public static function PhpVersionIs(string $operator, string $version): bool
+    {
+        return version_compare(PHP_MAJOR_VERSION . "." . PHP_MINOR_VERSION . "." . PHP_RELEASE_VERSION, $version, $operator);
+    }
 }
 
 class WdfIncomingRequest
@@ -529,6 +534,7 @@ class WdfIncomingRequest
                     case 'script':
                     case 'audio':
                     case 'video':
+                    case 'iframe':
                         $class = $dest;
                         break;
                     case 'empty':
@@ -550,7 +556,7 @@ class WdfIncomingRequest
 
     function isPageLoad()
     {
-        return $this->getRequestClass() == 'page';
+        return is_in($this->getRequestClass(), 'page', 'iframe');
     }
 
     function isAjax()
@@ -727,7 +733,7 @@ class WdfIncomingRequest
             system_die_http(404);
         }
 
-        if( system_is_ajax_call() )
+        if( $this->isAjax() )
         {
             if( !($this->_currentController instanceof Renderable) && !($this->_currentController instanceof WdfResource) )
             {

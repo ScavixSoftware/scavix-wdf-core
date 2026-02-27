@@ -38,8 +38,6 @@ class SysAdminUser
 
 	function __construct($data=[])
     {
-        if( unserializer_active() )
-            return;
         $this->username = $data['username'] ?? '';
         $this->role = $data['role'] ?? 'admin';
         $this->properties = array_filter

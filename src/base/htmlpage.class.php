@@ -183,11 +183,6 @@ class HtmlPage extends Template implements ICallable
             $init_data['site_root'] = cfg_get('system', 'url_root');
             $init_data['rewrite'] = can_rewrite();
 
-            if (function_exists('session_needs_url_arguments') && session_needs_url_arguments())
-            {
-                $init_data['session_id'] = session_id();
-                $init_data['session_name'] = session_name();
-            }
             if (isDevOrBeta() && !isset($init_data['log_to_console']))
                 $init_data['log_to_console'] = true;
 

@@ -83,14 +83,19 @@ function session_run()
 
     if (ini_get('session.use_cookies'))
     {
-        // Force SameSite=none in session cookies, will be overwritten in system_exit with 'partitioned'
+        // Force SameSite=none in session cookies, will be overwritten in system_exit with 'partitioned' for php<8.5
         $cookie_params = session_get_cookie_params();
         if (isset($cookie_params['samesite']))
         {
             $cookie_params['samesite'] = 'none';
             $cookie_params['httponly'] = true;
             if (isSSL())
+            {
                 $cookie_params['secure'] = true;
+                if ('iframe' == strtolower(ifavail($_SERVER, 'SEC_FETCH_DEST', 'HTTP_SEC_FETCH_DEST', 'REDIRECT_HTTP_SEC_FETCH_DEST') ?: ''))
+                    if (Wdf::PhpVersionIs(">=", '8.5'))
+                        $cookie_params['partitioned'] = true;
+            }
             else
                 unset($cookie_params['samesite']);
             session_set_cookie_params($cookie_params);
@@ -116,59 +121,17 @@ function session_run()
 
 	if (!isset($_SESSION["system_internal_cache"]))
 		$_SESSION["system_internal_cache"] = [];
-
-    if ('iframe' == strtolower(ifavail($_SERVER, 'HTTP_SEC_FETCH_DEST', 'REDIRECT_HTTP_SEC_FETCH_DEST')?:''))
-    {
-        $session_name = session_name();
-        $session_cookie_okay = true; // this disables cookie detection roundtrip, use 'false' to re-enable
-        foreach (getallheaders() as $name => $value)
-        {
-            if (strtolower($name) != "cookie")
-                continue;
-            foreach (explode(";", $value) as $cookie)
-            {
-                if (starts_with(trim($cookie), "{$session_name}="))
-                {
-                    $session_cookie_okay = true;
-                    break 2;
-                }
-            }
-        }
-
-        if (!isset($_REQUEST[$session_name]) && !$session_cookie_okay)
-        {
-            // log_debug("[IFRAME] Starting coockie detection roundtrip", system_current_request(true));
-            $CONFIG['session']['needs_get_args'] = true;
-            redirect(buildQuery(current_controller(), current_event(), $_GET));
-        }
-        elseif (isset($_GET[$session_name]))
-        {
-            unset($_GET[$session_name]);
-            unset($_REQUEST[$session_name]);
-            if ($session_cookie_okay)
-            {
-                // log_debug("[IFRAME] Cookies okay, finishing coockie detection roundtrip", system_current_request(true));
-                $CONFIG['session']['needs_get_args'] = false;
-                redirect(buildQuery(current_controller(), current_event(), $_GET));
-            }
-            else
-                $CONFIG['session']['needs_get_args'] = true;
-        }
-        else
-            $CONFIG['session']['needs_get_args'] = false;
-    }
-    else // no change for requests outside of an iframe
-        $CONFIG['session']['needs_get_args'] = false;
 }
 
 /**
  * Checks if the unserializer is doing something.
  *
+ * @deprecated Use Serializer::isUnserializing() instead.
  * @return bool true if running, else false
  */
 function unserializer_active()
 {
-    return Serializer::$unserializing_level > 0;
+    return Serializer::isUnserializing();
 }
 
 /**
@@ -251,7 +214,7 @@ function session_update($keep_alive_only = false)
     {
         $partitionCookies = function ()
         {
-            if (headers_sent() || ('iframe' != strtolower(ifavail($_SERVER, 'HTTP_SEC_FETCH_DEST', 'REDIRECT_HTTP_SEC_FETCH_DEST') ?: '')))
+            if (headers_sent() || Wdf::Request()->getRequestClass() != 'iframe')
                 return;
             $replace_headers = true;
             foreach (headers_list() as $header)
@@ -262,7 +225,6 @@ function session_update($keep_alive_only = false)
                     $header .= ends_with($header, ";") ? " Partitioned" : "; Partitioned";
                 header("$header", $replace_headers);
                 $replace_headers = false;
-                // log_debug("Cookie partitioned", $header,system_current_request(true));
             }
         };
 
@@ -407,11 +369,12 @@ function session_unserialize($value)
 }
 
 /**
- * @internal Checks if there's need to use GET arguments for session (because of missing cookies), for example if running in an iframe.
- * @return bool
+ * Checks if there's need to use GET arguments for session (because of missing cookies), for example if running in an iframe.
+ *
+ * @deprecated This is very insecure. As we support partitioned cookies this should never be needed/used. Returns false always.
+ * @return false
  */
 function session_needs_url_arguments()
 {
-    global $CONFIG;
-    return isset($CONFIG['session']['needs_get_args']) ? $CONFIG['session']['needs_get_args'] : false;
+    return false;
 }

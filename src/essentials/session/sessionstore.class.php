@@ -157,7 +157,7 @@ class SessionStore extends ObjectStore
         global $CONFIG;
         $start = microtime(true);
 
-		if( unserializer_active() )
+		if( Serializer::isUnserializing() )
 		{
 			log_trace("create_storage_id while unserializing object of type ".get_class_simple($obj));
 			$obj->_storage_id = "to_be_overwritten_by_unserializer";

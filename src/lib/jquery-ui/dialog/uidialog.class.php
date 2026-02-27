@@ -75,7 +75,7 @@ class uiDialog extends uiControl
         else
         {
             // old behaviour
-            $rem = system_is_ajax_call()
+            $rem = \ScavixWDF\Wdf::Request()->isAjax()
                 ?"$('#{$this->id}').removeDialog();"
                 :"try{ $('#{$this->id}').dialog('close'); }catch(noop){}";
             $this->CloseButtonAction = "function(){ $rem }";
@@ -99,7 +99,7 @@ class uiDialog extends uiControl
 				$this->Buttons = array_merge($this->Buttons, $temp);
 			}
 
-            $close_action = system_is_ajax_call()
+            $close_action = \ScavixWDF\Wdf::Request()->isAjax()
                 ?"$('#{$this->id}').removeDialog();"
                 :"try{ $('#{$this->id}').dialog('close'); }catch(noop){}";
 
@@ -117,7 +117,7 @@ class uiDialog extends uiControl
 			$this->script("$('#{$this->id}').parent().find('.ui-dialog-buttonpane .ui-button').click(function(){ $(this).parent().find('.ui-button').button().prop('disabled', true).addClass( 'ui-state-disabled' ); });");
 			$this->_script = array_merge($this->_script,$tmp);
 
-            if(!system_is_ajax_call())
+            if(!\ScavixWDF\Wdf::Request()->isAjax())
             {
                 foreach( $this->_script as $s )
                 {

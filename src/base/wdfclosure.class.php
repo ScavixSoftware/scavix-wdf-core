@@ -137,13 +137,16 @@ class WdfClosure
 		return $this->used_variables;
 	}
 
-	public function __sleep()
+	public function __serialize()
 	{
-		return ['code', 'used_variables', 'context'];
+        return ['code' => $this->code, 'used_variables' => $this->used_variables, 'context' => $this->context];
 	}
 
-	public function __wakeup()
+	public function __unserialize($data)
 	{
+        foreach ($data as $k => $v)
+            $this->$k = $v;
+
         if ($this->code)
         {
             extract($this->used_variables ?? []);

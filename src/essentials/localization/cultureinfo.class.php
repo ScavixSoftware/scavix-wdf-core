@@ -104,22 +104,9 @@ class CultureInfo
 //		$this->TimeZone = getTimeZone();
 	}
 
-	function __sleep()
+	function __serialize()
 	{
-		$res = [];
-		foreach( get_object_vars($this) as $name=>$val)
-		{
-			switch( $name )
-			{
-				case '_alwaysConvertTimesToTimezone':
-				case 'CurrenyConversionFunction':
-					break;
-				default:
-					$res[] = $name;
-					break;
-			}
-		}
-		return $res;
+        return array_diff_key(get_object_vars($this), ['_alwaysConvertTimesToTimezone' => true, 'CurrenyConversionFunction' => true]);
 	}
 
     public function __clone()
