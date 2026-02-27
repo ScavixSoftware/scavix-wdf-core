@@ -59,13 +59,10 @@ class Query
 
     function __construct(&$obj,&$datasource,$conditions_separator="WHERE")
 	{
-		if( !unserializer_active() )
-		{
-			$this->_object = $obj;
-			$this->_ds = $datasource;
-			$this->_where = new ConditionTree(-1,"AND",$conditions_separator);
-			$this->_knownmodels = [$obj];
-		}
+        $this->_object = $obj;
+        $this->_ds = $datasource;
+        $this->_where = new ConditionTree(-1,"AND",$conditions_separator);
+        $this->_knownmodels = [$obj];
 	}
 
     public function __clone()

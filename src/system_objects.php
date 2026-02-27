@@ -733,7 +733,7 @@ class WdfIncomingRequest
             system_die_http(404);
         }
 
-        if( system_is_ajax_call() )
+        if( $this->isAjax() )
         {
             if( !($this->_currentController instanceof Renderable) && !($this->_currentController instanceof WdfResource) )
             {

@@ -39,12 +39,6 @@ use ScavixWDF\Base\DateTimeEx;
 use ScavixWDF\Wdf;
 use ScavixWDF\WdfDbException;
 use ScavixWDF\WdfException;
-use function force_array;
-use function log_error;
-use function log_trace;
-use function model_datasource;
-use function starts_iwith;
-use function unserializer_active;
 
 
 /**
@@ -332,7 +326,7 @@ abstract class Model implements Iterator, Countable, ArrayAccess, \ScavixWDF\ILo
 		{
 			if( !isset($this->_cacheKey) || !$this->_cacheKey )
 				$this->_cacheKey = $this->_ds->Database().$this->_className;
-            if (!unserializer_active())
+            if (!\ScavixWDF\Session\Serializer::isUnserializing())
                 $this->__ensureTableSchema();
 		}
 		else
@@ -341,21 +335,22 @@ abstract class Model implements Iterator, Countable, ArrayAccess, \ScavixWDF\ILo
 
     function __serialize()
     {
-        return array_merge([
-            '_query' => $this->_query,
-            '_fieldValues' => $this->_fieldValues,
-            '_querySql' => $this->_querySql,
-            '_queryArgs' => $this->_queryArgs,
-            '_saved' => $this->_saved,
-        ], $this->AsArray());
+        if ($this->_query)
+            return $this->AsArray() + [
+                '_query' => $this->_query,
+                '_fieldValues' => $this->_fieldValues,
+                '_querySql' => $this->_querySql,
+                '_queryArgs' => $this->_queryArgs,
+                '_saved' => $this->_saved,
+            ];
+        return $this->AsArray();
     }
 
 	function __unserialize($data)
 	{
         foreach ($data as $k => $v)
             $this->$k = $v;
-
-		if( isset($this->_query) )
+		if( $this->_query )
 			return;
 		$q = $this->_ds->Query($this->GetTableName());
 		foreach( $this->GetPrimaryColumns() as $pk )

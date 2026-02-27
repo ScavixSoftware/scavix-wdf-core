@@ -356,7 +356,7 @@ function system_exit($result=null,$die=true)
     if( PHP_SAPI == 'cli' )
         die("Missing CLI handling, cannot render HTML here\n");
 
-	if( system_is_ajax_call() )
+	if( Wdf::Request()->isAjax() )
 	{
 		if( $result instanceof AjaxResponse )
 			$response = $result->Render();
@@ -466,7 +466,7 @@ function system_die($reason,$details_internal='',$log_error=true)
     if( PHP_SAPI == 'cli' )
 		die("$logmsg\n"); // system_exit cannot render to CLI, so just die here
 
-    if( system_is_ajax_call() )
+    if( Wdf::Request()->isAjax() )
 	{
         $res = AjaxResponse::Error($logmsg, true);
 		system_exit($res->Render());
@@ -1437,7 +1437,7 @@ function current_url()
  */
 function system_current_request($as_url=false)
 {
-    if( system_is_ajax_call() )
+    if( Wdf::Request()->isAjax() )
     {
         $rid = Args::request('request_id');
         if( $rid && isset($_SESSION['latest_requests'][$rid]) )
