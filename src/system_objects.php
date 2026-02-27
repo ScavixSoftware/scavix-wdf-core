@@ -535,7 +535,7 @@ class WdfIncomingRequest
                         $class ='ajax';
                         break;
                     default:
-                        if (str_contains($this->getHeader('Accept'), 'image/'))
+                        if (($accept = $this->getHeader('Accept')) && str_contains($accept, 'image/'))
                             $class = 'image';
                         elseif ($this->getHeader('requested_with') == 'xmlhttprequest')
                             $class = 'ajax';
