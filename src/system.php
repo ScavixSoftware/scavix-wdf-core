@@ -123,6 +123,7 @@ function system_config_default($reset = true)
 	if( $reset )
 		$CONFIG = [];
 
+	$CONFIG['class_path']['system'][]  = __DIR__.'/';
 	$CONFIG['class_path']['system'][]  = __DIR__.'/reflection/';
     $CONFIG['class_path']['system'][]  = __DIR__.'/reflection/attributes/';
 	$CONFIG['class_path']['system'][]  = __DIR__.'/base/';
