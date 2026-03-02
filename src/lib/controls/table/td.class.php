@@ -34,13 +34,13 @@ use ScavixWDF\Base\Control;
 
 /**
  * Just a table cell (td).
- * 
+ *
  */
 class Td extends Control
 {
     public $options = false;
 	public $CellFormat = false;
-	
+
 	public $colspan = "";
 
 	/**
@@ -55,7 +55,7 @@ class Td extends Control
 
 	/**
 	 * Returns this cells contents.
-	 * 
+	 *
 	 * Note: This will return the unformatted content and ignore an eventually active <CellFormat>.
 	 * @return string Contents
 	 */
@@ -68,18 +68,12 @@ class Td extends Control
 
 	/**
 	 * Set new content.
-	 * 
+	 *
 	 * @param mixed $content The new content
 	 * @return void
 	 */
 	function SetContent($content)
 	{
-        if($content instanceof \ScavixWDF\Base\Renderable)
-        {
-            $table = $this->closest('Table');
-            if($table !== false)
-                $table->force_ajax_dependenciesloading = true;
-        }
 		$this->content($content,true);
 	}
 }

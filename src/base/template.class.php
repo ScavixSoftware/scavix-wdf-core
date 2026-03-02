@@ -105,11 +105,10 @@ class Template extends Renderable
 	 */
 	function __construct($file = "")
 	{
-		$this->__constructed();
-
 		$this->file = $file;
-        create_storage_id($this);
+        parent::__construct();
         $this->set('id',$this->_storage_id);
+		$this->__constructed();
 	}
 
     function __constructed()
@@ -309,7 +308,7 @@ class Template extends Renderable
                 if (!$this->isHtmlPageTemplate($__template_file))
                     $tempvars['sub_template_content'] = $render_in_context($__template_file, $tempvars);
 
-                foreach (Renderable::CategorizeResources(Renderable::__getLazyResources()) as $r)
+                foreach (Wdf::Response()->getResources() as $r)
                 {
                     if ($r['ext'] == 'css' || $r['ext'] == 'less')
                         $this->addCss($r['url'], $r['key']);

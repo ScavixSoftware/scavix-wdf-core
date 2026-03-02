@@ -74,7 +74,6 @@ class Table extends Control
     public $ShowTotalText = false;
 
     public $PersistName = false;
-    public $force_ajax_dependenciesloading = false;
 
     public $OnPageChanged;
 
@@ -82,8 +81,6 @@ class Table extends Control
 	{
 		parent::__construct("div");
 		$this->class = 'table';
-        if(Wdf::Request()->isAjax())
-            $this->force_ajax_dependenciesloading = true;
 	}
 
     protected final function checkCallIsCorrectlyListingWrapped($hard=false)
@@ -152,13 +149,6 @@ class Table extends Control
             $f = $this->OnPageChanged;
             $f("{$this->PersistName}_page",$this->CurrentPage);
         }
-    }
-
-    function __collectResourcesInternal($template,&$static_stack)
-	{
-        if(Wdf::Request()->isAjax() && !$this->force_ajax_dependenciesloading)
-            return [];
-        return parent::__collectResourcesInternal($template,$static_stack);
     }
 
 	/**

@@ -119,7 +119,7 @@ class AjaxResponse
 
         if($force_dependency_loading !== false)
         {
-            foreach( Renderable::CategorizeResources(Renderable::__getLazyResources(),$content->__collectResources()) as $r )
+            foreach( Wdf::Response()->getResources() as $r )
             {
                 if( starts_with($r['ext'],'css') || starts_with($r['ext'],'less') )
                     $wrapped->dep_css[$r['key']] = $r['url'];

@@ -220,9 +220,8 @@ class HtmlPage extends Template implements ICallable
             $this->set("languagecode", $ci->Code);
 		}
 
-		$res = $this->__collectResources();
 		$this->js = array_reverse($this->js,true);
-		foreach( Renderable::CategorizeResources(array_reverse($res)) as $r )
+		foreach( array_reverse(Wdf::Response()->getResources()) as $r )
 		{
 			if( $r['ext'] == 'css' || $r['ext'] == 'less' )
 				$this->addCss($r['url'],$r['key']);

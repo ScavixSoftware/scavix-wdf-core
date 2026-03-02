@@ -210,6 +210,12 @@ abstract class Renderable implements \JsonSerializable
         }
 	}
 
+    function __construct()
+    {
+        create_storage_id($this);
+        Wdf::Response()->addResource($this);
+    }
+
     /**
      * @internal Dummy. Can be used in subclasses by overriding.
      */
@@ -244,8 +250,6 @@ abstract class Renderable implements \JsonSerializable
             $this->_parent = Renderable::GetCurrentRenderer();
             $this->PreRender([current_controller(false)]);
 
-            Renderable::addLazyResources($this->__collectResourcesCached());
-
             if (Renderable::HasCurrentRenderer())
                 Renderable::GetCurrentRenderer()->script($this->_script);
 
@@ -259,182 +263,12 @@ abstract class Renderable implements \JsonSerializable
 
     function __getContentVars(){ return ['_content']; }
 
-	function __collectResources()
-	{
-		global $CONFIG;
-
-		$min_js_file = isset($CONFIG['use_compiled_js'])?$CONFIG['use_compiled_js']:false;
-		$min_css_file = isset($CONFIG['use_compiled_css'])?$CONFIG['use_compiled_css']:false;
-
-		if( $min_js_file && $min_css_file )
-			return [$min_css_file, $min_js_file];
-
-		$res = $this->__collectResourcesCached();
-        if (!$min_js_file && !$min_css_file)
-            return $res;
-
-
-		$js = []; $css = [];
-		foreach( $res as $r )
-		{
-			if( ends_with($r, '.css') || ends_with($r, '.less') )
-			{
-				if( !$min_css_file )
-					$css[] = $r;
-			}
-			else
-			{
-				if( !$min_js_file )
-					$js[] = $r;
-			}
-		}
-
-		if( $min_js_file )
-		{
-			$css[] = $min_js_file;
-			return $css;
-		}
-
-		$js[] = $min_css_file;
-		return $js;
-	}
-
-    protected function __collectResourcesCached()
-    {
-        $key = __METHOD__."/{$GLOBALS['CONFIG']['system']['application_name']}/".getAppVersion('nc')."/".Wdf::Request()->getEndpoint();
-        if ($res = cache_get($key) )
-            return $res;
-        $start = microtime(true);
-        $stack = [];
-		$res = $this->__collectResourcesInternal($this, $stack);
-        cache_set($key, $res, isDev() ? 3600 : -1);
-        Wdf::Measure(__METHOD__ . " cache missed", $start);
-        return $res;
-    }
-
     /**
-     * @return array
-     */
-	protected function __collectResourcesInternal($template,&$static_stack)
-	{
-        // kind of dirty hack to allow overrides in subclasses
-        if( $template instanceof Renderable && $template != $this )
-            return $template->__collectResourcesInternal($template,$static_stack);
-
-        $res = [];
-
-		if( \is_object($template) )
-		{
-			$classname = \get_class($template);
-
-			// first collect statics from the class definitions
-            if( !isset($static_stack[$classname]) )
-            {
-                $static = ResourceAttribute::ResolveAll( ResourceAttribute::Collect($classname) );
-                $res = array_merge($res,$static);
-                $static_stack[$classname] = true;
-
-            }
-
-			if( $template instanceof Renderable )
-			{
-				// then check all contents and collect theis includes
-				foreach( $template->__getContentVars() as $varname )
-				{
-					$sub = [];
-					foreach( $template->$varname as $var )
-					{
-						if( \is_object($var) || \is_array($var) )
-							$sub = array_merge($sub,$this->__collectResourcesInternal($var,$static_stack));
-					}
-					$res = array_merge($res,$sub);
-				}
-
-				// for Template class check the template file too
-				if( $template instanceof Template )
-				{
-                    $fnl = strtolower(substr_until(basename($template->file), '.'));
-                    if( !isset($static_stack[$fnl]) )
-                    {
-                        if( get_class_simple($template,true) != $fnl )
-                        {
-                            if( resourceExists("$fnl.css") )
-                                $res[] = resFile("$fnl.css");
-                            elseif( resourceExists("$fnl.less") )
-                                $res[] = resFile("$fnl.less");
-                            if( resourceExists("$fnl.js") )
-                                $res[] = resFile("$fnl.js");
-                        }
-                    }
-                    $static_stack[$fnl] = true;
-				}
-
-				// finally include the 'self' stuff (<classname>.js,...)
-				// Note: these can be forced to be loaded in static if they require to be loaded before the contents resources
-				$classname = get_class_simple($template);
-				$parents = []; $cnl = strtolower($classname);
-				do
-				{
-                    if( !isset($static_stack[$cnl]) )
-                    {
-                        if( resourceExists("$cnl.css") )
-                            $parents[] = resFile("$cnl.css");
-                        elseif( resourceExists("$cnl.less") )
-                            $parents[] = resFile("$cnl.less");
-                        if( resourceExists("$cnl.js") )
-                            $parents[] = resFile("$cnl.js");
-                        $static_stack[$cnl] = true;
-                    }
-                    $classname = substr_from(get_parent_class(fq_class_name($classname)), '\\');
-    				$cnl = strtolower($classname);
-				}
-				while($classname != "");
-				$res = array_merge($res,array_reverse($parents));
-			}
-		}
-		elseif( \is_array($template) )
-		{
-			foreach( $template as $var )
-			{
-				if( \is_object($var)|| \is_array($var) )
-					$res = array_merge($res,$this->__collectResourcesInternal($var,$static_stack));
-			}
-		}
-		return array_unique($res);
-	}
-
-    protected static $_lazy_resources = [];
-    protected static function addLazyResources($res)
-	{
-        self::$_lazy_resources = array_unique(array_merge(
-            force_array($res),
-            self::$_lazy_resources
-        ));
-	}
-
-    public static function __getLazyResources()
-    {
-        return self::$_lazy_resources;
-    }
-
-    /**
-     * @internal Prepares given resources to be processed
+     * @deprecated Dont use anymore, returns an empty array
      */
     public static function CategorizeResources(...$args)
     {
-        $res = [];
-        foreach( $args as $a )
-            $res = array_merge($res, force_array($a));
-
-        $ret = [];
-        foreach( $res as $url )
-		{
-            if( $url === '') continue;
-            $key = get_requested_file($url);
-            $ext = pathinfo(($key == '' ? $url : $key), PATHINFO_EXTENSION);
-			$ret[] = compact('ext','key','url');
-		}
-        return $ret;
+        return [];
     }
 
 	/**

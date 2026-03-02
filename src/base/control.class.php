@@ -176,14 +176,13 @@ class Control extends Renderable
 	 */
 	function __construct($tag = "")
 	{
-		$this->__constructed();
-
-        create_storage_id($this);
+        parent::__construct();
         $this->Tag = strtolower("$tag");
         $class = strtolower(get_class_simple($this));
 
         if ($class != $this->Tag && $class != "control")
             $this->class = $class;
+		$this->__constructed();
 	}
 
     function __constructed()

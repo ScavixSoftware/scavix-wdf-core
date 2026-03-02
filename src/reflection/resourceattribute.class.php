@@ -69,24 +69,24 @@ class ResourceAttribute extends WdfAttribute
 	 * @param string|object $classname Classname or object to collect resources for
 	 * @return array Array of resource attributes
 	 */
-	public static function Collect($classname)
-	{
+    public static function Collect($classname)
+    {
         if (is_in($classname, Renderable::class, Model::class))
             return [];
-        if( is_a($classname, Model::class, true) ) // todo: perf, check if this is too heavy
+        if (is_a($classname, Model::class, true)) // todo: perf, check if this is too heavy
             return [];
 
         static $buffer = [];
-        if( isset($buffer[$classname]) )
+        if (isset($buffer[$classname]))
             return $buffer[$classname];
 
-		$ref = WdfReflector::GetInstance($classname);
+        $ref = WdfReflector::GetInstance($classname);
         $attrs = $ref->GetClassAttributes(['Resource', 'ExternalResource']);
-		$ref = $ref->getParentClass();
-		$parents = $ref?self::Collect($ref->getName()):[];
-		$buffer[$classname] = array_merge($parents,$attrs);
-		return $buffer[$classname];
-	}
+        $ref = $ref->getParentClass();
+        $parents = $ref ? self::Collect($ref->getName()) : [];
+        $buffer[$classname] = array_merge($parents, $attrs);
+        return $buffer[$classname];
+    }
 
 	/**
 	 * Resolves an array of ResourceAttributes
