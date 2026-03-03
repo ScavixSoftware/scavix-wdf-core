@@ -127,6 +127,7 @@ function system_config_default($reset = true)
 	$CONFIG['class_path']['system'][]  = __DIR__.'/reflection/';
     $CONFIG['class_path']['system'][]  = __DIR__.'/reflection/attributes/';
 	$CONFIG['class_path']['system'][]  = __DIR__.'/base/';
+	$CONFIG['class_path']['system'][]  = __DIR__.'/base/color/';
 	$CONFIG['class_path']['system'][]  = __DIR__.'/tasks/';
 	$CONFIG['class_path']['content'][] = __DIR__.'/lib/';
 	$CONFIG['class_path']['content'][] = __DIR__.'/lib/controls/';
@@ -1734,6 +1735,7 @@ function fq_class_name($classname)
 			WdfException::Raise("Ambigous classname: $classname",Wdf::$ClassAliases[$cnl]);
 		return Wdf::$ClassAliases[$cnl];
 	}
+    log_debug("HIA",$classname);
 	return $classname;
 }
 

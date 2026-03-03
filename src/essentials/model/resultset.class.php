@@ -35,7 +35,6 @@ use DateTime;
 use Exception;
 use Iterator;
 use PDO;
-use PDOStatement;
 use ScavixWDF\Model\Driver\MySql;
 
 /**
@@ -750,31 +749,3 @@ class ResultSet implements Iterator, ArrayAccess, \Serializable
 	}
 }
 
-/**
- * @internal Extends PDOStatement so that we can easily capture calling <DataSource>
- */
-class WdfPdoStatement extends PDOStatement
-{
-	public $_ds = null;
-	public $_pdo = null;
-
-	protected function __construct($datasource,$pdo)
-	{
-		$this->_ds = $datasource;
-		$this->_pdo = $pdo;
-	}
-
-    function finishAll()
-    {
-        $res = $this->fetchAll();
-        $this->closeCursor();
-        return $res;
-    }
-
-    function finishScalar($column_index=0)
-    {
-        $res = $this->fetchColumn($column_index);
-        $this->closeCursor();
-        return $res;
-    }
-}
