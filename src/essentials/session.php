@@ -123,6 +123,11 @@ function session_run()
 		$_SESSION["system_internal_cache"] = [];
 }
 
+function session_active()
+{
+    return (isset(Wdf::$SessionHandler) && is_object(Wdf::$SessionHandler));
+}
+
 /**
  * Checks if the unserializer is doing something.
  *
@@ -310,7 +315,9 @@ function in_object_storage($id)
  */
 function &restore_object($id)
 {
-	$res = Wdf::$ObjectStore->Restore($id);
+    $res = null;
+	if( isset(Wdf::$ObjectStore) && is_object(Wdf::$ObjectStore) )
+    	$res = Wdf::$ObjectStore->Restore($id);
     return $res;
 }
 

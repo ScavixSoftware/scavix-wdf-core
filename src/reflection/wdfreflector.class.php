@@ -30,12 +30,8 @@
  */
 namespace ScavixWDF\Reflection;
 
-use Attribute;
-use Exception;
-use ReflectionAttribute;
 use ReflectionClass;
 use ReflectionProperty;
-use ScavixWDF\Base\Control;
 use ScavixWDF\Reflection\Attributes\ExternalResource;
 use ScavixWDF\Reflection\Attributes\RequestParam;
 use ScavixWDF\Reflection\Attributes\Resource;
@@ -88,14 +84,17 @@ class WdfReflector extends ReflectionClass
 		$res->Classname = $res->getName();
 
 		// now using a filemtime cache to check if an update is needed
-		$fn = $res->getFileName();
-		$ftime = @filemtime($fn);
-		$mtime = cache_get("filemtime_$fn");
-		if( ($mtime === false) || ($ftime > $mtime) )
-		{
-			$res->UpdateCache();
-			cache_set("filemtime_$fn",$ftime);
-		}
+        if (\ScavixWDF\Wdf::PhpVersionIs("<", "8"))
+        {
+            $fn = $res->getFileName();
+            $ftime = @filemtime($fn);
+            $mtime = cache_get("filemtime_$fn");
+            if (($mtime === false) || ($ftime > $mtime))
+            {
+                $res->UpdateCache();
+                cache_set("filemtime_$fn", $ftime);
+            }
+        }
 
 		self::$cache[$classnamel] = $res;
 		return $res;
@@ -145,8 +144,8 @@ class WdfReflector extends ReflectionClass
 		$comment = cache_get("doccomment_$key");
 		if( $comment === false )
 			$comment = trim($ref->getDocComment());
-		if( $comment && (strpos($comment, "/**") === 0) )
-			cache_set("doccomment_$key",$comment);
+        if ($comment && (strpos($comment, "/**") === 0))
+            cache_set("doccomment_$key", $comment);
 		else
 		{
 			$comment = cache_get("doccomment_$key");
@@ -354,10 +353,15 @@ class WdfReflector extends ReflectionClass
 		if( !\is_array($filter) )
 			$filter = [$filter];
 
-        // skip cache: no performance benefit
-        $res = $this->_getAttributes_PHP8($filter, $this->Instance, false, false, $allowAttrInheritance);
-        if (!empty($res))
-            return $res;
+        if (\ScavixWDF\Wdf::PhpVersionIs(">=", "8"))
+        {
+            $res = $this->_getAttributes_PHP8($filter, $this->Instance, false, false, $allowAttrInheritance);
+            if (!empty($res))
+                return $res;
+
+            if (starts_iwith($this->Classname, "ScavixWdf\\")) // skip doccomment detection for ScavixWdf classes
+                return [];
+        }
 
 		$res = $this->_getCached($this->Classname,$filter);
 		if( $res )
@@ -387,10 +391,15 @@ class WdfReflector extends ReflectionClass
 			return [];
 		$method = $this->getMethod($method_name);
 
-        // skip cache: no performance benefit
-        $res = $this->_getAttributes_PHP8($filter, $this->Instance, $method, false, $allowAttrInheritance);
-        if( !empty($res) )
-            return $res;
+        if (\ScavixWDF\Wdf::PhpVersionIs(">=", "8"))
+        {
+            $res = $this->_getAttributes_PHP8($filter, $this->Instance, $method, false, $allowAttrInheritance);
+            if (!empty($res))
+                return $res;
+
+            if (starts_iwith($this->Classname, "ScavixWdf\\")) // skip doccomment detection for ScavixWdf classes
+                return [];
+        }
 
 		$cache_key = $this->Classname."::".$method_name;
 		$res = $this->_getCached($cache_key,$filter);

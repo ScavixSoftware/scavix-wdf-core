@@ -148,11 +148,9 @@ abstract class SessionBase
 		{
 			$name = $CONFIG['session']['session_name'];
 			session_name($name);
-//			if( system_is_ajax_call() && !isset($_COOKIE[$name]) )
-//            {
-//                log_debug("AJAX call without valid session");
-//				die();
-//            }
+            $opts = \ScavixWDF\Wdf::Request()->isStaticAsset()
+                ? ['read_and_close' => true]
+                : [];
 
 			if( isset($_REQUEST[$name]) )
 			{
@@ -179,7 +177,7 @@ abstract class SessionBase
 				{
 					session_id($sid);
 					$try = 0;
-					while( (@session_start() === false) && ($try++ < 10) )
+					while( (@session_start($opts) === false) && ($try++ < 10) )
 						usleep(200);
 					if($try >= 10)
 						trigger_error("session_start failed 10 times!", E_USER_ERROR);
@@ -192,7 +190,7 @@ abstract class SessionBase
 					session_id($this->GenerateSessionId());
 
 					$try = 0;
-					while( (@session_start() === false) && ($try++ < 10) )
+					while( (@session_start($opts) === false) && ($try++ < 10) )
 						usleep(200);
 					if($try >= 10)
 						trigger_error("start_start failed 10 times!", E_USER_ERROR);
@@ -200,13 +198,21 @@ abstract class SessionBase
 			}
 			else
 			{
+                $start = microtime(true);
 				try {
 					$try = 0;
-					while( (@session_start() === false) && ($try++ < 10) )
-						usleep(200);
+                    while ((@session_start($opts) === false) && ($try++ < 10))
+                        usleep(200);
 					if($try >= 10)
 						trigger_error("start_start failed 10 times!", E_USER_ERROR);
-				} catch(Exception $ex) {}
+                }
+                catch (Exception $ex){}
+                $ms = round((microtime(true) - $start) * 1000);
+                if (isDev() && $ms > 35)
+                {
+                    $size = strlen(serialize($_SESSION));
+                    log_debug("Slow session {$ms}ms, size=$size, req={$_SERVER['REQUEST_URI']}", $opts);
+                }
 			}
 		}
 	}

@@ -34,17 +34,23 @@ use ScavixWDF\WdfResource;
 class WdfIncomingRequest
 {
     private static WdfIncomingRequest $_instance;
+    private bool $parsingDone = false;
     private $_url, $_currentController, $_currentEvent, $_raw_data;
     private $_route, $_routeArgs, $_parsedArguments, $_usingDefaultPage, $_usingDefaultEvent;
 
     public static function &Get()
     {
         if (empty(self::$_instance))
-        {
             self::$_instance = new WdfIncomingRequest();
-            self::$_instance->parseRequest();
-            self::$_instance->parseArguments();
 
+        if (!self::$_instance->parsingDone)
+        {
+            if (PHP_SAPI == 'cli' || session_active())
+            {
+                self::$_instance->parsingDone = true;
+                self::$_instance->parseRequest();
+                self::$_instance->parseArguments();
+            }
         }
         return self::$_instance;
     }
@@ -240,7 +246,7 @@ class WdfIncomingRequest
 
     function isStaticAsset()
     {
-        return is_in($this->getRequestClass(), 'image', 'audio', 'video');
+        return is_in($this->getRequestClass(), 'image', 'audio', 'video', 'style', 'script');
     }
 
     #endregion

@@ -32,52 +32,36 @@ use ScavixWDF\Wdf;
 class WdfResponse
 {
     private static WdfResponse $_instance;
-
     public static function &Get()
     {
         if (empty(self::$_instance))
         {
             self::$_instance = new WdfResponse();
+            self::$_instance->resource_cache_prefix = 'resource/' . getAppVersion('nc');
         }
         return self::$_instance;
     }
 
-    private $resource_map = [], $processed_classes = [];
+    #region Resource handling
 
-    public function getResources()
-    {
-        $res = [];
-        foreach ($this->resource_map ?? [] as $key => $val)
-        {
-            foreach ($val['items'] ?? [] as $url)
-            {
-                $key = get_requested_file($url);
-                if (empty($res[$key]))
-                {
-                    $ext = pathinfo(($key == '' ? $url : $key), PATHINFO_EXTENSION);
-                    $res[$key] = compact('ext', 'key', 'url');
-                }
-            }
-        }
-        return array_values($res);
-    }
+    protected string $resource_cache_prefix;
+    protected array $resource_map = [];
+    protected $prepared_resources = false;
 
-    private function resMapRestore($name)
+    protected function resMapRestore($name)
     {
         if (!empty($this->resource_map[$name]))
             return true;
 
-        $key = 'resource/' . getAppVersion('nc') . '/' . $name;
-        if ($data = cache_get($key, false, true, false))
+        if ($data = cache_get("{$this->resource_cache_prefix}/$name", false, true, false))
         {
-            // $this->processed_classes[$classname] = true;
             $this->resource_map[$name] = ['items' => $data, 'saved' => true];
             return true;
         }
         return false;
     }
 
-    private function resMapAdd($name, $data)
+    protected function resMapAdd($name, $data)
     {
         if (empty($data))
             return;
@@ -90,16 +74,17 @@ class WdfResponse
             $this->resource_map[$name]['items'] = array_unique(array_merge($this->resource_map[$name]['items'], $data));
             $this->resource_map[$name]['saved'] = false;
         }
-
+        $this->prepared_resources = false;
     }
 
-    private function resMapStore($name)
+    protected function resMapStore($name)
     {
         if (!empty($this->resource_map[$name]['items']) && !$this->resource_map[$name]['saved'])
-        {
-            $key = 'resource/' . getAppVersion('nc') . '/' . $name;
-            cache_set($key, $this->resource_map[$name]['items'], 3600, true, false);
-        }
+            cache_set(
+                "{$this->resource_cache_prefix}/$name",
+                $this->resource_map[$name]['items'],
+                3600, true, false
+            );
     }
 
     public function addResource(Renderable|string $data)
@@ -117,7 +102,6 @@ class WdfResponse
                 $start = Wdf::Measure(__METHOD__." - cache hit" , $start);
                 return;
             }
-            // $this->processed_classes[$classname] = true;
             if (!$data_present )
             {
                 $this->resMapAdd($cnl, ResourceAttribute::ResolveAll(ResourceAttribute::Collect(\get_class($data))));
@@ -169,4 +153,28 @@ class WdfResponse
             $this->resource_map['plain.string']['items'][] = $data;
         }
     }
+
+    public function getResources()
+    {
+        if (!$this->prepared_resources)
+        {
+            $res = [];
+            foreach ($this->resource_map ?? [] as $key => $val)
+            {
+                foreach ($val['items'] ?? [] as $url)
+                {
+                    $key = get_requested_file($url);
+                    if (empty($res[$key]))
+                    {
+                        $ext = pathinfo(($key == '' ? $url : $key), PATHINFO_EXTENSION);
+                        $res[$key] = compact('ext', 'key', 'url');
+                    }
+                }
+            }
+            $this->prepared_resources = array_values($res);
+        }
+        return $this->prepared_resources;
+    }
+
+    #endregion
 }

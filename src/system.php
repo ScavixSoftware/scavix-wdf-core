@@ -272,13 +272,19 @@ function system_init($application_name, $skip_header = false, $logging_category=
     if( PHP_SAPI=='cli' && !function_exists('cli_init') )
         system_load_module('essentials/cli.php');
 
+    $start = Wdf::Measure(__FUNCTION__.' essentials', $start);
+
 	if( $logging_category )
 		logging_add_category($logging_category);
 	session_run();
 
+    $start = Wdf::Measure(__FUNCTION__.' session', $start);
+
 	foreach( $CONFIG['system']['modules'] as $mod )
         log_warn("Depecated use of old module system: use 'composer require scavixsoftware/scavix-wdf-{$mod}' instead.");
     Wdf::InitPackages();
+
+    $start = Wdf::Measure(__FUNCTION__.' packages', $start);
 
 	if( isset($_REQUEST['request_id']) )
 		session_keep_alive();
@@ -967,7 +973,7 @@ function __search_file_for_class($class_name,$extension="class.php",$classpath_l
 	global $CONFIG;
 
     $key = "autoload_class-".session_name().'-'.getAppVersion('nc').'-'.$class_name.$extension.$classpath_limit;
-    $r = cache_get($key);
+    $r = cache_get($key,false,true,false);
     if( $r !== false )
         return $r;
 
@@ -998,14 +1004,14 @@ function __search_file_for_class($class_name,$extension="class.php",$classpath_l
 			if( file_exists("$path$class_name.$extension") )
 			{
 				$ret = "$path$class_name.$extension";
-                cache_set($key, $ret, $CONFIG['system']['cache_ttl']);
+                cache_set($key, $ret, $CONFIG['system']['cache_ttl'],true,false);
 				return $ret;
 			}
 
 			if( file_exists("$path$class_name_lc.$extension") )
 			{
 				$ret = "$path$class_name_lc.$extension";
-				cache_set($key, $ret, $CONFIG['system']['cache_ttl']);
+				cache_set($key, $ret, $CONFIG['system']['cache_ttl'],true,false);
 				return $ret;
 			}
 
@@ -1014,14 +1020,14 @@ function __search_file_for_class($class_name,$extension="class.php",$classpath_l
 				if( file_exists("$path$short_class_name.$extension") )
 				{
 					$ret = "$path$short_class_name.$extension";
-					cache_set($key, $ret, $CONFIG['system']['cache_ttl']);
+					cache_set($key, $ret, $CONFIG['system']['cache_ttl'],true,false);
 					return $ret;
 				}
 
 				if( file_exists("$path$short_class_name_lc.$extension") )
 				{
 					$ret = "$path$short_class_name_lc.$extension";
-					cache_set($key, $ret, $CONFIG['system']['cache_ttl']);
+					cache_set($key, $ret, $CONFIG['system']['cache_ttl'],true,false);
 					return $ret;
 				}
 			}
@@ -1276,7 +1282,16 @@ function is_host($host_or_ip)
  */
 function cache_get($key,$default=false,$use_global_cache=true,$use_session_cache=true)
 {
-	if ($use_session_cache && isset($_SESSION["system_internal_cache"][$key]) && function_exists('session_unserialize'))
+    // if( $use_session_cache && hook_already_fired(HOOK_POST_INIT) )
+    // {
+    //     $ck = "cache_item_$key";
+    //     if (($cached = restore_object($ck)) && $cached->eol > time())
+    //     {
+    //         unset(\ScavixWDF\Session\ObjectStore::$buffer[$ck]);
+    //         return $cached->content;
+    //     }
+    // }
+	if ( $use_session_cache && isset($_SESSION["system_internal_cache"][$key]) && function_exists('session_unserialize'))
 	{
 		if(is_array($_SESSION["system_internal_cache"][$key]))
 		{
@@ -1291,16 +1306,6 @@ function cache_get($key,$default=false,$use_global_cache=true,$use_session_cache
 	if( $use_global_cache && system_is_module_loaded('globalcache') )
     {
         $res = globalcache_get($key,$default);
-		// if ($use_session_cache)
-		// {
-		// 	if ($res == $default)
-		// 	{
-		// 		if(isset($_SESSION["system_internal_cache"][$key]))
-		// 			unset($_SESSION["system_internal_cache"][$key]);
-		// 	}
-		// 	else
-		// 		$_SESSION["system_internal_cache"][$key] = ['data' => session_serialize($res)];
-		// }
 		return $res;
     }
     return $default;
@@ -1326,6 +1331,14 @@ function cache_set($key,$value,$ttl=false,$use_global_cache=true,$use_session_ca
 	if( $use_global_cache && system_is_module_loaded('globalcache') )
 		globalcache_set($key, $value, $ttl);
 
+    // if( $use_session_cache && hook_already_fired(HOOK_POST_INIT) )
+    // {
+    //     $ce = new stdClass();
+    //     $ce->_storage_id = "cache_item_$key";
+    //     $ce->eol = time() + $ttl;
+    //     $ce->content = $value;
+    //     store_object($ce);
+    // }
     if( $use_session_cache && function_exists('session_serialize') )
     {
 		if (!isset($_SESSION['system_internal_cache']) || !is_array($_SESSION['system_internal_cache']))

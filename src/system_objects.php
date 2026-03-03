@@ -348,7 +348,8 @@ class Wdf
             self::Measure(Wdf::Request()->getUrl(), self::$first_measurement);
             $um = umask(0);
             @mkdir($folder, 0777, true);
-            $fn = rtrim($folder, "/") . "/" . str_replace("/", "_", self::Request()->getEndpoint()) . ".json";
+            $fn = trim(substr_until(Wdf::Request()->getUrl(false), "?"), "/");
+            $fn = rtrim($folder, "/") . "/" . str_replace("/", "_", $fn) . ".json";
             file_put_contents($fn, json_encode(self::GetMeasurements(), JSON_PRETTY_PRINT));
             umask($um);
         }
