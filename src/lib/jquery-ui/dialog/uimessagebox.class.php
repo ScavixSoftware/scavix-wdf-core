@@ -62,9 +62,9 @@ class uiMessageBox extends uiDialog
 	 * @param string $message Hint text
 	 * @return static A new uiMessagebox
 	 */
-	static function Hint($message)
+	static function Hint($message, $title = '')
 	{
-		return new uiMessageBox($message,'hint','');
+		return new uiMessageBox($message, 'hint', $title);
 	}
 
 	/**
@@ -73,8 +73,8 @@ class uiMessageBox extends uiDialog
 	 * @param string $message Error text
 	 * @return static A new uiMessagebox
 	 */
-	static function Error($message)
+	static function Error($message, $title = '')
 	{
-		return new uiMessageBox($message,'error','');
+		return new uiMessageBox($message, 'error', $title);
 	}
 }
