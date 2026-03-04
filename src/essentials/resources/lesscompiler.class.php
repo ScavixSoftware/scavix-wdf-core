@@ -309,8 +309,12 @@ class LessCompiler implements \JsonSerializable
     {
         $less = preg_replace_callback('/@import\s+["\']([^"\']+)["\']/', function ($match) use ($parser, $lessFile)
         {
-            $rel = realpath(dirname($lessFile) . '/' . $match[1]);
-            $this->parseImportedFile($parser, $rel, $match[1]);
+            $fn = dirname($lessFile) . '/' . $match[1];
+            if (strpos($fn, '.') === false)
+                $rel = realpath("$fn.less") ?: realpath("$fn.css");
+            else
+                $rel = realpath($fn);
+            $this->parseImportedFile($parser, $rel, basename($rel));
             return '';
         }, $less ?: file_get_contents($lessFile));
         return $less;

@@ -93,7 +93,7 @@ class WdfResponse
         if ($data instanceof Renderable)
         {
             $is_template = $data instanceof Template;
-            $classname = get_class_simple($data);
+            $classname = get_class($data);
             $cnl = strtolower($classname);
             $rootcn = $cnl;
             $data_present = $this->resMapRestore($cnl);
@@ -132,14 +132,14 @@ class WdfResponse
             $parents = [];
             do
             {
+                $cnl = strtolower(substr_from($classname, '\\'));
                 if (resourceExists("$cnl.css"))
                     $parents[] = resFile("$cnl.css");
                 elseif (resourceExists("$cnl.less"))
                     $parents[] = resFile("$cnl.less");
                 if (resourceExists("$cnl.js"))
                     $parents[] = resFile("$cnl.js");
-                $classname = substr_from(get_parent_class(fq_class_name($classname)), '\\');
-                $cnl = strtolower($classname);
+                $classname = get_parent_class($classname);
             }
             while ($classname != "");
 

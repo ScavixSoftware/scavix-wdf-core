@@ -1735,7 +1735,6 @@ function fq_class_name($classname)
 			WdfException::Raise("Ambigous classname: $classname",Wdf::$ClassAliases[$cnl]);
 		return Wdf::$ClassAliases[$cnl];
 	}
-    log_debug("HIA",$classname);
 	return $classname;
 }
 

@@ -81,6 +81,9 @@ class RequestParamAttribute extends WdfAttribute implements IRequestAttribute
         return isset($this->Default);
     }
 
+    /**
+     * @suppress PHP6406
+     */
     function applyDefaults(&$args, $is_last = false)
     {
         $name = $GLOBALS['CONFIG']['requestparam']['ignore_case'] ? strtolower($this->Name) : $this->Name;
