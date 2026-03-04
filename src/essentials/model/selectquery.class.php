@@ -30,6 +30,8 @@
  */
 namespace ScavixWDF\Model;
 
+use ScavixWDF\Model\Query\ConditionTree;
+
 /**
  * @internal SQL SELECT query builder
  */
