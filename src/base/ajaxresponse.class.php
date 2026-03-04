@@ -38,6 +38,7 @@ class AjaxResponse
 {
 	public $_data = false;
 	public $_text = false;
+    public $_raw = false;
 	private $_translated = false;
 
 	/**
@@ -101,6 +102,20 @@ class AjaxResponse
 		return $res;
 	}
 
+    /**
+	 * Return a plain text.
+	 *
+	 * @param string $text Text to be passed out
+	 * @return AjaxResponse The created response
+	 */
+	public static function Raw($content=false)
+	{
+		$res = new AjaxResponse();
+		if( $content !== false )
+			$res->_raw = $content;
+		return $res;
+	}
+
 	/**
 	 * Return a Controller (with full init-code).
 	 *
@@ -111,11 +126,11 @@ class AjaxResponse
 	public static function Renderable(Renderable $content, $force_dependency_loading = null)
 	{
         $start = microtime(true);
-		$wrapped = new stdClass();
 
-		$wrapped->html = $content->WdfRenderAsRoot();
-		if( $content->_translate && system_is_module_loaded('translation') )
-			$wrapped->html = __translate($wrapped->html);
+        $wrapped = new stdClass();
+        $wrapped->html = $content->WdfRenderAsRoot();
+        if( $content->_translate && system_is_module_loaded('translation') )
+            $wrapped->html = __translate($wrapped->html);
 
         if($force_dependency_loading !== false)
         {
@@ -127,8 +142,12 @@ class AjaxResponse
                     $wrapped->dep_js[$r['key']] = $r['url'];
             }
         }
-		$res = AjaxResponse::Json($wrapped);
-		$res->_translated = true;
+        if( avail($wrapped,'dep_css') || avail($wrapped,'dep_js') )
+            $res = AjaxResponse::Json($wrapped);
+        else
+            $res = AjaxResponse::Raw($wrapped->html);
+        $res->_translated = true;
+
         Wdf::Measure(__METHOD__, $start);
 		return $res;
 	}
@@ -193,6 +212,11 @@ class AjaxResponse
             {
                 $res = !$this->_translated && system_is_module_loaded("translation") ? __translate($this->_text) : $this->_text;
                 $res = json_encode($res);
+                $this->_translated = true;
+            }
+            elseif ($this->_raw)
+            {
+                $res = $this->_raw;
                 $this->_translated = true;
             }
             else
