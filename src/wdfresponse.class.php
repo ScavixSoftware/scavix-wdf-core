@@ -37,7 +37,7 @@ class WdfResponse
         if (empty(self::$_instance))
         {
             self::$_instance = new WdfResponse();
-            self::$_instance->resource_cache_prefix = 'resource/' . getAppVersion('nc');
+            self::$_instance->resource_cache_prefix = 'resource/' . session_name() . "/" . getAppVersion('nc');
         }
         return self::$_instance;
     }
