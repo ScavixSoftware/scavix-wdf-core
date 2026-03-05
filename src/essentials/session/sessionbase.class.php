@@ -148,7 +148,7 @@ abstract class SessionBase
 		{
 			$name = $CONFIG['session']['session_name'];
 			session_name($name);
-            $opts = \ScavixWDF\Wdf::Request()->isStaticAsset()
+            $opts = \ScavixWDF\Wdf::Request()->isStaticAsset() || \ScavixWDF\Base\Args::request('ping', false)
                 ? ['read_and_close' => true]
                 : [];
 
