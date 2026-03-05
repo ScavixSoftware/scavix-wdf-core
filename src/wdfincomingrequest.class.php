@@ -124,7 +124,7 @@ class WdfIncomingRequest
         return $as_string ? strtolower(
             \is_object($this->_currentController)
             ? get_class_simple($this->_currentController)
-            : $this->_currentController
+            : "{$this->_currentController}"
         ) : $this->_currentController;
     }
 
@@ -172,22 +172,22 @@ class WdfIncomingRequest
 
     function isDefaultController()
     {
-        return $this->_usingDefaultPage;
+        return !!$this->_usingDefaultPage;
     }
 
     function isDefaultEvent()
     {
-        return $this->_usingDefaultEvent;
+        return !!$this->_usingDefaultEvent;
     }
 
     function getRoute()
     {
-        return implode("/", $this->_route);
+        return implode("/", $this->_route ?? []);
     }
 
     function getMethod()
     {
-        return strtolower(ifavail($_SERVER, 'REQUEST_METHOD'));
+        return strtolower(ifavail($_SERVER, 'REQUEST_METHOD') ?: '');
     }
 
     function isMethod(string $name)
@@ -231,7 +231,7 @@ class WdfIncomingRequest
                 }
             }
         }
-        return $class;
+        return "$class";
     }
 
     function isPageLoad()
@@ -279,7 +279,9 @@ class WdfIncomingRequest
      */
     function shiftRouteArg(string $glue='')
     {
-        return $glue ? implode($glue, $this->_routeArgs) : array_shift($this->_routeArgs);
+        if( \is_array($this->_routeArgs) )
+            return $glue ? implode($glue, $this->_routeArgs) : array_shift($this->_routeArgs);
+        return null;
     }
 
     function expandRoute(string $route)
