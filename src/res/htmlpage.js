@@ -820,7 +820,7 @@ Object.defineProperty(String.prototype, 'hashCode', {
                             async: false,
                             cache: true
                         });
-                        Object.entries(d.responseJSON).forEach(([key, value]) => {
+                        Object.entries(d.responseJSON || {}).forEach(([key, value]) => {
                             win.wdf_texts[key] = value;
                         });
                     }
