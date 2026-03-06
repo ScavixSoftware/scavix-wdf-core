@@ -477,19 +477,32 @@ class MySql implements IDatabaseDriver
                 ?preg_replace('/LIMIT[\s0-9,]+$/i','',$sql)
                 :$sql_limit;
 
-            $sql_columns = preg_replace("/\/\*BEG-COLUMNS\*\/.+\/\*END-COLUMNS\*\//", (stripos($sql, ' having ') ? '*' : '1'), $sql);          // Might not work with virual columns
+            $sql_columns = preg_replace("/\/\*BEG-COLUMNS\*\/.+\/\*END-COLUMNS\*\//", (stripos($sql, ' having ') ? '*' : '1'), $sql);          // Might not work with virtual columns
             $sql = ($sql_columns == $sql)
                 ?((stripos($sql, 'select * from') === 0)?"SELECT 1 FROM".substr($sql,13):$sql)
                 :$sql_columns;
 
-            $ok = $this->_ds->ExecuteScalar("SELECT count(1) FROM ($sql) AS x",
-                \is_null($input_arguments)?[]:array_clean_assoc_or_sequence($input_arguments)
-            );
-            $total = \intval($ok);
-            if( $ok === false )
-                $this->_ds->LogLastStatement("Error querying paging info");
-            else
+            try
+            {
+                $rs = $this->_ds->ExecuteSql($sql,
+                    \is_null($input_arguments) ? [] : array_clean_assoc_or_sequence($input_arguments)
+                );
+                $total = \intval($rs->rowCount());
                 cache_set($key,$total,60,false,true);
+            }
+            catch( Exception $e)
+            {
+                $ok = $this->_ds->ExecuteScalar("SELECT count(1) FROM ($sql) AS x",
+                    \is_null($input_arguments)?[]:array_clean_assoc_or_sequence($input_arguments)
+                );
+                if($ok === false)
+                    $this->_ds->LogLastStatement("Error querying paging info");
+                else
+                {
+                    $total = \intval($ok);
+                    cache_set($key,$total,60,false,true);
+                }
+            }
         }
         else
             $total = \intval($found_rows);
