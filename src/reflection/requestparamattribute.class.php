@@ -87,7 +87,7 @@ class RequestParamAttribute extends WdfAttribute implements IRequestAttribute
     function applyDefaults(&$args, $is_last = false)
     {
         $name = $GLOBALS['CONFIG']['requestparam']['ignore_case'] ? strtolower($this->Name) : $this->Name;
-        if (isset($args[$name]))
+        if (isset($args[$name]) || isset($args[$this->Name]))
             return;
         if (!\is_null($this->Default))
             $args[$this->Name] = $this->Default;

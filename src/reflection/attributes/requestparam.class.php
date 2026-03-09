@@ -52,7 +52,7 @@ class RequestParam extends RequestParamAttribute
     function applyDefaults(&$args, $is_last = false)
     {
         $name = $GLOBALS['CONFIG']['requestparam']['ignore_case'] ? strtolower($this->Name) : $this->Name;
-        if (isset($args[$name]))
+        if (isset($args[$name]) || isset($args[$this->Name]))
             return;
 
         if( $this->path_definition )
