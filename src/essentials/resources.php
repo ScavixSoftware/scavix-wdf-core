@@ -29,6 +29,9 @@
  * @license http://www.opensource.org/licenses/lgpl-license.php LGPL
  */
 
+use ScavixWDF\Wdf;
+use ScavixWDF\WdfException;
+
 /**
  * Initializes the resources essential.
  *
@@ -77,6 +80,7 @@ function resources_init()
 /**
  * Checks if a resource exists and returns it if so.
  *
+ * @deprecated Use resource_search($filename, $usecache) instead
  * @param string $filename The resource name
  * @param bool $return_url If true returns an URL, else returns true or false depending on if the resource exists
  * @param bool $as_local_path If true returns not URL, but a filepath in local filesystem. Needs $return_url=true.
@@ -120,6 +124,88 @@ function resourceExists($filename, $return_url = false, $as_local_path = false, 
 	return false;
 }
 
+function resource_search($filename, $usecache = true)
+{
+	global $CONFIG;
+
+    if( is_array($filename) )
+    {
+        if( isset($filename['key'])&& isset($filename['path'])&& isset($filename['mtime'])&& isset($filename['ext'])&& isset($filename['url']) )
+            return $filename;
+        WdfException::Raise('Invalid argument: $filename should be a string');
+    }
+
+    $start = microtime(true);
+
+    $cnc = substr(appendVersion(''), 1);
+    $cachekey = md5((isSSL() ? "resource_ssl_$filename" : "resource_$filename") . "_{$cnc}" . $CONFIG['system']['url_root']);
+    if ($usecache )
+    {
+        if ($res = cache_get($cachekey))
+        {
+            if ($res === "notfound")
+            {
+                // log_debug("[$cachekey] Resource $filename not found (cached)");
+                $start = Wdf::Measure(__FUNCTION__ . ' notfound from cache', $start);
+                return null;
+            }
+            $mtime = @filemtime($res['path'] ?? '') ?: time();
+            if (($res['mtime'] ?? 0) >= $mtime)
+            {
+                Wdf::Measure(__FUNCTION__ . ' found in cache', $start);
+                return $res;
+            }
+            else
+                $start = Wdf::Measure(__FUNCTION__ . ' cache old', $start);
+        }
+        else
+            $start = Wdf::Measure(__FUNCTION__ . ' cache missed', $start);
+    }
+
+	$ext = pathinfo($filename,PATHINFO_EXTENSION);
+	foreach( $CONFIG['resources'] as $conf )
+	{
+		if( strpos("|".$conf['ext']."|", "|".$ext."|") === false )
+			continue;
+
+        $path = $conf['path'] . '/' . $filename;
+        if( !file_exists($path) )
+			continue;
+
+        if ($ext == 'less')
+            $conf['url'] = $CONFIG['resources_system_url_root'] . 'res/';
+
+        $mtime = filemtime($path);
+        $ver = $mtime % 86400; // only time-part of mtime, stays constant every day while not beeing too long
+        $nc = $conf['append_nc'] ? "$cnc$ver" : "";
+        $url = can_nocache()
+            ? $conf['url'] . ($nc ? "$nc/" : "") . $filename
+            : $conf['url'] . $filename . (strpos($conf['url'], '?') === false ? '?' : '&') . ($nc ? "_nc=" . substr($nc, 2) : '');
+        $key = parse_url($conf['url'] . $filename, PHP_URL_PATH);
+        $res = compact('key','path','mtime','ext','url');
+
+        if ($usecache)
+        {
+            cache_set($cachekey, $res);
+            $start = Wdf::Measure(__FUNCTION__ . ' found and cached', $start);
+        }
+        else
+        {
+            $start = Wdf::Measure(__FUNCTION__ . ' found (nocache)', $start);
+        }
+        return $res;
+	}
+    if ($usecache)
+    {
+        // log_debug("[$cachekey] Resource $filename not found (chaching)");
+        cache_set($cachekey, "notfound");
+        Wdf::Measure(__FUNCTION__. ' not found and cached', $start);
+    }
+    else
+        Wdf::Measure(__FUNCTION__. ' not found');
+	return null;
+}
+
 /**
  * Returns aresource file, as local path or as URI.
  *
@@ -129,8 +215,8 @@ function resourceExists($filename, $return_url = false, $as_local_path = false, 
  */
 function resFile($filename, $as_local_path = false)
 {
-	if( $conf = resourceExists($filename,true,$as_local_path) )
-		return $conf;
+    if ($res = resource_search($filename))
+        return $as_local_path ? $res['path'] : $res['url'];
 	return "";
 }
 

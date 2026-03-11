@@ -49,31 +49,13 @@ class WdfResource implements ICallable
 	 */
 	public static function ValidatedCacheResponse($file)
 	{
-		$etag = md5($file);
-		$days = 365*86400;
-		$cached = cache_get("etag_$etag",false);
+        $days = 365 * 86400;
 		$mtime = gmdate("D, d M Y H:i:s GMT",filemtime($file));
-		header("Expires: ".gmdate("D, d M Y H:i:s e",time()+$days));
-		header("Last-Modified: ".$mtime);
+        header("Expires: " . gmdate("D, d M Y H:i:s e", time() + $days));
+		header("Last-Modified: $mtime");
 		header('Pragma: public');
 		header("Cache-Control: public, max-age=$days");
         header("Referrer-Policy: strict-origin-when-cross-origin");
-		header("ETag: $etag");
-		$headers = getallheaders();
-		if( $cached )
-		{
-			if( isset($headers['If-None-Match']) && $headers['If-None-Match'] == $etag )
-			{
-				header($_SERVER['SERVER_PROTOCOL'].' 304 Not Modified');
-				die();
-			}
-			if( isset($headers['If-Modified-Since']) && strtotime($headers['If-Modified-Since']) >= strtotime($mtime) )
-			{
-				header($_SERVER['SERVER_PROTOCOL'].' 304 Not Modified');
-				die();
-			}
-		}
-		cache_set("etag_$etag",$mtime);
 	}
 
     /**
@@ -163,9 +145,11 @@ class WdfResource implements ICallable
 		else
 			$cache = $less;
 
+        $start = microtime(true);
 		$compiler = new LessCompiler();
-
         $newCache = $compiler->cachedCompile($cache);
+        $start = Wdf::Measure(__METHOD__.' compiled', $start);
+
 		if( !is_array($cache) || $newCache["updated"] > $cache["updated"] )
 		{
 			file_put_contents($cacheFile, serialize($newCache));

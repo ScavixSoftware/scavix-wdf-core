@@ -37,7 +37,7 @@ class WdfResponse
         if (empty(self::$_instance))
         {
             self::$_instance = new WdfResponse();
-            self::$_instance->resource_cache_prefix = 'resource/' . session_name() . "/" . getAppVersion('nc');
+            self::$_instance->resource_cache_prefix = 'resource_map/' . session_name() . "/" . getAppVersion('nc');
         }
         return self::$_instance;
     }
@@ -55,8 +55,18 @@ class WdfResponse
 
         if ($data = cache_get("{$this->resource_cache_prefix}/$name", false, true, false))
         {
-            $this->resource_map[$name] = ['items' => $data, 'saved' => true];
-            return true;
+            // if any file have been modified, invalidate this cache entry
+            foreach( $data as $item )
+            {
+                $mtime = filemtime($item['path'] ?? '');
+                if( $mtime > ($item['mtime'] ?? 0) )
+                    return false;
+            };
+            if (count($data) > 0)
+            {
+                $this->resource_map[$name] = ['items' => $data, 'saved' => true];
+                return true;
+            }
         }
         return false;
     }
@@ -68,12 +78,13 @@ class WdfResponse
         if (!is_array($data))
             $data = [$data];
         if (empty($this->resource_map[$name]))
-            $this->resource_map[$name] = ['items' => $data, 'saved' => false];
-        else
+            $this->resource_map[$name] = ['items' => [], 'saved' => false];
+        foreach ($data as $item)
         {
-            $this->resource_map[$name]['items'] = array_unique(array_merge($this->resource_map[$name]['items'], $data));
-            $this->resource_map[$name]['saved'] = false;
+            if (($key = $item['key'] ?? '') && empty($this->resource_map[$name]['items'][$key]))
+                $this->resource_map[$name]['items'][$key] = $item;
         }
+        $this->resource_map[$name]['saved'] = false;
         $this->prepared_resources = false;
     }
 
@@ -87,6 +98,14 @@ class WdfResponse
             );
     }
 
+    /**
+     * Searches resources in the filesystem.
+     *
+     * If $data is a string, it must be relative to any of the defined resource paths (as always).
+     *
+     * @param Renderable|string $data Object to search for or resource to add directly.
+     * @return void
+     */
     public function addResource(Renderable|string $data)
     {
         $start = microtime(true);
@@ -104,7 +123,8 @@ class WdfResponse
             }
             if (!$data_present )
             {
-                $this->resMapAdd($cnl, ResourceAttribute::ResolveAll(ResourceAttribute::Collect(\get_class($data))));
+                $this->resMapAdd($cnl, array_map(fn($a) => resource_search($a->Path), ResourceAttribute::Collect(\get_class($data))));
+                // $this->resMapAdd($cnl, ResourceAttribute::ResolveAll(ResourceAttribute::Collect(\get_class($data))));
                 $start = Wdf::Measure(__METHOD__." - attributes" , $start);
             }
 
@@ -114,12 +134,12 @@ class WdfResponse
                 $fnl = strtolower(substr_until(basename($data->file), '.'));
                 if (!$this->resMapRestore($fnl) && get_class_simple($data, true) != $fnl)
                 {
-                    if (resourceExists("$fnl.css"))
-                        $this->resMapAdd($fnl, resFile("$fnl.css"));
-                    elseif (resourceExists("$fnl.less"))
-                        $this->resMapAdd($fnl, resFile("$fnl.less"));
-                    if (resourceExists("$fnl.js"))
-                        $this->resMapAdd($fnl, resFile("$fnl.js"));
+                    if ($rf = resource_search("$fnl.css"))
+                        $this->resMapAdd($fnl, [$rf]);
+                    elseif ($rf = resource_search("$fnl.less"))
+                        $this->resMapAdd($fnl, [$rf]);
+                    if ($rf = resource_search("$fnl.js"))
+                        $this->resMapAdd($fnl, [$rf]);
 
                     $this->resMapStore($fnl);
                     $start = Wdf::Measure(__METHOD__." - template" , $start);
@@ -133,12 +153,12 @@ class WdfResponse
             do
             {
                 $cnl = strtolower(substr_from($classname, '\\'));
-                if (resourceExists("$cnl.css"))
-                    $parents[] = resFile("$cnl.css");
-                elseif (resourceExists("$cnl.less"))
-                    $parents[] = resFile("$cnl.less");
-                if (resourceExists("$cnl.js"))
-                    $parents[] = resFile("$cnl.js");
+                if ($rf = resource_search("$cnl.css"))
+                    $parents[] = $rf;
+                elseif ($rf = resource_search("$cnl.less"))
+                    $parents[] = $rf;
+                if ($rf = resource_search("$cnl.js"))
+                    $parents[] = $rf;
                 $classname = get_parent_class($classname);
             }
             while ($classname != "");
@@ -148,9 +168,10 @@ class WdfResponse
             $this->resMapStore($rootcn);
             Wdf::Measure(__METHOD__." - parents" , $start);
         }
-        elseif (!empty($data))
+        elseif (!empty($data) && ($rf = resource_search($data)))
         {
-            $this->resource_map['plain.string']['items'][] = $data;
+            // this is uncached onetime addition
+            $this->resource_map['plain.string']['items'][$rf['key']] = $rf;
         }
     }
 
@@ -158,18 +179,13 @@ class WdfResponse
     {
         if (!$this->prepared_resources)
         {
+            // map collected resources to a flat array
             $res = [];
-            foreach ($this->resource_map ?? [] as $key => $val)
+            foreach ($this->resource_map ?? [] as $val)
             {
-                foreach ($val['items'] ?? [] as $url)
-                {
-                    $key = get_requested_file($url);
-                    if (empty($res[$key]))
-                    {
-                        $ext = pathinfo(($key == '' ? $url : $key), PATHINFO_EXTENSION);
-                        $res[$key] = compact('ext', 'key', 'url');
-                    }
-                }
+                foreach ($val['items'] ?? [] as $key => $resource)
+                    if ($key && empty($res[$key]))
+                        $res[$key] = $resource;//compact('ext', 'key', 'url');
             }
             $this->prepared_resources = array_values($res);
         }
