@@ -120,17 +120,79 @@ class LessCompiler implements \JsonSerializable
         {
             $n = system_get_caller_by_type(Less_Tree_Declaration::class)?->name;
             if( is_string($n) )
-                $this->registered[$n] = $a->value;;
+                $this->registered[$n] = $this->getVariableValue($a);
             return $a;
         });
         $this->registerFunction('force', function ($a)
         {
             $n = system_get_caller_by_type(Less_Tree_Declaration::class)?->name;
-            if( is_string($n) )
-                $this->forced[$n] = $a->value;
+            if (is_string($n))
+                $this->forced[$n] = $this->getVariableValue($a);
             return $a;
         });
     }
+
+    private function getVariableValue( \Less_Tree $var ) {
+		switch ( get_class( $var ) ) {
+			case \Less_Tree_Color::class:
+				return $this->rgb2html( $var->rgb );
+			case \Less_Tree_Variable::class:
+			case \Less_Tree_Keyword::class:
+				return $var->value;
+			case \Less_Tree_Anonymous::class:
+				$return = [];
+				if ( is_array( $var->value ) ) {
+					// in compilation phase, Less_Tree_Anonymous::$val can be a Less_Tree[]
+					foreach ( $var->value as $value ) {
+						/** @var \Less_Tree $value */
+						$return[ $value->name ] = $this->getVariableValue( $value );
+					}
+				}
+				return count( $return ) === 1 ? $return[0] : $return;
+			case \Less_Tree_Url::class:
+				// Based on Less_Tree_Url::genCSS()
+				// Recurse to serialize the Less_Tree_Quoted value
+				return 'url(' . $this->getVariableValue( $var->value ) . ')';
+			case \Less_Tree_Declaration::class:
+				return $this->getVariableValue( $var->value );
+			case \Less_Tree_Value::class:
+				$values = [];
+				foreach ( $var->value as $sub_value ) {
+					$values[] = $this->getVariableValue( $sub_value );
+				}
+				return count( $values ) === 1 ? $values[0] : $values;
+			case \Less_Tree_Quoted::class:
+				return $var->quote . $var->value . $var->quote;
+			case \Less_Tree_Dimension::class:
+				$value = $var->value;
+				if ( $var->unit && $var->unit->numerator ) {
+					$value .= $var->unit->numerator[0];
+				}
+				return $value;
+			case \Less_Tree_Expression::class:
+				$values = [];
+				foreach ( $var->value as $item ) {
+					$values[] = $this->getVariableValue( $item );
+				}
+				return implode( ' ', $values );
+			case \Less_Tree_Operation::class:
+				throw new Exception( 'getVariables() require Less to be compiled. please use $parser->getCss() before calling getVariables()' );
+			case \Less_Tree_Unit::class:
+			case \Less_Tree_Comment::class:
+			case \Less_Tree_Import::class:
+			case \Less_Tree_Ruleset::class:
+			default:
+				throw new Exception( "type missing in switch/case getVariableValue for " . get_class( $var ) );
+		}
+	}
+
+	private function rgb2html( $r, $g = -1, $b = -1 ) {
+		if ( is_array( $r ) && count( $r ) == 3 ) {
+			[ $r, $g, $b ] = $r;
+		}
+
+		return sprintf( '#%02x%02x%02x', $r, $g, $b );
+	}
 
     private function enhancedBackgound($mode, ...$args)
     {
