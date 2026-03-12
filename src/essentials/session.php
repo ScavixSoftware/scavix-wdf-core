@@ -144,6 +144,7 @@ function unserializer_active()
  *
  * Checks reference-equality or storage_id equality (if storage_id is set)
  * @deprecated Has never been used and is not useful at all. Just compare using "==="
+ * @suppress PHP0416
  * @param object $o1 First object to compare
  * @param object $o2 Second object to compare
  * @param bool $compare_classes Seems to be deprecated
