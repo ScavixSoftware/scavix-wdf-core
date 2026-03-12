@@ -14,7 +14,7 @@
     margin: 5px 0;
     justify-content: flex-end;
     font-size: 13px;
-    
+
     select
     {
         padding: 2px 4px;
@@ -23,7 +23,7 @@
     {
         padding: 3px 4px;
     }
-    
+
     @media @not_phone
     {
         select
@@ -31,22 +31,22 @@
             max-width: 240px;
         }
     }
-    
+
     > *
     {
         margin-right: 10px;
     }
-    
+
     .svg-inline--fa
     {
         vertical-align: 0;
     }
-    
+
     .hasvalue
     {
         border-color: @wdf_highlight_border;
     }
-    
+
     .field
     {
         label
@@ -55,21 +55,21 @@
             margin-bottom: 0px;
             font-size: 12px;
         }
-        
+
         input:not([type="checkbox"]), textarea, select
         {
             margin-top: 0px;
             font-size: 12px;
         }
     }
-    
+
     > div.notitle:last-of-type
     {
         margin-right: unset;
-        
+
         display: flex;
         align-items: flex-end;
-        
+
         > *
         {
             height: 23px;
@@ -117,16 +117,16 @@
         font-size: unset;
         width: 100%;
         border-color: @wdf_listing_border;
-        
+
         .thead, .tfoot { background-color: @wdf_listing_border; }
-        
+
         .tfoot { font-weight: bold; }
-        
+
         .tbody .tr:nth-child(even)
         {
             background-color: @wdf_listing_even;
         }
-        
+
         .tbody .tr[onclick]:hover
         {
             background-color: @wdf_listing_hover;
@@ -136,12 +136,12 @@
                 cursor: pointer;
             }
         }
-        
+
         .tbody .td a:hover
         {
             text-decoration: underline;
         }
-        
+
         .tr.paused
         {
             opacity: 0.5;
@@ -152,7 +152,7 @@
             display: table-caption;
             caption-side: bottom;
             font-weight: bold;
-            
+
             table
             {
                 float: right;
@@ -178,7 +178,7 @@
             margin-left: 5px;
             margin-bottom: -4px;
         }
-        
+
         &.asc::after
         {
             background-image: url('resfile/listing/sort_asc.svg');
@@ -215,28 +215,28 @@
         padding: 5px;
         position: absolute;
         z-index: 9999;
-        
+
         max-height: 500px;
         overflow: auto;
-        
+
         > div
         {
             cursor: pointer;
             padding: 2px 10px 2px 5px;
-            
+
             &:hover
             {
                 background-color: @wdf_listing_border;
             }
         }
     }
-    
+
     .handle
     {
         margin-right: 5px;
         padding-left: 5px;
         padding-right: 5px;
-        
+
         .fa-grip-lines
         {
             cursor: s-resize;
