@@ -78,7 +78,7 @@ class PathData extends WdfAttribute implements IRequestAttribute
     function getParsedData(WdfIncomingRequest $request)
     {
         $path = $request->expandRoute($this->path);
-        $req = $request->getRoute();
+        $req = $request->expandRoute($request->getRoute());
         $res = $this->getDataFromString($path, $req);
         if( empty($res) && \count($this->detectedNames)==1 ) // if only one argument is requested assume it may receive all the rest of the path
             $res = $this->getDataFromString($path, $req,'.');
