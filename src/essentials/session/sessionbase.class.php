@@ -31,8 +31,6 @@
 namespace ScavixWDF\Session;
 
 use Exception;
-use ScavixWDF\Base\Renderable;
-use ScavixWDF\WdfException;
 
 /**
  * Base class for SessionHandlers.
@@ -148,7 +146,7 @@ abstract class SessionBase
 		{
 			$name = $CONFIG['session']['session_name'];
 			session_name($name);
-            $opts = \ScavixWDF\Wdf::Request()->isStaticAsset() || \ScavixWDF\Base\Args::request('ping', false)
+            $opts = $this->isReadOnlySession()
                 ? ['read_and_close' => true]
                 : [];
 
@@ -311,4 +309,16 @@ abstract class SessionBase
 
 		return $obj->_storage_id;
 	}
+
+    protected function isReadOnlySession()
+    {
+        if (\ScavixWDF\Wdf::Request()->isStaticAsset() || \ScavixWDF\Base\Args::request('ping', false))
+            return true;
+
+        global $CONFIG;
+        if (!empty($CONFIG['session']['detect_readonly_session']) && is_callable($CONFIG['session']['detect_readonly_session']))
+            return !!call_user_func($CONFIG['session']['detect_readonly_session'], $_SERVER['REQUEST_URI']);
+
+        return false;
+    }
 }
