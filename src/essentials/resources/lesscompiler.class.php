@@ -24,9 +24,9 @@
  */
 namespace ScavixWDF;
 
+use Exception;
 use Less_Exception_Compiler;
 use Less_Parser;
-use Less_Tree_Declaration;
 
 /**
  * This class creates a unique interface for LESS compilers.
@@ -118,20 +118,23 @@ class LessCompiler implements \JsonSerializable
 
         $this->registerFunction('register', function ($a)
         {
-            $n = system_get_caller_by_type(Less_Tree_Declaration::class)?->name;
+            $n = system_get_caller_by_type(\Less_Tree_Declaration::class)?->name;
             if( is_string($n) )
                 $this->registered[$n] = $this->getVariableValue($a);
             return $a;
         });
         $this->registerFunction('force', function ($a)
         {
-            $n = system_get_caller_by_type(Less_Tree_Declaration::class)?->name;
+            $n = system_get_caller_by_type(\Less_Tree_Declaration::class)?->name;
             if (is_string($n))
                 $this->forced[$n] = $this->getVariableValue($a);
             return $a;
         });
     }
 
+    /**
+     * @suppress PHP0416
+     */
     private function getVariableValue( \Less_Tree $var ) {
 		switch ( get_class( $var ) ) {
 			case \Less_Tree_Color::class:
