@@ -913,29 +913,32 @@ function get_ip_address()
 
 	foreach( $proxy_headers as $ph )
 	{
-		if( !empty($_SERVER) && isset($_SERVER[$ph]) )
-		{
-			$DETECTED_CLIENT_IP = $_SERVER[$ph];
-			break;
-		}
-		elseif( !empty($_ENV) && isset($_ENV[$ph]) )
-		{
-			$DETECTED_CLIENT_IP = $_ENV[$ph];
-			break;
-		}
-		elseif( @getenv($ph) )
-		{
-			$DETECTED_CLIENT_IP = getenv($ph);
-			break;
-		}
+        $ip = false;
+		if(!empty($_SERVER) && isset($_SERVER[$ph]))
+			$ip = $_SERVER[$ph];
+		elseif(!empty($_ENV) && isset($_ENV[$ph]))
+			$ip = $_ENV[$ph];
+		elseif($envip = @getenv($ph))
+			$ip = $envip;
+
+        if($ip)
+        {
+            // sometimes, there are multiple ips separated by commas:
+            $is_ip = preg_match('/^(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})/', $ip, $regs);
+            if( $is_ip && (count($regs) > 0) )
+                $ip = $regs[1];
+
+            if ($ip != '127.0.0.1')
+            {
+                $DETECTED_CLIENT_IP = $ip;
+                break;
+            }
+        }
 	}
 
 	if( !isset($DETECTED_CLIENT_IP) )
 		return false;
 
-	$is_ip = preg_match('/^(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})/',$DETECTED_CLIENT_IP,$regs);
-	if( $is_ip && (count($regs) > 0) )
-		$DETECTED_CLIENT_IP = $regs[1];
 	return $DETECTED_CLIENT_IP;
 }
 
