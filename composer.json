@@ -1,65 +1,60 @@
 {
-	"name": "scavix/wdf-core",
-	"version": "1.1.1",
-	"description": "Core components",
-	"type": "library",
-	"license": "LGPL-3.0-or-later",
-    "authors": [
-		{
-			"name": "Scavix Software GmbH & Co. KG",
-			"email": "info@scavix.com",
-			"homepage": "http://www.scavix.com/"
-		},
-		{
-			"name": "Christoph Bünger",
-			"homepage": "https://github.com/christophbue"
-		},
-		{
-			"name": "Daniel Spors",
-			"homepage": "https://github.com/DaSpors"
-		}
-	],
-	"autoload": {
-		"files": [
-			"bootstrap.php"
-		]
-	},
-	"require": {
-		"php": ">=8.0",
-        "wikimedia/less.php": "^5.4"
-	},
-	"suggest": {
-		"ext-xml": "Needed for some features",
-		"ext-curl": "Needed for some features"
-	},
-    "extra":
+  "name": "scavix/wdf-core",
+  "description": "Core components",
+  "type": "library",
+  "license": "LGPL-3.0-or-later",
+  "authors": [
     {
-        "externals":
-        [
-            {
-                "name": "jQuery",
-                "version": "3.7.1",
-                "homepage": "https://jquery.com/",
-                "description": "jQuery is a fast, small, and feature-rich JavaScript library.",
-                "license": "MIT",
-                "author": "OpenJS Foundation and other contributors",
-                "files":
-                {
-                    "res/jquery.js":"https://code.jquery.com/jquery-3.7.1.min.js"
-                }
-            },
-            {
-                "name": "jQuery UI",
-                "version": "1.14.1",
-                "homepage": "https://jqueryui.com/",
-                "description": "jQuery UI is a curated set of user interface interactions, effects, widgets, and themes built on top of the jQuery JavaScript Library.",
-                "license": "MIT",
-                "author": "OpenJS Foundation and other contributors",
-                "files":
-                {
-                    "res/jquery-ui/jquery-ui.js":"https://cdn.jsdelivr.net/npm/jquery-ui@1.14.1/dist/jquery-ui.min.js"
-                }
-            }
-        ]
+      "name": "Scavix Software GmbH & Co. KG",
+      "email": "info@scavix.com",
+      "homepage": "http://www.scavix.com/"
+    },
+    {
+      "name": "Christoph Bünger",
+      "homepage": "https://github.com/christophbue"
+    },
+    {
+      "name": "Daniel Spors",
+      "homepage": "https://github.com/DaSpors"
     }
+  ],
+  "autoload": {
+    "files": [
+      "bootstrap.php"
+    ]
+  },
+  "require": {
+    "php": ">=8.0",
+    "wikimedia/less.php": "^5.4"
+  },
+  "suggest": {
+    "ext-xml": "Needed for some features",
+    "ext-curl": "Needed for some features"
+  },
+  "extra": {
+    "externals": [
+      {
+        "name": "jQuery",
+        "version": "3.7.1",
+        "homepage": "https://jquery.com/",
+        "description": "jQuery is a fast, small, and feature-rich JavaScript library.",
+        "license": "MIT",
+        "author": "OpenJS Foundation and other contributors",
+        "files": {
+          "res/jquery.js": "https://code.jquery.com/jquery-3.7.1.min.js"
+        }
+      },
+      {
+        "name": "jQuery UI",
+        "version": "1.14.1",
+        "homepage": "https://jqueryui.com/",
+        "description": "jQuery UI is a curated set of user interface interactions, effects, widgets, and themes built on top of the jQuery JavaScript Library.",
+        "license": "MIT",
+        "author": "OpenJS Foundation and other contributors",
+        "files": {
+          "res/jquery-ui/jquery-ui.js": "https://cdn.jsdelivr.net/npm/jquery-ui@1.14.1/dist/jquery-ui.min.js"
+        }
+      }
+    ]
+  }
 }
