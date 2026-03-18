@@ -236,7 +236,7 @@ class ResultSet implements Iterator, ArrayAccess, \Serializable
     {
         return [
             'ds' => $this->_ds->_storage_id,
-			'sql' => $this->_stmt->queryString,
+			'sql' => $this->_stmt?->queryString,
 			'args' => $this->_arguments_used,
 			'paging_info' => $this->_paging_info,
 			'field_types' => $this->_field_types,
