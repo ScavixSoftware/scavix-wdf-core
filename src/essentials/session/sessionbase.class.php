@@ -262,9 +262,8 @@ abstract class SessionBase
                 self::$session_request_id = $_SESSION['request_id'];
             else
             {
-                $p = current_controller();
-                $e = current_event();
-                self::$session_request_id = md5($p . $e . microtime());
+                $ep = \ScavixWDF\Wdf::Request()->getEndpoint();
+                self::$session_request_id = md5($ep . microtime());
                 // log_debug("New request_id: ".self::$session_request_id,\ScavixWDF\Wdf::Request()->getEndpoint());
             }
 		}

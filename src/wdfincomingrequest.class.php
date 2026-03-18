@@ -111,6 +111,16 @@ class WdfIncomingRequest
         return $this->getController(true) . "/" . $this->getEvent();
     }
 
+    function getRequest(bool $as_url=false)
+    {
+        $data = (($rid = request_id()) && isset($_SESSION['latest_requests'][$rid]))
+            ? $_SESSION['latest_requests'][$rid]
+            : [$this->getController(true), $this->getEvent(), $_GET, $_POST];
+        if (!$as_url)
+            return $data;
+        return buildQuery($data[0], $data[1], $data[2]);
+    }
+
     function getUrl(bool $absolute=true)
     {
         $url = $this->samePage();
@@ -428,7 +438,17 @@ class WdfIncomingRequest
             log_fatal("ACCESS DENIED: '$controller_name' is no ICallable", "REQ=", $_REQUEST);
             system_die_http(404);
         }
-
+        elseif ($this->isPageLoad())
+        {
+            $_SESSION['request_id'] = request_id();
+            $_SESSION['latest_requests'][$_SESSION['request_id']] = [
+                $this->getController(true),
+                $this->getEvent(),
+                $_GET, $_POST
+            ];
+            while (\count($_SESSION['latest_requests']) > 40)
+                array_shift($_SESSION['latest_requests']);
+        }
 
         if( system_method_exists($this->_currentController,'__translate_event') )
             $this->_currentEvent = \call_user_func([$this->_currentController,'__translate_event'],$this->_currentEvent);

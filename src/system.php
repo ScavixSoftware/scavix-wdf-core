@@ -294,6 +294,7 @@ function system_init($application_name, $skip_header = false, $logging_category=
 	if( !$skip_header && PHP_SAPI!='cli' )
 	{
 		try {
+            $CONFIG['system']['header']['Service-Worker-Allowed'] = "/" . trim(parse_url($CONFIG['system']['url_root'], PHP_URL_PATH), "/") . "/";
 			foreach( $CONFIG['system']['header'] as $k=>$v )
 				header("$k: $v");
 		} catch(Exception $ex) { log_debug($ex); }
@@ -371,7 +372,7 @@ function system_exit($result=null,$die=true)
         elseif( $result instanceof ScavixWDF\Base\HtmlPage )
         {
             // use this to redirect if some previous AJAX redirect should have in fact been redirected to an HTML page.
-            log_error("Cannot deliver HtmlPage via AJAX, redirecting instead:", system_current_request(), $_SERVER);
+            log_error("Cannot deliver HtmlPage via AJAX, redirecting instead:",Wdf::Request()->getEndpoint(), system_current_request(true), $_SERVER);
             $response = AjaxResponse::Redirect(system_current_request(true))->Render();
         }
 		elseif( $result instanceof Renderable )
@@ -385,11 +386,6 @@ function system_exit($result=null,$die=true)
 		die("__SESSION_TIMEOUT__");
 	else
 	{
-		$_SESSION['request_id'] = request_id();
-        $_SESSION['latest_requests'][$_SESSION['request_id']] = [current_controller(),current_event(),$_GET,$_POST];
-        while( count($_SESSION['latest_requests']) > 20 )
-            array_shift($_SESSION['latest_requests']);
-
 		if($result instanceof Renderable)
 		{
 			$response = $result->WdfRenderAsRoot();
@@ -1452,24 +1448,7 @@ function current_url()
  */
 function system_current_request($as_url=false)
 {
-    if( Wdf::Request()->isAjax() )
-    {
-        $rid = Args::request('request_id');
-        if( $rid && isset($_SESSION['latest_requests'][$rid]) )
-        {
-            if( !$as_url )
-                return $_SESSION['latest_requests'][$rid];
-            return buildQuery
-            (
-                $_SESSION['latest_requests'][$rid][0],
-                $_SESSION['latest_requests'][$rid][1],
-                $_SESSION['latest_requests'][$rid][2]
-            );
-        }
-    }
-    if( $as_url )
-        return samePage($_GET);
-    return [current_controller(),current_event(),$_GET,$_POST];
+    return Wdf::Request()->getRequest($as_url);
 }
 
 /**

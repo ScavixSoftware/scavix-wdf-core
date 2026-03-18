@@ -279,11 +279,15 @@ class FilesStore extends ObjectStore
         $start = microtime(true);
         if( $keep_alive )
         {
-            $this->withIndex(function(&$items,&$requests)
+            $this->withIndex(function (&$items, &$requests)
             {
-                $ids = $requests[request_id()] ?? [];
-                if (empty($ids))
+                $rid = request_id();
+                if (!isset($requests[$rid]))
                     return false;
+                $ids = $requests[$rid]['items'] ?? [];
+                $requests[$rid]['eol'] = time() + $this->options['ttl'];
+                if (empty($ids))
+                    return true;
                 foreach ($ids as $id)
                 {
                     if (is_array($id))
@@ -325,7 +329,7 @@ class FilesStore extends ObjectStore
                 $requests[request_id()] = [
                     'eol' => time() + $this->options['ttl'],
                     'items' => array_keys(ObjectStore::$buffer),
-                    'debug'=>Wdf::Request()->getEndpoint()
+                    'debug' => ['ep' => Wdf::Request()->getEndpoint(), 'ref' => Wdf::Request()->getHeader('REFERER')]
                 ];
                 return true;
             });
