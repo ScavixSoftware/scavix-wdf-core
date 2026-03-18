@@ -1,6 +1,6 @@
 {
 	"name": "scavix/wdf-core",
-	"version": "1.1.0",
+	"version": "1.1.1",
 	"description": "Core components",
 	"type": "library",
 	"license": "LGPL-3.0-or-later",
