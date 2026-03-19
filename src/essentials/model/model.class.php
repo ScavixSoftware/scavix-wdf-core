@@ -355,10 +355,12 @@ abstract class Model implements Iterator, Countable, ArrayAccess, \ScavixWDF\ILo
 		$q = $this->_ds->Query($this->GetTableName());
 		foreach( $this->GetPrimaryColumns() as $pk )
 			$q = $q->eq($pk,$this->$pk);
-		$q = $q->current();
-		foreach( $this->GetColumnNames() as $cn )
-			$this->$cn = $q->$cn;
-		$this->__init_db_values();
+        if ($q = $q->current())
+        {
+            foreach ($this->GetColumnNames() as $cn)
+                $this->$cn = $q->$cn;
+            $this->__init_db_values();
+        }
 	}
 
 	function __init_db_values($is_new_dataset=false, $convert_now_values=false, $column_filter=false)
