@@ -274,7 +274,7 @@ class ResultSet implements Iterator, ArrayAccess, \Serializable
 		$this->_loaded_from_cache = true;
 		$this->_data_fetched = isset($data['df'])?$data['df']:false;
 		if( isset($this->_rowbuffer[$this->_index]) )
-			$this->_current = $this->_rowbuffer[$this->_index];
+			$this->_current = $this->_rowbuffer[$this->_index] ?? null;
     }
 
 	/**
@@ -297,8 +297,8 @@ class ResultSet implements Iterator, ArrayAccess, \Serializable
 		$res->_rowCount = isset($buf['rowCount'])?$buf['rowCount']:false;
 		$res->_loaded_from_cache = true;
 		$res->_data_fetched = isset($buf['df'])?$buf['df']:false;
-		if( isset($res->_rowbuffer[$res->_index]) )
-			$res->_current = $res->_rowbuffer[$res->_index];
+        if (isset($res->_rowbuffer[$res->_index]))
+            $res->_current = $res->_rowbuffer[$res->_index] ?? null;
 		return $res;
 	}
 
@@ -402,13 +402,13 @@ class ResultSet implements Iterator, ArrayAccess, \Serializable
 		if( $this->_index < (\count($this->_rowbuffer)-1) )
 		{
 			$this->_index++;
-			$this->_current = $this->_rowbuffer[$this->_index];
+            $this->_current = $this->_rowbuffer[$this->_index] ?? null;
 			return $this->_current;
 		}
 		if( $this->_loaded_from_cache )
 		{
-			$this->_current = false;
-			return false;
+			$this->_current = null;
+			return null;
 		}
 
 		if( $mode == null && $this->FetchMode )
@@ -419,7 +419,9 @@ class ResultSet implements Iterator, ArrayAccess, \Serializable
             \is_null($cursorOrientation)?PDO::FETCH_ORI_NEXT:$cursorOrientation,
             \is_null($cursorOffset)?0:$cursorOffset
         );
-		if( $this->_current !== false )
+        if ($this->_current === false)
+            $this->_current = null;
+		else
 		{
 			$this->_index = \count($this->_rowbuffer);
 			$this->_rowbuffer[] = $this->_current;
@@ -469,7 +471,7 @@ class ResultSet implements Iterator, ArrayAccess, \Serializable
 		if( \count($this->_rowbuffer) > 0 )
 		{
 			$this->_index = 0;
-			$this->_current = $this->_rowbuffer[$this->_index];
+            $this->_current = $this->_rowbuffer[$this->_index] ?? null;
 		}
 
 		// call init method on objects after they are loaded. Other methods do not work as documented :(
@@ -615,7 +617,7 @@ class ResultSet implements Iterator, ArrayAccess, \Serializable
 		{
 			for($i=0; $i<$cnt; $i++)
 				$this->_rowbuffer[$i] = $callback($this->_rowbuffer[$i]);
-			$this->_current = $this->_rowbuffer[$this->_index];
+			$this->_current = $this->_rowbuffer[$this->_index] ?? null;
 		}
 		return $this;
 	}
@@ -737,7 +739,7 @@ class ResultSet implements Iterator, ArrayAccess, \Serializable
 	 */
 	public function rewind(): void {
 		$this->_index = -1;
-        $this->_current = false;
+        $this->_current = null;
 	}
 
 	/**
@@ -745,7 +747,7 @@ class ResultSet implements Iterator, ArrayAccess, \Serializable
 	 */
 	public function valid(): bool {
 		if( !$this->_current ) $this->_current = $this->fetch();
-		return $this->_current !== false;
+		return $this->_current !== null;
 	}
 }
 
