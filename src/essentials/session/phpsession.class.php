@@ -45,23 +45,11 @@ class PhpSession extends SessionBase
 	function Sanitize()
 	{
 		global $CONFIG;
-		$lt = $CONFIG['session']['lifetime'];
 		$prefix = $CONFIG['session']['prefix'];
-
-		if(isset($_SESSION[$prefix."session_lastaccess"]) && ($_SESSION[$prefix."session_lastaccess"] < time() - $lt * 60))
-		{
-			// session timed out
-			// Implementations in system/modules/authorization.php and
-			// common/modules/fax_authorization.php
-			if( function_exists('logoutUser') )
-				call_user_func('logoutUser');
-		}
 
 		if( $CONFIG['session']['iplock'] )
 		{
 			$ip_address = get_ip_address();
-			if(isset($_SESSION[$prefix.'ip_address']) && function_exists('logoutUser') && ($_SESSION[$prefix.'ip_address'] != $ip_address))
-				call_user_func('logoutUser');
 			$_SESSION[$prefix.'ip_address'] = $ip_address;
 		}
 	}
