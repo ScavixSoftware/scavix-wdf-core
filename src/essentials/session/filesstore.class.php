@@ -84,7 +84,7 @@ class FilesStore extends ObjectStore
         if ($ttl)
             $this->options['ttl'] = $ttl;
         elseif (empty($this->options['ttl']))
-            $this->options['ttl'] = 120;
+            $this->options['ttl'] = ceil(($GLOBALS['CONFIG']['session']['ping_time'] ?? 60) * 1.5);
 
 
         system_ensure_path_ending($this->options['path']);

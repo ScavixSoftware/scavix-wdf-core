@@ -72,6 +72,9 @@ function session_init()
 
 	if( !isset($CONFIG['session']['object_store']))
 		$CONFIG['session']['object_store'] = 'SessionStore';
+
+	if( !isset($CONFIG['session']['ping_time']) )
+		$CONFIG['session']['ping_time'] = 60;
 }
 
 /**
@@ -243,8 +246,11 @@ function session_update($keep_alive_only = false)
 
         if (Wdf::$ObjectStore)
         {
-            if( $keep_alive_only )
+            if ($keep_alive_only)
+            {
                 Wdf::$ObjectStore->Update(true);
+                Wdf::$ObjectStore->Cleanup(); // let cleanup run on PING too, but after the keepalive
+            }
             else
             {
                 if (Wdf::Request()->isPageLoad())
@@ -274,10 +280,10 @@ function session_update($keep_alive_only = false)
 /**
  * @shortcut <SessionBase::RequestId>
  */
-function request_id()
+function request_id(bool $regenerate = false)
 {
     if (isset(Wdf::$SessionHandler) && is_object(Wdf::$SessionHandler))
-        return Wdf::$SessionHandler->RequestId();
+        return Wdf::$SessionHandler->RequestId($regenerate);
     return md5("".microtime(true));
 }
 

@@ -183,6 +183,9 @@ class HtmlPage extends Template implements ICallable
             $init_data['site_root'] = cfg_get('system', 'url_root');
             $init_data['rewrite'] = can_rewrite();
 
+            if (empty($init_data['ping_time']))
+                $init_data['ping_time'] = cfg_getd('session', 'ping_time', 60) * 1000;
+
             if (isDevOrBeta() && !isset($init_data['log_to_console']))
                 $init_data['log_to_console'] = true;
 

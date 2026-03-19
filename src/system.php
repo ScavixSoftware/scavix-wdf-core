@@ -328,8 +328,7 @@ function system_execute()
     if (PHP_SAPI == 'cli' && function_exists('cli_execute'))
         cli_execute();
 
-    // respond to PING requests that are sended to keep the session alive
-    if (Args::request('ping', false))
+    if (Wdf::Request()->isPing())
     {
         session_update(true);
         execute_hooks(HOOK_PING_RECIEVED);

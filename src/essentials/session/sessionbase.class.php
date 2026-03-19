@@ -254,13 +254,22 @@ abstract class SessionBase
 	 * This method does the real magic and creates a new request id or returns the current.
 	 * @return string A new request id or the current one
 	 */
-	function RequestId()
+	function RequestId(bool $regenerate = false)
 	{
+        if ($regenerate && self::$session_request_id)
+            self::$session_request_id = false;
 		if( !self::$session_request_id )
 		{
-            if (avail($_SESSION, 'request_id') && !\ScavixWDF\Wdf::Request()->isPageLoad())
-                self::$session_request_id = $_SESSION['request_id'];
-            else
+            // get from request or session when this is some kind of followup request (==no pageload)
+            if (!$regenerate && !\ScavixWDF\Wdf::Request()->isPageLoad())
+            {
+                if (avail($_REQUEST, 'request_id'))
+                    self::$session_request_id = $_REQUEST['request_id'];
+                elseif (avail($_SESSION, 'request_id'))
+                    self::$session_request_id = $_SESSION['request_id'];
+            }
+
+            if( !self::$session_request_id ) // fallback: generate a new id
             {
                 $ep = \ScavixWDF\Wdf::Request()->getEndpoint();
                 self::$session_request_id = md5($ep . microtime());

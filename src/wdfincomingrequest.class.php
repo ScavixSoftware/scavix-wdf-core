@@ -35,6 +35,7 @@ class WdfIncomingRequest
 {
     private static WdfIncomingRequest $_instance;
     private bool $parsingDone = false;
+    private int $request_ttl = 90;
     private $_url, $_currentController, $_currentEvent, $_raw_data;
     private $_route, $_routeArgs, $_parsedArguments, $_usingDefaultPage, $_usingDefaultEvent;
 
@@ -113,12 +114,12 @@ class WdfIncomingRequest
 
     function getRequest(bool $as_url=false)
     {
-        $data = (($rid = request_id()) && isset($_SESSION['latest_requests'][$rid]))
-            ? $_SESSION['latest_requests'][$rid]
-            : [$this->getController(true), $this->getEvent(), $_GET, $_POST];
+        $data = (($rid = request_id()) && isset($_SESSION['active_requests'][$rid]))
+            ? $_SESSION['active_requests'][$rid]
+            : ['c'=>$this->getController(true), 'e'=>$this->getEvent(), 'g'=>$_GET];
         if (!$as_url)
             return $data;
-        return buildQuery($data[0], $data[1], $data[2]);
+        return buildQuery($data['c'], $data['e'], $data['g']);
     }
 
     function getUrl(bool $absolute=true)
@@ -259,6 +260,14 @@ class WdfIncomingRequest
         return is_in($this->getRequestClass(), 'image', 'audio', 'video', 'style', 'script');
     }
 
+    function isPing()
+    {
+        $res = \ScavixWDF\Base\Args::request('ping', false);
+        if ($res && $this->parsingDone)
+            $this->pingCurrentRequest($res);
+        return $res;
+    }
+
     #endregion
 
     #region Tools
@@ -312,6 +321,7 @@ class WdfIncomingRequest
     private function __construct()
     {
         $this->_url = $GLOBALS['CONFIG']['system']['same_page'];
+        $this->request_ttl = ceil(($GLOBALS['CONFIG']['session']['ping_time'] ?? 60) * 1.5);
     }
 
     private function parseRequest()
@@ -432,6 +442,7 @@ class WdfIncomingRequest
                 log_fatal("ACCESS DENIED: '$controller_name' is no Renderable", "REQ=", $_REQUEST);
                 die("__SESSION_TIMEOUT__");
             }
+            $this->pingCurrentRequest();
         }
         else if( !($this->_currentController instanceof ICallable) )
         {
@@ -439,16 +450,9 @@ class WdfIncomingRequest
             system_die_http(404);
         }
         elseif ($this->isPageLoad())
-        {
-            $_SESSION['request_id'] = request_id();
-            $_SESSION['latest_requests'][$_SESSION['request_id']] = [
-                $this->getController(true),
-                $this->getEvent(),
-                $_GET, $_POST
-            ];
-            while (\count($_SESSION['latest_requests']) > 40)
-                array_shift($_SESSION['latest_requests']);
-        }
+            $this->startNewRequest();
+        else
+            $this->pingCurrentRequest();
 
         if( system_method_exists($this->_currentController,'__translate_event') )
             $this->_currentEvent = \call_user_func([$this->_currentController,'__translate_event'],$this->_currentEvent);
@@ -461,6 +465,36 @@ class WdfIncomingRequest
 
         if( !isset($this->_route) )
             $this->_route = [$this->_currentController, $this->_currentEvent];
+    }
+
+    private function startNewRequest()
+    {
+        // force regeneration because this really is a new HTML page request
+        $_SESSION['request_id'] = request_id(true);
+        $_SESSION['active_requests'][$_SESSION['request_id']] = [
+            'c' => $this->getController(true),
+            'e' => $this->getEvent(),
+            'g' => $_GET,
+            'p' => $_POST,
+            '_' => time() + $this->request_ttl
+        ];
+        // log_debug("[REQ] started {$_SESSION['request_id']}");
+
+        foreach ($_SESSION['active_requests'] as $k => $data)
+            if ($data['_'] < time())
+            {
+                unset($_SESSION['active_requests'][$k]);
+                // log_debug("[REQ] removed $k");
+            }
+    }
+
+    private function pingCurrentRequest($rid='')
+    {
+        $rid = $rid ?: request_id();
+        if (empty($_SESSION['active_requests'][$rid]))
+            return;
+        $_SESSION['active_requests'][$rid]['_'] = time() + $this->request_ttl;
+        // log_debug("[REQ] pinged $rid");
     }
 
     private function eventExists()
