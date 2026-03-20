@@ -52,6 +52,11 @@ class PhpSession extends SessionBase
 			$ip_address = get_ip_address();
 			$_SESSION[$prefix.'ip_address'] = $ip_address;
 		}
+        array_walk_recursive($_SESSION, function ($item)
+        {
+            if ($item instanceof \ScavixWDF\Base\Renderable)
+                \ScavixWDF\Wdf::Response()->addResource($item);
+        });
 	}
 
 	/**

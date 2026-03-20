@@ -82,7 +82,10 @@ class WdfResponse
         foreach ($data as $item)
         {
             if (($key = $item['key'] ?? '') && empty($this->resource_map[$name]['items'][$key]))
+            {
                 $this->resource_map[$name]['items'][$key] = $item;
+                // log_debug("$name added $key");
+            }
         }
         $this->resource_map[$name]['saved'] = false;
         $this->prepared_resources = false;
@@ -124,7 +127,6 @@ class WdfResponse
             if (!$data_present )
             {
                 $this->resMapAdd($cnl, array_map(fn($a) => resource_search($a->Path), ResourceAttribute::Collect(\get_class($data))));
-                // $this->resMapAdd($cnl, ResourceAttribute::ResolveAll(ResourceAttribute::Collect(\get_class($data))));
                 $start = Wdf::Measure(__METHOD__." - attributes" , $start);
             }
 
@@ -181,13 +183,20 @@ class WdfResponse
         {
             // map collected resources to a flat array
             $res = [];
-            foreach ($this->resource_map ?? [] as $val)
+            // log_debug("Final map keys",array_keys($this->resource_map));
+            foreach ($this->resource_map ?? [] as $name=>$val)
             {
+                // log_debug("checking $name", $val);
                 foreach ($val['items'] ?? [] as $key => $resource)
                     if ($key && empty($res[$key]))
+                    {
+                        // log_debug("added $key");
                         $res[$key] = $resource;//compact('ext', 'key', 'url');
+                    }
             }
+            uasort($res, fn($a, $b) => $a['sort'] <=> $b['sort']);
             $this->prepared_resources = array_values($res);
+            // log_debug("resources for ", Wdf::Request()->getEndpoint(), $res);
         }
         return $this->prepared_resources;
     }

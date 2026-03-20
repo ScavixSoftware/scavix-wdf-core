@@ -223,16 +223,6 @@ class HtmlPage extends Template implements ICallable
             $this->set("languagecode", $ci->Code);
 		}
 
-		$this->js = array_reverse($this->js,true);
-		foreach( array_reverse(Wdf::Response()->getResources()) as $r )
-		{
-			if( $r['ext'] == 'css' || $r['ext'] == 'less' )
-				$this->addCss($r['url'],$r['key']);
-			else
-				$this->addjs($r['url'],$r['key']);
-		}
-		$this->js = array_reverse($this->js,true);
-
 		$this->set("css",$this->css);
 		$this->set("js",$this->js);
 		$this->set("meta",$this->meta);

@@ -308,6 +308,8 @@ class Template extends Renderable
                 if (!$this->isHtmlPageTemplate($__template_file))
                     $tempvars['sub_template_content'] = $render_in_context($__template_file, $tempvars);
 
+                $mem = [$this->js, $this->css];
+                $this->js = []; $this->css = [];
                 foreach (Wdf::Response()->getResources() as $r)
                 {
                     if ($r['ext'] == 'css' || $r['ext'] == 'less')
@@ -315,6 +317,9 @@ class Template extends Renderable
                     else
                         $this->addjs($r['url'], $r['key']);
                 }
+                $this->js += $mem[0];
+                $this->css += $mem[1];
+
                 $tempvars['meta'] = $this->meta;
                 $tempvars['css'] = $this->css;
                 $tempvars['js'] = $this->js;

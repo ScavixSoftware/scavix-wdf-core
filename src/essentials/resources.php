@@ -183,6 +183,7 @@ function resource_search($filename, $usecache = true)
             : $conf['url'] . $filename . (strpos($conf['url'], '?') === false ? '?' : '&') . ($nc ? "_nc=" . substr($nc, 2) : '');
         $key = parse_url($conf['url'] . $filename, PHP_URL_PATH);
         $res = compact('key','path','mtime','ext','url');
+        $res['sort'] = (stripos($path, "scavix-wdf") || stripos($path, "scavix/wdf")) ? 0 : 1;
 
         if ($usecache)
         {
