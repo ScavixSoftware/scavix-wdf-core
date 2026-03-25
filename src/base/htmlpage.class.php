@@ -215,13 +215,10 @@ class HtmlPage extends Template implements ICallable
 	 */
 	function WdfRender()
 	{
-		if( system_is_module_loaded('localization') )
-		{
-			$ci = Localization::detectCulture();
-			if( !$this->get('isrtl') && $ci->IsRTL )
-				$this->set("isrtl", " dir='rtl'");
-            $this->set("languagecode", $ci->Code);
-		}
+        $ci = Localization::detectCulture();
+        if( !$this->get('isrtl') && $ci->IsRTL )
+            $this->set("isrtl", " dir='rtl'");
+        $this->set("languagecode", $ci->Code);
 
 		$this->set("css",$this->css);
 		$this->set("js",$this->js);

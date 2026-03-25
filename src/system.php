@@ -210,10 +210,6 @@ function system_load_module($path_to_module)
 {
 	// prevent double-loading:
 	$mod = basename($path_to_module,".php");
-
-    if( $mod == "mod_phpexcel" )
-        WdfException::Raise("PHPExcel module has bee removed. Use PhpSpreadsheet instead.");
-
 	if(system_is_module_loaded($mod))
 		return;
 
@@ -223,7 +219,7 @@ function system_load_module($path_to_module)
 	if( function_exists($initfuncname) )
 		$initfuncname();
 
-	execute_hooks(HOOK_POST_MODULE_INIT,array($mod));
+	execute_hooks(HOOK_POST_MODULE_INIT, [$mod]);
 
 	// mark module loaded:
 	Wdf::$Modules[$mod] = $path_to_module;
@@ -388,10 +384,10 @@ function system_exit($result=null,$die=true)
 		if($result instanceof Renderable)
 		{
 			$response = $result->WdfRenderAsRoot();
-            if ($result->_translate && system_is_module_loaded("translation"))
+            if ($result->_translate )
                 $response = __translate($response);
 		}
-		elseif( system_is_module_loaded("translation") )
+		else
 			$response = __translate($result);
 	}
 

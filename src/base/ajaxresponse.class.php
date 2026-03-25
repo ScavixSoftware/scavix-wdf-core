@@ -129,7 +129,7 @@ class AjaxResponse
 
         $wrapped = new stdClass();
         $wrapped->html = $content->WdfRenderAsRoot();
-        if( $content->_translate && system_is_module_loaded('translation') )
+        if( $content->_translate )
             $wrapped->html = __translate($wrapped->html);
 
         if($force_dependency_loading !== false)
@@ -210,7 +210,7 @@ class AjaxResponse
             }
             elseif ($this->_text)
             {
-                $res = !$this->_translated && system_is_module_loaded("translation") ? __translate($this->_text) : $this->_text;
+                $res = !$this->_translated ? __translate($this->_text) : $this->_text;
                 $res = json_encode($res);
                 $this->_translated = true;
             }
