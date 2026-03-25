@@ -243,17 +243,7 @@ class FilesStore extends ObjectStore
                 if( $f != "$d/." && $f != "$d/.." )
                     @unlink($f);
             @rmdir($d);
-            // log_debug(__METHOD__,"Session removed:",$d);
         }
-        // foreach( system_glob_rec($this->getPath(),'*') as $f )
-        // {
-        //     $time = @filemtime($f);
-        //     if( $time && (time() - $time > $this->options['ttl']) )
-        //     {
-        //         @unlink($f);
-        //         //log_debug(__METHOD__,"Object removed:",$f);
-        //     }
-        // }
         Wdf::Measure(__METHOD__,$start);
     }
 
@@ -265,9 +255,11 @@ class FilesStore extends ObjectStore
             $index = json_decode(@file_get_contents($eolfile) ?: '[]', true);
             $items = $index['items'] ?? [];
             $requests = $index['requests'] ?? [];
-            if ($callback($items, $requests))
+            if ($res = $callback($items, $requests))
                 file_put_contents($eolfile, json_encode(compact('items', 'requests'), JSON_PRETTY_PRINT));
             Wdf::ReleaseLock($eolfile);
+            if ($res === null)
+                die("__SESSION_TIMEOUT__");
         }
     }
 
@@ -283,7 +275,11 @@ class FilesStore extends ObjectStore
             {
                 $rid = request_id();
                 if (!isset($requests[$rid]))
-                    return false;
+                {
+                    if( isDev() )
+                        log_debug("Request $rid not found");
+                    return null;
+                }
                 $ids = $requests[$rid]['items'] ?? [];
                 $requests[$rid]['eol'] = time() + $this->options['ttl'];
                 if (empty($ids))
