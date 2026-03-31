@@ -289,8 +289,11 @@ Object.defineProperty(String.prototype, 'hashCode', {
                 return;
 			if( wdf.ping_timer ) clearTimeout(wdf.ping_timer);
 			wdf.ping_timer = setTimeout(function()
-			{
-				wdf.get('',{PING:wdf.request_id}, function(){ wdf.resetPing(); });
+            {
+                if(wdf.controller)
+                    wdf.controller.get('', { PING: wdf.request_id }, function () { wdf.resetPing(); });
+                else
+				    wdf.get('',{PING:wdf.request_id}, function(){ wdf.resetPing(); });
 			},wdf.settings.ping_time || 60000);
 		},
 

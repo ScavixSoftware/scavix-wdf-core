@@ -221,8 +221,10 @@ class FilesStore extends ObjectStore
             },ARRAY_FILTER_USE_BOTH);
             $requests = array_filter($requests, function ($req, $id)
             {
-                // log_debug("old request_id $id");
-                return $req['eol'] > time();
+                $ret = $req['eol'] > time();
+                if(!$ret)
+                    log_debug("old request_id $id", time(), $req);
+                return $ret;
             },ARRAY_FILTER_USE_BOTH);
 
             return true;
@@ -253,10 +255,12 @@ class FilesStore extends ObjectStore
         if ($lock = Wdf::GetLock($eolfile, 1, false))
         {
             $index = json_decode(@file_get_contents($eolfile) ?: '[]', true);
+            // log_debug($eolfile, $index);
             $items = $index['items'] ?? [];
             $requests = $index['requests'] ?? [];
             if ($res = $callback($items, $requests))
                 file_put_contents($eolfile, json_encode(compact('items', 'requests'), JSON_PRETTY_PRINT));
+            // log_debug($res, request_id(), $requests);
             Wdf::ReleaseLock($eolfile);
             // if ($res === null)
             //     die("__SESSION_TIMEOUT__");
