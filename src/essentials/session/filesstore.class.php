@@ -258,8 +258,8 @@ class FilesStore extends ObjectStore
             if ($res = $callback($items, $requests))
                 file_put_contents($eolfile, json_encode(compact('items', 'requests'), JSON_PRETTY_PRINT));
             Wdf::ReleaseLock($eolfile);
-            if ($res === null)
-                die("__SESSION_TIMEOUT__");
+            // if ($res === null)
+            //     die("__SESSION_TIMEOUT__");
         }
     }
 
