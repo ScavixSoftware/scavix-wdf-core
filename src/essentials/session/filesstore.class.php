@@ -222,8 +222,8 @@ class FilesStore extends ObjectStore
             $requests = array_filter($requests, function ($req, $id)
             {
                 $ret = $req['eol'] > time();
-                if(!$ret)
-                    log_debug("old request_id $id", time(), $req);
+                // if(!$ret)
+                //     log_debug("old request_id $id", time(), $req);
                 return $ret;
             },ARRAY_FILTER_USE_BOTH);
 
