@@ -135,7 +135,7 @@ wdf.ready.add(function()
                     }
                     $('<hr/>').css({border:0, borderTop:'1px dotted black', margin: '5px 0px'}).appendTo($d);
                     $('<div/>').appendTo($d)
-                        .append( '<i class="fas fa-eraser"></i> ' )
+                        .append( '<i class="fad fa-eraser"></i> ' )
                         .append(wdf.getText("TXT_RESET"))
                         .click(function()
                         {
