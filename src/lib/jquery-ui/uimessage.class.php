@@ -46,7 +46,7 @@ class uiMessage extends uiControl
 		parent::__construct('div');
 		$this->class = "ui-widget ui-message";
 
-		if( function_exists('translation_string_exists') && translation_string_exists($message) )
+		if( translation_string_exists($message) )
 			$message = getString($message);
 		$icon = $type=='highlight'?'info':'alert';
 

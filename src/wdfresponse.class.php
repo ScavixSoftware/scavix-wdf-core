@@ -32,6 +32,8 @@ use ScavixWDF\Wdf;
 class WdfResponse
 {
     private static WdfResponse $_instance;
+    protected $skipResources = false;
+
     public static function &Get()
     {
         if (empty(self::$_instance))
@@ -111,6 +113,8 @@ class WdfResponse
      */
     public function addResource(Renderable|string $data)
     {
+        if ($this->skipResources)
+            return;
         $start = microtime(true);
         if ($data instanceof Renderable)
         {
@@ -179,6 +183,8 @@ class WdfResponse
 
     public function getResources()
     {
+        if ($this->skipResources)
+            return [];
         if (!$this->prepared_resources)
         {
             // map collected resources to a flat array
@@ -202,4 +208,10 @@ class WdfResponse
     }
 
     #endregion
+
+    public function skipResources(bool $skip = true): static
+    {
+        $this->skipResources = $skip;
+        return $this;
+    }
 }
