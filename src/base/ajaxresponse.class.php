@@ -105,7 +105,7 @@ class AjaxResponse
     /**
 	 * Return a plain text.
 	 *
-	 * @param string $text Text to be passed out
+	 * @param string $content Text to be passed out
 	 * @return AjaxResponse The created response
 	 */
 	public static function Raw($content=false)

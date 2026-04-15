@@ -58,6 +58,7 @@ class uiButton extends uiControl
 	 * @param string $label Label
 	 * @param string $onclick OnClick JS code
 	 * @return uiButton The new button
+     * @suppress PHP6508
 	 */
 	static function Make(...$args)
 	{

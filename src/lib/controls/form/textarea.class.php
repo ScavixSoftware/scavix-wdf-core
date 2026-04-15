@@ -34,14 +34,13 @@ use ScavixWDF\Base\Control;
 
 /**
  *  This is a &lt;textarea&gt;.
- * 
+ *
  */
 class TextArea extends Control
 {
 	/**
 	 * @param string $value The text
 	 * @param string $name The name
-	 * @param string $cid 
 	 */
     function __construct($value='',$name=false)
 	{

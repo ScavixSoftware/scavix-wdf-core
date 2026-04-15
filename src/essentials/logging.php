@@ -343,7 +343,7 @@ function logging_extend_logger($alias,$key,$value)
 /**
  * Replaces all previously set categories in all loggers.
  *
- * @param string $name Category to add
+ * @param array $names Categories to set
  * @return void
  */
 function logging_set_categories(array $names)

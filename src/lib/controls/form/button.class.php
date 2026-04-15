@@ -69,6 +69,7 @@ class Button extends Input
 	 * @param string $label Label
 	 * @param string $onclick OnClick JS code
 	 * @return Button The new button
+     * @suppress PHP6508
 	 */
 	static function Make(...$args)
 	{
