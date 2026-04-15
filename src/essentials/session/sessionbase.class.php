@@ -208,7 +208,11 @@ abstract class SessionBase
                 $ms = round((microtime(true) - $start) * 1000);
                 if (isDev() && $ms > 35)
                 {
-                    $size = strlen(serialize($_SESSION));
+                    try
+                    {
+                        $size = strlen(serialize($_SESSION));
+                    }
+                    catch (Exception $ex) { $size = "N/A"; }
                     log_debug("Slow session {$ms}ms, size=$size, req={$_SERVER['REQUEST_URI']}", $opts);
                 }
 			}
