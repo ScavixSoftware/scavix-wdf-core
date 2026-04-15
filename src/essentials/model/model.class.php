@@ -350,7 +350,7 @@ abstract class Model implements Iterator, Countable, ArrayAccess, \ScavixWDF\ILo
 	{
         foreach ($data as $k => $v)
             $this->$k = $v;
-		if( $this->_query )
+		if( $this->_query || !$this->_ds )
 			return;
 		$q = $this->_ds->Query($this->GetTableName());
 		foreach( $this->GetPrimaryColumns() as $pk )
