@@ -234,12 +234,13 @@ class FilesStore extends ObjectStore
         $start = microtime(true);
         clearstatcache();
         $p = $this->options['path'];
+        $ttl = $this->options['ttl'] * 2; // double the standard object TTL to be sure
         foreach( glob($p.'*',GLOB_ONLYDIR) as $d )
         {
             if( $d == "$p." || $d == "$p.." )
                 continue;
             $time = @filemtime($d);
-            if( !$time || (time() - $time <= $this->options['ttl']) )
+            if( !$time || (time() - $time <= $ttl) )
                 continue;
             foreach( glob($d.'/*') as $f )
                 if( $f != "$d/." && $f != "$d/.." )
@@ -251,20 +252,19 @@ class FilesStore extends ObjectStore
 
     private function withIndex($callback)
     {
-        $eolfile = $this->getPath() . "/index.json";
+        $path = $this->getPath();
+        $eolfile = "$path/index.json";
         if ($lock = Wdf::GetLock($eolfile, 1, false))
         {
             $index = json_decode(@file_get_contents($eolfile) ?: '[]', true);
-            // log_debug($eolfile, $index);
             $items = $index['items'] ?? [];
             $requests = $index['requests'] ?? [];
             if ($res = $callback($items, $requests))
                 file_put_contents($eolfile, json_encode(compact('items', 'requests'), JSON_PRETTY_PRINT));
-            // log_debug($res, request_id(), $requests);
             Wdf::ReleaseLock($eolfile);
-            // if ($res === null)
-            //     die("__SESSION_TIMEOUT__");
         }
+        else
+            @touch($path); // at least touch the path to prevent it from beeing cleaned up
     }
 
     /**
