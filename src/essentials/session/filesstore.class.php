@@ -254,14 +254,20 @@ class FilesStore extends ObjectStore
     {
         $path = $this->getPath();
         $eolfile = "$path/index.json";
-        if ($lock = Wdf::GetLock($eolfile, 1, false))
+        if (Wdf::GetLock($eolfile, 1, false))
         {
-            $index = json_decode(@file_get_contents($eolfile) ?: '[]', true);
-            $items = $index['items'] ?? [];
-            $requests = $index['requests'] ?? [];
-            if ($res = $callback($items, $requests))
-                file_put_contents($eolfile, json_encode(compact('items', 'requests'), JSON_PRETTY_PRINT));
-            Wdf::ReleaseLock($eolfile);
+            try
+            {
+                $index = json_decode(@file_get_contents($eolfile) ?: '[]', true);
+                $items = $index['items'] ?? [];
+                $requests = $index['requests'] ?? [];
+                if ($res = $callback($items, $requests))
+                    file_put_contents($eolfile, json_encode(compact('items', 'requests'), JSON_PRETTY_PRINT));
+            }
+            finally
+            {
+                Wdf::ReleaseLock($eolfile);
+            }
         }
         else
             @touch($path); // at least touch the path to prevent it from beeing cleaned up
