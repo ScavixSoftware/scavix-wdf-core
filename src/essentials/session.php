@@ -30,8 +30,8 @@
  */
 
 use ScavixWDF\Session\Serializer;
+use ScavixWDF\Session\WdfSession;
 use ScavixWDF\Wdf;
-use ScavixWDF\WdfException;
 use ScavixWDF\WdfResource;
 
 require_once(__DIR__.'/session/serializer.class.php');
@@ -50,31 +50,18 @@ function session_init()
 	if( !isset($CONFIG['session']['session_name']) )
 		$CONFIG['session']['session_name'] = isset($CONFIG['system']['application_name'])?$CONFIG['system']['application_name']:'WDF_SESSION';
 
-	if( !isset($CONFIG['session']['datasource']) )
-		$CONFIG['session']['datasource'] = 'internal';
-
-	if( !isset($CONFIG['session']['table']) )
-		$CONFIG['session']['table'] = 'sessions';
-
 	if( !isset($CONFIG['session']['prefix']) )
 		$CONFIG['session']['prefix'] = '';
 
-	if( !isset($CONFIG['session']['lifetime']) )
-		$CONFIG['session']['lifetime'] = '10';
-
-	// Bind sessions to one ip address
-	if( !isset($CONFIG['session']['iplock']))
-		$CONFIG['session']['iplock'] = false;
-
-	// Classname of the Session Handler
-	if( !isset($CONFIG['session']['handler']))
-		$CONFIG['session']['handler'] = 'PhpSession';
-
 	if( !isset($CONFIG['session']['object_store']))
-		$CONFIG['session']['object_store'] = 'SessionStore';
+		$CONFIG['session']['object_store'] = \ScavixWDF\Session\SessionStore::class;
 
 	if( !isset($CONFIG['session']['ping_time']) )
 		$CONFIG['session']['ping_time'] = 60;
+
+    $dep = array_intersect(array_keys($CONFIG['session']), ['datasource','table','lifetime','iplock','handler','usephpsession']);
+    if (count($dep) > 0)
+        log_info("Deprecated config found. These keys may safely be removed: " . implode(", ", array_map(fn($d) => "sesison." . $d, $dep)));
 }
 
 /**
@@ -105,30 +92,18 @@ function session_run()
         }
     }
 
-	// check for backwards compatibility
-	if( isset($CONFIG['session']['usephpsession']))
-	{
-		if( ($CONFIG['session']['usephpsession'] && $CONFIG['session']['handler'] != "PhpSession") ||
-			(!$CONFIG['session']['usephpsession'] && $CONFIG['session']['handler'] == "PhpSession") )
-			WdfException::Raise('Do not use $CONFIG[\'session\'][\'usephpsession\'] anymore! See session_init() for details.');
-	}
-
-	$CONFIG['session']['handler'] = fq_class_name($CONFIG['session']['handler']);
 	$CONFIG['session']['object_store'] = fq_class_name($CONFIG['session']['object_store']);
-
-    Wdf::$SessionHandler = new $CONFIG['session']['handler']();
-    Wdf::$SessionHandler->store = Wdf::$ObjectStore = new $CONFIG['session']['object_store']();
-
-    if( !isset($_SESSION[$GLOBALS['CONFIG']['session']['prefix']."object_access"]) )
-        $_SESSION[$GLOBALS['CONFIG']['session']['prefix']."object_access"] = [];
 
 	if (!isset($_SESSION["system_internal_cache"]))
 		$_SESSION["system_internal_cache"] = [];
+
+    WdfSession::Get(); // explicitely start the session
+    $CONFIG['session']['started'] = microtime(true);
 }
 
 function session_active()
 {
-    return (isset(Wdf::$SessionHandler) && is_object(Wdf::$SessionHandler));
+    return !empty($GLOBALS['CONFIG']['session']['started']);
 }
 
 /**
@@ -182,33 +157,34 @@ function equals(&$o1, &$o2, $compare_classes = true)
 }
 
 /**
- * @shortcut <SessionBase::Sanitize>
+ * @shortcut <WdfSession::Sanitize>
  */
 function session_sanitize()
 {
-    if (isset(Wdf::$SessionHandler) && is_object(Wdf::$SessionHandler))
-	    return Wdf::$SessionHandler->Sanitize();
+    return WdfSession::Get()->Sanitize();
 }
 
 /**
- * Truncates the session.
- *
- * @return void
+ * @deprecated Use <session_clear> instead
  */
 function session_kill_all()
 {
-    if (isset(Wdf::$SessionHandler) && is_object(Wdf::$SessionHandler))
-	    Wdf::$SessionHandler->KillAll();
+    session_clear();
 }
 
 /**
- * @internal Keeps session alive
+ * @shortcut <WdfSession::Clear>
+ */
+function session_clear()
+{
+    WdfSession::Get()->Clear();
+}
+
+/**
+ * @deprecated This is useless now and just does nothing
  */
 function session_keep_alive($request_key='PING')
-{
-    if (isset(Wdf::$SessionHandler) && is_object(Wdf::$SessionHandler))
-	    return Wdf::$SessionHandler->KeepAlive($request_key);
-}
+{}
 
 /**
  * @internal Keeps used stored objects alive
@@ -238,38 +214,9 @@ function session_update($keep_alive_only = false)
             }
         };
 
-        if (current_controller(false) instanceof WdfResource)
-        {
-            $partitionCookies();
-            return;
-        }
-
-        if (Wdf::$ObjectStore)
-        {
-            if ($keep_alive_only)
-            {
-                Wdf::$ObjectStore->Update(true);
-                Wdf::$ObjectStore->Cleanup(); // let cleanup run on PING too, but after the keepalive
-            }
-            else
-            {
-                if (Wdf::Request()->isPageLoad())
-                {
-                    Wdf::$ObjectStore->Cleanup();
-                    Wdf::$ObjectStore->Update();
-                }
-                elseif( !Wdf::Request()->isStaticAsset() )
-                    Wdf::$ObjectStore->Update();
-            }
-        }
-        if (isset(Wdf::$SessionHandler) && is_object(Wdf::$SessionHandler))
-        {
-            $res = Wdf::$SessionHandler->Update();
-            $partitionCookies();
-            return $res;
-        }
+        if( !(Wdf::Request()->getController(false) instanceof WdfResource) )
+            WdfSession::Get()->Update($keep_alive_only);
         $partitionCookies();
-        return false;
     }
     finally
     {
@@ -278,85 +225,67 @@ function session_update($keep_alive_only = false)
 }
 
 /**
- * @shortcut <SessionBase::RequestId>
+ * @shortcut <WdfSession::RequestId>
  */
 function request_id(bool $regenerate = false)
 {
-    if (isset(Wdf::$SessionHandler) && is_object(Wdf::$SessionHandler))
-        return Wdf::$SessionHandler->RequestId($regenerate);
-    return md5("".microtime(true));
+    return WdfSession::Get()->GetRequestId($regenerate);
 }
 
 /**
- * @shortcut <SessionBase::Store>
+ * @shortcut <WdfSession::StoreObject>
  */
 function store_object(&$obj,$id="")
 {
-    if( !isset(Wdf::$ObjectStore) )
-		return false;
-	$res = Wdf::$ObjectStore->Store($obj,$id);
-    return $res;
+    return WdfSession::Get()->StoreObject($obj, $id);
 }
 
 /**
- * @shortcut <SessionBase::Delete>
+ * @shortcut <WdfSession::DeleteObject>
  */
 function delete_object($id)
 {
-    if( !isset(Wdf::$ObjectStore) )
-		return false;
-	return Wdf::$ObjectStore->Delete($id);
+    return WdfSession::Get()->DeleteObject($id);
 }
 
 /**
- * @shortcut <SessionBase::Exists>
+ * @shortcut <WdfSession::ObjectExists>
  */
 function in_object_storage($id)
 {
-	if( !isset(Wdf::$ObjectStore) )
-		return false;
-	return Wdf::$ObjectStore->Exists($id);
+    return WdfSession::Get()->ObjectExists($id);
 }
 
 /**
- * @shortcut <SessionBase::Restore>
+ * @shortcut <WdfSession::RestoreObject>
  */
-function &restore_object($id)
+function restore_object($id)
 {
-    $res = null;
-	if( isset(Wdf::$ObjectStore) && is_object(Wdf::$ObjectStore) )
-    	$res = Wdf::$ObjectStore->Restore($id);
-    return $res;
+    return WdfSession::Get()->RestoreObject($id);
 }
 
 /**
- * @shortcut <SessionBase::CreateId>
+ * @shortcut <WdfSession::CreateObjectId>
  */
 function create_storage_id(&$obj)
 {
-	if( isset(Wdf::$ObjectStore) && is_object(Wdf::$ObjectStore) )
-		return Wdf::$ObjectStore->CreateId($obj);
-	return false;
+    return WdfSession::Get()->CreateObjectId($obj);
 }
 
 /**
- * @shortcut <SessionBase::RegenerateId>
+ * @shortcut <WdfSession::RegenerateId>
  */
 function regenerate_session_id()
 {
-    if( isset(Wdf::$SessionHandler) && is_object(Wdf::$SessionHandler) )
-	    return Wdf::$SessionHandler->RegenerateId();
-    return false;
+    return WdfSession::Get()->RegenerateSessionId();
 }
 
 /**
- * @shortcut <SessionBase::GenerateSessionId>
+ * @shortcut <WdfSession::GenerateSessionId>
  */
 function generate_session_id()
 {
-    if( isset(Wdf::$SessionHandler) && is_object(Wdf::$SessionHandler) )
-	    return Wdf::$SessionHandler->GenerateSessionId();
-    return md5(time() . random_int(10000, 99999));
+    return WdfSession::Get()->GenerateSessionId();
 }
 
 /**

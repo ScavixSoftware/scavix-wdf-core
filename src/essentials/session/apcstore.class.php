@@ -27,55 +27,21 @@
  */
 namespace ScavixWDF\Session;
 
-use ScavixWDF\Wdf;
+use ScavixWDF\WdfException;
 
 /**
  * Implements <ObjectStore> for use with APC.
- *
+ * @deprecated This is non functional. Do not use.
  * @suppress PHP0417
  */
 class APCStore extends ObjectStore
 {
-    private $serializer;
-    public static $apcstore_key_prefix = 'wdf_apcstore_';
-
-    public function __construct()
-    {
-        global $CONFIG;
-        $servername = isset($_SERVER['SERVER_NAME'])?$_SERVER['SERVER_NAME']:"SCAVIX_WDF_SERVER";
-        if( isset($CONFIG['apcstore']['key_prefix']) )
-            APCStore::$apcstore_key_prefix = "apcstore_".md5($servername."-".$CONFIG['apcstore']['key_prefix']."-".getAppVersion('nc')).'_';
-        else
-            APCStore::$apcstore_key_prefix = "apcstore_".md5($servername."-".session_name()."-".getAppVersion('nc')).'_';
-
-        $this->serializer = Serializer::Get();
-
-        if( !isset($_SESSION['object_ids']) )
-            $_SESSION['object_ids'] = [];
-    }
-
     /**
      * @override <ObjectStore::Store>
      */
     function Store(&$obj,$id="")
     {
-        $start = microtime(true);
-		$id = strtolower($id);
-		if( $id == "" )
-		{
-			if( !isset($obj->_storage_id) )
-				\ScavixWDF\WdfException::Raise("Trying to store an object without storage_id!");
-			$id = $obj->_storage_id;
-		}
-		else
-			$obj->_storage_id = $id;
-
-        $content = $this->serializer->Serialize($obj);
-
-        apc_store(APCStore::$apcstore_key_prefix.session_id().'_'.$id, $content, (ini_get('session.gc_maxlifetime')?:300));
-
-        ObjectStore::$buffer[$id] = $obj;
-        Wdf::Measure(__METHOD__,$start);
+        WdfException::Raise("APC Store is obsolete and non functional");
     }
 
     /**
@@ -83,16 +49,7 @@ class APCStore extends ObjectStore
      */
 	function Delete($id)
     {
-        $start = microtime(true);
-		if( is_object($id) && isset($id->_storage_id) )
-			$id = $id->_storage_id;
-
-        if( isset(ObjectStore::$buffer[$id]) )
-            unset(ObjectStore::$buffer[$id]);
-
-		apc_delete(APCStore::$apcstore_key_prefix.session_id().'_'.$id);
-
-        Wdf::Measure(__METHOD__,$start);
+        WdfException::Raise("APC Store is obsolete and non functional");
     }
 
     /**
@@ -100,16 +57,8 @@ class APCStore extends ObjectStore
      */
 	function Exists($id)
     {
-        $start = microtime(true);
-		if( is_object($id) && isset($id->_storage_id) )
-			$id = $id->_storage_id;
-		$id = strtolower($id);
-		if( isset(ObjectStore::$buffer[$id]) )
-            $res = true;
-        else
-            $res = (apc_exists(APCStore::$apcstore_key_prefix.session_id().'_'.$id) === true);
-        Wdf::Measure(__METHOD__,$start);
-		return $res;
+        WdfException::Raise("APC Store is obsolete and non functional");
+        return false;
     }
 
     /**
@@ -117,44 +66,7 @@ class APCStore extends ObjectStore
      */
 	function Restore($id)
     {
-        $start = microtime(true);
-		$id = strtolower($id);
-
-		if( isset(ObjectStore::$buffer[$id]) )
-			$res = ObjectStore::$buffer[$id];
-        else
-        {
-            $data = apc_fetch(APCStore::$apcstore_key_prefix.session_id().'_'.$id);
-            $res = $this->serializer->Unserialize($data);
-            ObjectStore::$buffer[$id] = $res;
-
-        }
-        Wdf::Measure(__METHOD__,$start);
-		return $res;
-    }
-
-    /**
-     * @override <ObjectStore::CreateId>
-     */
-    function CreateId(&$obj)
-    {
-        $start = microtime(true);
-        if( Serializer::isUnserializing() )
-		{
-			log_trace("create_storage_id while unserializing object of type ".get_class_simple($obj));
-			$obj->_storage_id = "to_be_overwritten_by_unserializer";
-			return $obj->_storage_id;
-		}
-
-		$cn = strtolower(get_class_simple($obj));
-		if( !isset($_SESSION['object_ids'][$cn]) )
-			$_SESSION['object_ids'][$cn] = 1;
-		else
-			$_SESSION['object_ids'][$cn]++;
-
-        $obj->_storage_id = $cn.$_SESSION['object_ids'][$cn];
-        Wdf::Measure(__METHOD__,$start);
-        return $obj->_storage_id;
+        WdfException::Raise("APC Store is obsolete and non functional");
     }
 
     /**
@@ -162,7 +74,7 @@ class APCStore extends ObjectStore
      */
     function Cleanup()
     {
-        // not necessary for APC
+        WdfException::Raise("APC Store is obsolete and non functional");
     }
 
     /**
@@ -170,37 +82,7 @@ class APCStore extends ObjectStore
      */
     function Update($keep_alive=false)
     {
-        $start = microtime(true);
-
-        if( $keep_alive )
-        {
-            $data = apc_cache_info('user');
-            if($data && $data['cache_list'])
-            {
-                foreach($data['cache_list'] as $entry)
-                {
-                    if(starts_with($entry['info'], APCStore::$apcstore_key_prefix.session_id().'_'))
-                        apc_store($entry['info'], apc_fetch($entry['info']), (ini_get('session.gc_maxlifetime')?:300));
-                }
-                return;
-            }
-            Wdf::Measure(__METHOD__."/KA",$start);
-            return;
-        }
-
-        $sql = [];
-        foreach( ObjectStore::$buffer as $id=>$obj )
-		{
-			try
-			{
-                $this->Store($obj, $id);
-			}
-			catch(\Exception $ex)
-			{
-				\ScavixWDF\WdfException::Log("updating storage for object $id [".get_class($obj)."]",$ex);
-			}
-		}
-        Wdf::Measure(__METHOD__,$start);
+        WdfException::Raise("APC Store is obsolete and non functional");
     }
 
     /**
@@ -208,19 +90,11 @@ class APCStore extends ObjectStore
      */
     function Migrate($old_session_id, $new_session_id)
     {
-//        log_debug('Migrate', $old_session_id, $new_session_id);
-        $start = microtime(true);
-        $data = apc_cache_info('user');
-        if($data && $data['cache_list'])
-        {
-            foreach($data['cache_list'] as $entry)
-            {
-                if(starts_with($entry['info'], APCStore::$apcstore_key_prefix.$old_session_id.'_'))
-                {
-                    apc_store(str_replace(APCStore::$apcstore_key_prefix.$old_session_id.'_', APCStore::$apcstore_key_prefix.$new_session_id.'_', $entry['info']), apc_fetch($entry['info']), (ini_get('session.gc_maxlifetime')?:300));
-                }
-            }
-        }
-        Wdf::Measure(__METHOD__,$start);
+        WdfException::Raise("APC Store is obsolete and non functional");
+    }
+
+    function Clear()
+    {
+        WdfException::Raise("APC Store is obsolete and non functional");
     }
 }

@@ -38,14 +38,13 @@ use ScavixWDF\WdfException;
  */
 class RedisStore extends ObjectStore
 {
-    protected $serializer;
-
+    protected $server;
     protected $socket;
     protected function getSocket()
     {
         return $this->socket
             ? $this->socket
-            : ($this->socket = stream_socket_client($GLOBALS['CONFIG']['session']['redisstore']['server']));
+            : ($this->socket = stream_socket_client($this->server));
     }
 
     protected function _key($key)
@@ -57,15 +56,8 @@ class RedisStore extends ObjectStore
 
     public function __construct()
     {
-        global $CONFIG;
-
-        if( !isset($CONFIG['session']['redisstore']['server']) )
-            $CONFIG['session']['redisstore']['server'] = 'localhost:6379';
-
-        $this->serializer = Serializer::Get();
-
-        if( !isset($_SESSION['object_ids']) )
-            $_SESSION['object_ids'] = [];
+        $this->server = $GLOBALS['CONFIG']['session']['redisstore']['server'] ?? 'localhost:6379';
+        parent::__construct();
     }
 
     private function makePaket($args)
@@ -233,30 +225,6 @@ class RedisStore extends ObjectStore
     }
 
     /**
-     * @override <ObjectStore::CreateId>
-     */
-    function CreateId(&$obj)
-    {
-        $start = microtime(true);
-		if( Serializer::isUnserializing() )
-		{
-			log_trace("create_storage_id while unserializing object of type ".get_class_simple($obj));
-			$obj->_storage_id = "to_be_overwritten_by_unserializer";
-			return $obj->_storage_id;
-		}
-
-		$cn = strtolower(get_class_simple($obj));
-		if( !isset($_SESSION['object_ids'][$cn]) )
-			$_SESSION['object_ids'][$cn] = 1;
-		else
-			$_SESSION['object_ids'][$cn]++;
-
-        $obj->_storage_id = $cn.$_SESSION['object_ids'][$cn];
-        Wdf::Measure(__METHOD__,$start);
-        return $obj->_storage_id;
-    }
-
-    /**
      * @override <ObjectStore::Cleanup>
      */
     function Cleanup()
@@ -295,5 +263,10 @@ class RedisStore extends ObjectStore
             $this->exec('rename',[$id,$nid]);
         }
         Wdf::Measure(__METHOD__,$start);
+    }
+
+    function Clear()
+    {
+        // todo: implement clearing redis data (for the session)
     }
 }

@@ -32,6 +32,7 @@ namespace ScavixWDF\Model;
 
 use Exception;
 use PDO;
+use ScavixWDF\ISelfStoring;
 use ScavixWDF\Model\Driver\MySql;
 use ScavixWDF\Model\Driver\SqLite;
 use ScavixWDF\WdfDbException;
@@ -41,7 +42,7 @@ use ScavixWDF\WdfDbException;
  *
  * Use this to execute SQL statements directly when you need to do so.
  */
-class DataSource
+class DataSource implements ISelfStoring
 {
     private $_dsn;
 	private $_username;
@@ -846,5 +847,21 @@ class DataSource
         }
 
         log_debug("Done");
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public static function __restoreObject($id): static|null
+    {
+        return model_datasource($id);
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function __storeMe($id)
+    {
+        // just ignore, will always be loaded fresh
     }
 }

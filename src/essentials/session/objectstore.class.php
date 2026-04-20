@@ -37,8 +37,15 @@ namespace ScavixWDF\Session;
  */
 abstract class ObjectStore
 {
+    protected $serializer;
     public static $buffer = [];
-    public static $ids = [];
+
+    protected function __construct()
+    {
+        $this->serializer = Serializer::Get();
+        if( !isset($_SESSION['object_ids']) )
+            $_SESSION['object_ids'] = [];
+    }
 
     /**
      * Stores an object.
@@ -74,11 +81,6 @@ abstract class ObjectStore
 	abstract function Restore($id);
 
     /**
-     * @internal Creates a unique object ID
-     */
-	abstract function CreateId(&$obj);
-
-    /**
      * @internal Cleans things up
      */
     abstract function Cleanup();
@@ -99,4 +101,30 @@ abstract class ObjectStore
      * @return void
      */
     abstract function Migrate($old_session_id, $new_session_id);
+
+    abstract function Clear();
+
+    /**
+     * @internal Creates a unique object ID
+     */
+    function CreateId(&$obj)
+    {
+        $start = microtime(true);
+		if( Serializer::isUnserializing() )
+		{
+			log_trace("create_storage_id while unserializing object of type ".get_class_simple($obj));
+			$obj->_storage_id = "to_be_overwritten_by_unserializer";
+			return $obj->_storage_id;
+		}
+
+		$cn = strtolower(get_class_simple($obj));
+		if( !isset($_SESSION['object_ids'][$cn]) )
+			$_SESSION['object_ids'][$cn] = 1;
+		else
+			$_SESSION['object_ids'][$cn]++;
+
+        $obj->_storage_id = $cn.$_SESSION['object_ids'][$cn];
+        \ScavixWDF\Wdf::Measure(__METHOD__,$start);
+        return $obj->_storage_id;
+    }
 }

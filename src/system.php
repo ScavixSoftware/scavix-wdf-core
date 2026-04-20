@@ -283,9 +283,6 @@ function system_init($application_name, $skip_header = false, $logging_category=
 
     $start = Wdf::Measure(__FUNCTION__.' packages', $start);
 
-	if( isset($_REQUEST['request_id']) )
-		session_keep_alive();
-
 	// attach more headers here if required
 	if( !$skip_header && PHP_SAPI!='cli' )
 	{
@@ -671,7 +668,7 @@ function execute_hooks($type,$arguments = [])
 	}
 	if( $loghooks )
 		log_debug("END ".hook_type_to_string($type));
-    Wdf::Measure("execute_hook $type", $start);
+    Wdf::Measure("execute_hook " . hook_type_to_string($type), $start);
 }
 
 /**

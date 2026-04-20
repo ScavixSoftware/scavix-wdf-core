@@ -77,9 +77,7 @@ function cli_init()
     create_class_alias(\ScavixWDF\Tasks\DbTask::class,'dbtask');
     create_class_alias(\ScavixWDF\Tasks\TaskPool::class,'taskpool');
 
-    global $CONFIG;
-    $CONFIG['session']['handler'] = CliSession::class;
-    $CONFIG['session']['object_store'] = CliObjectStore::class;
+    $GLOBALS['CONFIG']['session']['object_store'] = CliObjectStore::class;
 }
 
 /**

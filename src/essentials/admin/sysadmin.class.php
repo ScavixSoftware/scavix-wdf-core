@@ -37,6 +37,8 @@ use ScavixWDF\Controls\Form\Form;
 use ScavixWDF\Controls\Form\Select;
 use ScavixWDF\Controls\Form\TextInput;
 use ScavixWDF\Controls\Table\Table;
+use ScavixWDF\Localization\CultureInfo;
+use ScavixWDF\Localization\Localization;
 use ScavixWDF\Model\Model;
 use ScavixWDF\Reflection\Attributes\Boolean;
 use ScavixWDF\Reflection\Attributes\RequestParam;

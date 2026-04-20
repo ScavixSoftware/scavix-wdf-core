@@ -39,8 +39,26 @@ use ScavixWDF\WdfException;
 class FilesStore extends ObjectStore
 {
     protected $options = [];
-    protected $serializer;
     protected $path = false;
+
+    public function __construct($path = null, $ttl = null)
+    {
+        $this->options = $GLOBALS['CONFIG']['session']['filesstore'] ?? [];
+
+        if ($path)
+            $this->options['path'] = $path;
+        elseif (empty($this->options['path']))
+            $this->options['path'] = system_app_temp_dir('filesstore', false);
+
+        if ($ttl)
+            $this->options['ttl'] = $ttl;
+        elseif (empty($this->options['ttl']))
+            $this->options['ttl'] = ceil(($GLOBALS['CONFIG']['session']['ping_time'] ?? 60) * 1.5);
+
+
+        system_ensure_path_ending($this->options['path']);
+        parent::__construct();
+    }
 
     protected function getPath($sid=false)
     {
@@ -70,28 +88,6 @@ class FilesStore extends ObjectStore
     protected function getFile($id)
     {
         return $this->getPath()."/$id";
-    }
-
-    public function __construct($path = null, $ttl = null)
-    {
-        $this->options = $GLOBALS['CONFIG']['session']['filesstore'] ?? [];
-
-        if ($path)
-            $this->options['path'] = $path;
-        elseif (empty($this->options['path']))
-            $this->options['path'] = system_app_temp_dir('filesstore', false);
-
-        if ($ttl)
-            $this->options['ttl'] = $ttl;
-        elseif (empty($this->options['ttl']))
-            $this->options['ttl'] = ceil(($GLOBALS['CONFIG']['session']['ping_time'] ?? 60) * 1.5);
-
-
-        system_ensure_path_ending($this->options['path']);
-        $this->serializer = new Serializer();
-
-        if( !isset($_SESSION['object_ids']) )
-            $_SESSION['object_ids'] = [];
     }
 
     /**
@@ -179,29 +175,6 @@ class FilesStore extends ObjectStore
 		return $res;
     }
 
-    /**
-     * @override <ObjectStore::CreateId>
-     */
-    function CreateId(&$obj)
-    {
-        $start = microtime(true);
-		if( Serializer::isUnserializing() )
-		{
-			log_trace("create_storage_id while unserializing object of type ".get_class_simple($obj));
-			$obj->_storage_id = "to_be_overwritten_by_unserializer";
-			return $obj->_storage_id;
-		}
-
-		$cn = strtolower(get_class_simple($obj));
-		if( !isset($_SESSION['object_ids'][$cn]) )
-			$_SESSION['object_ids'][$cn] = 1;
-		else
-			$_SESSION['object_ids'][$cn]++;
-
-        $obj->_storage_id = $cn.$_SESSION['object_ids'][$cn];
-        Wdf::Measure(__METHOD__,$start);
-        return $obj->_storage_id;
-    }
 
     /**
      * @override <ObjectStore::Cleanup>
@@ -287,7 +260,7 @@ class FilesStore extends ObjectStore
                 if (!isset($requests[$rid]))
                 {
                     if( isDev() )
-                        log_debug("Request $rid not found");
+                        log_debug("[Sess ".session_id()."] Request $rid not found");
                     return null;
                 }
                 $ids = $requests[$rid]['items'] ?? [];
@@ -353,5 +326,15 @@ class FilesStore extends ObjectStore
         @rename($this->getPath($old_session_id),$this->getPath($new_session_id));
         $this->path = false;
         Wdf::Measure(__METHOD__,$start);
+    }
+
+    function Clear()
+    {
+        $this->withIndex(function (&$items, &$requests)
+        {
+            $items = [];
+            $requests = [];
+            return true;
+        });
     }
 }

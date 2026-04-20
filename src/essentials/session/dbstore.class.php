@@ -36,21 +36,12 @@ use ScavixWDF\Wdf;
  */
 class DbStore extends ObjectStore
 {
-    protected $serializer;
     protected $ds;
 
     public function __construct()
     {
-        global $CONFIG;
-
-        if( !isset($CONFIG['session']['dbstore']['datasource']) )
-            $CONFIG['session']['dbstore']['datasource'] = 'internal';
-
-        $this->ds = model_datasource($CONFIG['session']['dbstore']['datasource']);
-        $this->serializer = Serializer::Get();
-
-        if( !isset($_SESSION['object_ids']) )
-            $_SESSION['object_ids'] = [];
+        $this->ds = model_datasource($GLOBALS['CONFIG']['session']['dbstore']['datasource'] ?? 'internal');
+        parent::__construct();
     }
 
     private function exec($sql,$args=[])
@@ -168,30 +159,6 @@ class DbStore extends ObjectStore
     }
 
     /**
-     * @override <ObjectStore::CreateId>
-     */
-    function CreateId(&$obj)
-    {
-        $start = microtime(true);
-		if( Serializer::isUnserializing() )
-		{
-			log_trace("create_storage_id while unserializing object of type ".get_class_simple($obj));
-			$obj->_storage_id = "to_be_overwritten_by_unserializer";
-			return $obj->_storage_id;
-		}
-
-		$cn = strtolower(get_class_simple($obj));
-		if( !isset($_SESSION['object_ids'][$cn]) )
-			$_SESSION['object_ids'][$cn] = 1;
-		else
-			$_SESSION['object_ids'][$cn]++;
-
-        $obj->_storage_id = $cn.$_SESSION['object_ids'][$cn];
-        Wdf::Measure(__METHOD__,$start);
-        return $obj->_storage_id;
-    }
-
-    /**
      * @override <ObjectStore::Cleanup>
      */
     function Cleanup()
@@ -251,5 +218,10 @@ class DbStore extends ObjectStore
         $start = microtime(true);
         $this->exec("UPDATE IGNORE wdf_objects SET session_id=? WHERE session_id=?",[$new_session_id,$old_session_id]);
         Wdf::Measure(__METHOD__,$start);
+    }
+
+    function Clear()
+    {
+        $this->ds->ExecuteSql("DELETE FROM wdf_objects WHERE session_id=?",[session_id()]);
     }
 }

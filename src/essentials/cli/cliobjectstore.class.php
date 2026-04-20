@@ -26,21 +26,15 @@
 namespace ScavixWDF\Session;
 
 use ScavixWDF\Wdf;
-use ScavixWDF\WdfException;
 
 /**
- * Stores objects in the filesystem.
- *
- * This is by far the fastets <ObjectStore> implementation. As we use it mostly,
- * it is most commonly updated!
+ * Specialized store for CLI, hides some parts from FilesStore.
  */
 class CliObjectStore extends FilesStore
 {
-    public function __construct() // hides the parent constructor!
+    public function __construct()
     {
-        $this->serializer = Serializer::Get();
-        if( !isset($_SESSION['object_ids']) )
-            $_SESSION['object_ids'] = [];
+        ObjectStore::__construct();  // hides the parent constructor!
     }
 
     /**
@@ -113,5 +107,10 @@ class CliObjectStore extends FilesStore
      */
     function Migrate($old_session_id, $new_session_id)
     {
+    }
+
+    function Clear()
+    {
+
     }
 }

@@ -38,16 +38,13 @@ use ScavixWDF\WdfException;
  */
 class SessionStore extends ObjectStore
 {
-    protected $serializer;
-
+    private $prefix = '';
     public function __construct()
     {
-        if( isset($_SESSION['object_id_storage']) )
-    		ObjectStore::$ids = $_SESSION['object_id_storage'];
-        else
-            ObjectStore::$ids = [];
-
-        $this->serializer = Serializer::Get();
+        $this->prefix = $GLOBALS['CONFIG']['session']['sessionstore']['prefix'] ?? $GLOBALS['CONFIG']['session']['prefix'] ?? '';
+        if( !isset($_SESSION["{$this->prefix}object_access"]) )
+            $_SESSION["{$this->prefix}object_access"] = [];
+        parent::__construct();
     }
 
     /**
@@ -55,7 +52,6 @@ class SessionStore extends ObjectStore
      */
     function Store(&$obj,$id="")
     {
-        global $CONFIG;
         $start = microtime(true);
 		$id = strtolower($id);
 		if( $id == "" )
@@ -68,11 +64,11 @@ class SessionStore extends ObjectStore
 			$obj->_storage_id = $id;
 
         $content = $this->serializer->Serialize($obj);
-        $_SESSION[$CONFIG['session']['prefix']."session"][$id] = $content;
+        $_SESSION["{$this->prefix}session"][$id] = $content;
 
 		ObjectStore::$buffer[$id] = $obj;
 
-        $_SESSION[$CONFIG['session']['prefix']."object_access"][$obj->_storage_id] = time();
+        $_SESSION["{$this->prefix}object_access"][$obj->_storage_id] = time();
         Wdf::Measure(__METHOD__, $start);
     }
 
@@ -81,22 +77,19 @@ class SessionStore extends ObjectStore
      */
 	function Delete($id)
     {
-        global $CONFIG;
         $start = microtime(true);
 
 		if( is_object($id) && isset($id->_storage_id) )
 			$id = $id->_storage_id;
 
-        if( isset($_SESSION[$CONFIG['session']['prefix']."object_access"][$id]) )
-            unset($_SESSION[$CONFIG['session']['prefix']."object_access"][$id]);
+        if( isset($_SESSION["{$this->prefix}object_access"][$id]) )
+            unset($_SESSION["{$this->prefix}object_access"][$id]);
         if( isset($_SESSION['object_id_storage'][$id]) )
             unset($_SESSION['object_id_storage'][$id]);
-        if( isset(ObjectStore::$ids[$id]) )
-            unset(ObjectStore::$ids[$id]);
 
 		$id = strtolower($id);
-		if(isset($_SESSION[$CONFIG['session']['prefix']."session"][$id]))
-			unset($_SESSION[$CONFIG['session']['prefix']."session"][$id]);
+		if(isset($_SESSION["{$this->prefix}session"][$id]))
+			unset($_SESSION["{$this->prefix}session"][$id]);
 		unset(ObjectStore::$buffer[$id]);
         Wdf::Measure(__METHOD__,$start);
     }
@@ -106,7 +99,6 @@ class SessionStore extends ObjectStore
      */
 	function Exists($id)
     {
-        global $CONFIG;
         $start = microtime(true);
 
 		if( is_object($id) && isset($id->_storage_id) )
@@ -115,7 +107,7 @@ class SessionStore extends ObjectStore
 		if( isset(ObjectStore::$buffer[$id]) )
 			$res = true;
         else
-            $res = isset($_SESSION[$CONFIG['session']['prefix']."session"][$id]);
+            $res = isset($_SESSION["{$this->prefix}session"][$id]);
         Wdf::Measure(__METHOD__,$start);
 		return $res;
     }
@@ -125,7 +117,6 @@ class SessionStore extends ObjectStore
      */
 	function Restore($id)
     {
-        global $CONFIG;
         $start = microtime(true);
 		$id = strtolower($id);
 
@@ -133,10 +124,10 @@ class SessionStore extends ObjectStore
 			$res = ObjectStore::$buffer[$id];
         else
         {
-            if(!isset($_SESSION[$CONFIG['session']['prefix']."session"][$id]))
+            if(!isset($_SESSION["{$this->prefix}session"][$id]))
                 return null;
 
-            $data = $_SESSION[$CONFIG['session']['prefix']."session"][$id];
+            $data = $_SESSION["{$this->prefix}session"][$id];
 
             $res = $this->serializer->Unserialize($data);
             ObjectStore::$buffer[$id] = $res;
@@ -144,44 +135,9 @@ class SessionStore extends ObjectStore
         }
 
         if( $res && is_object($res) && isset($res->_storage_id) )// update objects last access
-            $_SESSION[$CONFIG['session']['prefix']."object_access"][$res->_storage_id] = time();
+            $_SESSION["{$this->prefix}object_access"][$res->_storage_id] = time();
         Wdf::Measure(__METHOD__,$start);
 		return $res;
-    }
-
-    /**
-     * @override <ObjectStore::CreateId>
-     */
-    function CreateId(&$obj)
-    {
-        global $CONFIG;
-        $start = microtime(true);
-
-		if( Serializer::isUnserializing() )
-		{
-			log_trace("create_storage_id while unserializing object of type ".get_class_simple($obj));
-			$obj->_storage_id = "to_be_overwritten_by_unserializer";
-			return $obj->_storage_id;
-		}
-
-		$cn = strtolower(get_class_simple($obj));
-		if( !isset(ObjectStore::$ids[$cn]) )
-		{
-			$i = 1;
-			while(isset($_SESSION[$CONFIG['session']['prefix']."session"][$cn.$i]))
-				$i++;
-			ObjectStore::$ids[$cn] = $i;
-		}
-		else
-			ObjectStore::$ids[$cn]++;
-
-		$obj->_storage_id = $cn.ObjectStore::$ids[$cn];
-
-		if( session_id() )
-			$_SESSION['object_id_storage'] = ObjectStore::$ids;
-
-        Wdf::Measure(__METHOD__,$start);
-		return $obj->_storage_id;
     }
 
     /**
@@ -189,12 +145,11 @@ class SessionStore extends ObjectStore
      */
     function Cleanup()
     {
-        global $CONFIG;
         $start = microtime(true);
 
-        if(isset($_SESSION[$CONFIG['session']['prefix']."object_access"]))
+        if(isset($_SESSION["{$this->prefix}object_access"]))
         {
-            foreach( $_SESSION[$CONFIG['session']['prefix']."object_access"] as $id=>$time )
+            foreach( $_SESSION["{$this->prefix}object_access"] as $id=>$time )
             {
                 if( isset(ObjectStore::$buffer[$id]) || $time + 60 > time() )
                     continue;
@@ -209,13 +164,12 @@ class SessionStore extends ObjectStore
      */
     function Update($keep_alive=false)
     {
-        global $CONFIG;
         $start = microtime(true);
 
         if( $keep_alive )
         {
-            foreach( $_SESSION[$CONFIG['session']['prefix']."object_access"] as $id=>$time )
-                $_SESSION[$CONFIG['session']['prefix']."object_access"][$id] = time();
+            foreach( $_SESSION["{$this->prefix}object_access"] as $id=>$time )
+                $_SESSION["{$this->prefix}object_access"][$id] = time();
             return;
         }
 
@@ -239,5 +193,11 @@ class SessionStore extends ObjectStore
     function Migrate($old_session_id, $new_session_id)
     {
         // nothing to to because session variable is migrated by PHP itself
+    }
+
+    function Clear()
+    {
+        $_SESSION["{$this->prefix}session"] = [];
+        $_SESSION["{$this->prefix}object_access"] = [];
     }
 }

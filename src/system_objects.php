@@ -54,7 +54,13 @@ class Wdf
      */
     public static $Request;
     public static $ClientIP;
+    /**
+     * @deprecated Use Wdf::Session() instead.
+     */
     public static $SessionHandler;
+    /**
+     * @deprecated Use Wdf::Session() instead.
+     */
     public static $ObjectStore;
     public static $Translation;
 
@@ -223,6 +229,11 @@ class Wdf
         return WdfResponse::Get();
     }
 
+    public static function Session()
+    {
+        return \ScavixWDF\Session\WdfSession::Get();
+    }
+
     private static $timeouts = [], $nextTimeoutId = 1, $alarmHandlerInstalled = false;
     public static function SetTimeout(int $delay_seconds, callable $callback)
     {
@@ -381,6 +392,31 @@ interface IRequestAttribute
     function getParsedData(\ScavixWDF\WdfIncomingRequest $request);
     function getError(): string;
     function applyDefaults(&$args, $is_last = false);
+}
+
+/**
+ * Objects implementing this interface must store themselves in the session.
+ *
+ * This may be useful for current-user storage which is most likely just an identifier and must
+ * be kept in the session and not in the object store.
+ */
+interface ISelfStoring
+{
+    /**
+     * Stores the Object at id $id.
+     *
+     * @param mixed $id The identifier
+     * @return void
+     */
+    public function __storeMe($id);
+
+    /**
+     * Restores the object at id $id.
+     *
+     * @param mixed $id The idnetifier
+     * @return static|null The restored object or null if not found
+     */
+    public static function __restoreObject($id): static|null;
 }
 
 
