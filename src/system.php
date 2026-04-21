@@ -629,7 +629,6 @@ function execute_hooks($type,$arguments = [])
 	Wdf::$Hooks['fired'][$type] = $type;
 	if( !isset(Wdf::$Hooks[$type]) )
     	return;
-    $start = microtime(true);
 	is_valid_hook_type($type);
 
 	$loghooks = $CONFIG['system']['hook_logging'];
@@ -668,7 +667,6 @@ function execute_hooks($type,$arguments = [])
 	}
 	if( $loghooks )
 		log_debug("END ".hook_type_to_string($type));
-    Wdf::Measure("execute_hook " . hook_type_to_string($type), $start);
 }
 
 /**

@@ -239,7 +239,7 @@ class WdfSession
 					if($try >= 10)
 						trigger_error("start_start failed 10 times!", E_USER_ERROR);
                 }
-                catch (Exception $ex){}
+                catch (Exception $ex){log_debug("Exception while starting session: ",$ex);}
                 $ms = round((microtime(true) - $start) * 1000);
                 if (isDev() && $ms > 35)
                 {
@@ -248,15 +248,17 @@ class WdfSession
                         $size = strlen(serialize($_SESSION));
                     }
                     catch (Exception $ex) { $size = "N/A"; }
-                    log_debug("Slow session {$ms}ms, size=$size, req={$_SERVER['REQUEST_URI']}", $opts);
+                    log_debug("Slow session {$try}tries, {$ms}ms, size=$size, req={$_SERVER['REQUEST_URI']}", $opts);
                 }
 			}
+            if (\ScavixWDF\Base\Args::request('ping', '-1') == \ScavixWDF\Base\Args::request('request_id', '-2'))
+                session_write_close();
 		}
 	}
 
 	private function isReadOnlySession()
     {
-        if (Wdf::Request()->isStaticAsset() || \ScavixWDF\Base\Args::request('ping', false))
+        if (Wdf::Request()->isStaticAsset())
             return true;
 
         global $CONFIG;
