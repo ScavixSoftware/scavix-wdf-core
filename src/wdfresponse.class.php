@@ -174,10 +174,19 @@ class WdfResponse
             $this->resMapStore($rootcn);
             Wdf::Measure(__METHOD__." - parents" , $start);
         }
-        elseif (!empty($data) && ($rf = resource_search($data)))
+        elseif (!empty($data))
         {
-            // this is uncached onetime addition
-            $this->resource_map['plain.string']['items'][$rf['key']] = $rf;
+            if ($rf = resource_search($data))
+            {
+                // this is uncached onetime addition
+                $this->resource_map['plain.string']['items'][$rf['key']] = $rf;
+            }
+            elseif(starts_iwith($data, 'http') && ($url = filter_var($data, \FILTER_VALIDATE_URL)))
+            {
+                // this is a ressource as full url
+                $k = md5($url);
+                $this->resource_map[$k]['items'][$url] = ['key' => $k, 'url' => $url, 'ext' => pathinfo($url, PATHINFO_EXTENSION), 'sort' => 0];
+            }
         }
     }
 
